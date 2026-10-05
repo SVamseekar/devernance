@@ -183,6 +183,28 @@ export interface GateControlMode {
   signedOff: boolean;
 }
 
+/** One framework item with the evidence linked to it. Relevance, not conformity. */
+export interface FrameworkItemStatus {
+  id: string;
+  title: string;
+  status: "covered" | "partial" | "no_evidence";
+  /** Mapped controls that pass. */
+  controls: string[];
+  /** Mapped evidence types that are indexed. */
+  evidence: string[];
+  requiredControls: string[];
+  requiredEvidence: string[];
+}
+
+export interface FrameworkView {
+  framework: string;
+  version: string;
+  source: string;
+  reviewed: boolean;
+  disclaimer: string;
+  items: FrameworkItemStatus[];
+}
+
 /** Sealed evidence pack (JSON primary; PDF is Phase 6 export). */
 export interface EvidencePack {
   systemId: string;
@@ -198,6 +220,8 @@ export interface EvidencePack {
   determination?: Record<string, unknown>;
   conformity?: Record<string, unknown>;
   evgraphArtifacts?: Record<string, unknown>;
+  /** Framework crosswalks keyed by framework; absent when the plan does not include them. Covered by the seal. */
+  frameworks?: Record<string, FrameworkView>;
   evidencePackVersion: string;
   contentSha256: string;
   generator: string;

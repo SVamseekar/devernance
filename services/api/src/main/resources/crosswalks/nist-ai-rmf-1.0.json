@@ -1,0 +1,28 @@
+{
+  "framework": "nist-ai-rmf",
+  "version": "1.0",
+  "source": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+  "retrieved": "2026-10-05",
+  "reviewedBy": "",
+  "items": [
+    { "id": "GOVERN 1", "title": "Policies, processes, procedures, and practices across the organization related to the mapping, measuring, and managing of AI risks are in place, transparent, and implemented effectively", "controlCodes": ["RISK_MANAGEMENT", "TECHNICAL_DOCUMENTATION"], "evidenceTypes": ["POLICY", "CONTROL_MAP"] },
+    { "id": "GOVERN 2", "title": "Accountability structures are in place so that the appropriate teams and individuals are empowered, responsible, and trained for mapping, measuring, and managing AI risks", "controlCodes": ["HUMAN_OVERSIGHT"], "evidenceTypes": ["POLICY"] },
+    { "id": "GOVERN 3", "title": "Workforce diversity, equity, inclusion, and accessibility processes are prioritized in the mapping, measuring, and managing of AI risks throughout the lifecycle", "controlCodes": ["RISK_MANAGEMENT"], "evidenceTypes": ["POLICY"] },
+    { "id": "GOVERN 4", "title": "Organizational teams are committed to a culture that considers and communicates AI risk", "controlCodes": ["RISK_MANAGEMENT"], "evidenceTypes": ["POLICY"] },
+    { "id": "GOVERN 5", "title": "Processes are in place for robust engagement with relevant AI actors", "controlCodes": ["TRANSPARENCY", "HUMAN_OVERSIGHT"], "evidenceTypes": ["POLICY", "DPIA"] },
+    { "id": "GOVERN 6", "title": "Policies and procedures are in place to address AI risks and benefits arising from third-party software and data and other supply chain issues", "controlCodes": ["DATA_GOVERNANCE"], "evidenceTypes": ["VENDOR_DOC"] },
+    { "id": "MAP 1", "title": "Context is established and understood", "controlCodes": ["RISK_MANAGEMENT", "TECHNICAL_DOCUMENTATION"], "evidenceTypes": ["MODEL_CARD", "DPIA"] },
+    { "id": "MAP 2", "title": "Categorization of the AI system is performed", "controlCodes": ["RISK_MANAGEMENT"], "evidenceTypes": ["MODEL_CARD"] },
+    { "id": "MAP 3", "title": "AI capabilities, targeted usage, goals, and expected benefits and costs compared with appropriate benchmarks are understood", "controlCodes": ["HUMAN_OVERSIGHT"], "evidenceTypes": ["MODEL_CARD"] },
+    { "id": "MAP 4", "title": "Risks and benefits are mapped for all components of the AI system including third-party software and data", "controlCodes": ["DATA_GOVERNANCE"], "evidenceTypes": ["VENDOR_DOC"] },
+    { "id": "MAP 5", "title": "Impacts to individuals, groups, communities, organizations, and society are characterized", "controlCodes": ["TRANSPARENCY"], "evidenceTypes": ["DPIA"] },
+    { "id": "MEASURE 1", "title": "Appropriate methods and metrics are identified and applied", "controlCodes": ["ACCURACY_ROBUSTNESS"], "evidenceTypes": ["MODEL_CARD"] },
+    { "id": "MEASURE 2", "title": "AI systems are evaluated for trustworthy characteristics", "controlCodes": ["ACCURACY_ROBUSTNESS", "CYBERSECURITY", "DATA_GOVERNANCE", "TRANSPARENCY"], "evidenceTypes": ["MODEL_CARD"] },
+    { "id": "MEASURE 3", "title": "Mechanisms for tracking identified AI risks over time are in place", "controlCodes": ["RECORD_KEEPING"], "evidenceTypes": ["CONTROL_MAP"] },
+    { "id": "MEASURE 4", "title": "Feedback about efficacy of measurement is gathered and assessed", "controlCodes": ["ACCURACY_ROBUSTNESS", "RECORD_KEEPING"], "evidenceTypes": ["CONTROL_MAP", "MODEL_CARD"] },
+    { "id": "MANAGE 1", "title": "AI risks based on assessments and other analytical output from the MAP and MEASURE functions are prioritized, responded to, and managed", "controlCodes": ["RISK_MANAGEMENT"], "evidenceTypes": ["CONTROL_MAP"] },
+    { "id": "MANAGE 2", "title": "Strategies to maximize AI benefits and minimize negative impacts are planned, prepared, implemented, documented, and informed by input from relevant AI actors", "controlCodes": ["HUMAN_OVERSIGHT", "CYBERSECURITY"], "evidenceTypes": ["POLICY"] },
+    { "id": "MANAGE 3", "title": "AI risks and benefits from third-party entities are managed", "controlCodes": ["DATA_GOVERNANCE"], "evidenceTypes": ["VENDOR_DOC"] },
+    { "id": "MANAGE 4", "title": "Risk treatments, including response and recovery, and communication plans for the identified and measured AI risks are documented and monitored regularly", "controlCodes": ["RECORD_KEEPING", "RISK_MANAGEMENT"], "evidenceTypes": ["CONTROL_MAP", "POLICY"] }
+  ]
+}

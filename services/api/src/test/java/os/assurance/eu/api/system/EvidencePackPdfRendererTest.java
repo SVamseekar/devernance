@@ -43,7 +43,8 @@ class EvidencePackPdfRendererTest {
         Map.of(),
         Map.of(),
         MonitoringPlan.standIn(),
-        "test-signature");
+        "test-signature",
+        null);
 
     byte[] pdf = EvidencePackPdfRenderer.render(pack, "Claims Triage AI");
 
@@ -52,5 +53,34 @@ class EvidencePackPdfRendererTest {
     assertThat(header).startsWith("%PDF");
     assertThat(EvidencePackPdfRenderer.filename(systemId, generatedAt))
         .isEqualTo("evidence-pack-33333333-3333-3333-3333-333333333333-2026-07-20.pdf");
+  }
+
+  @Test
+  void theFrameworksSectionListsEachItemWithTheDisclaimer() throws Exception {
+    Map<String, Object> nist = Map.of(
+        "framework", "nist-ai-rmf",
+        "version", "1.0",
+        "reviewed", false,
+        "disclaimer", "Mapping shows which evidence is relevant to each framework item. It is not an assessment of whether the system meets the framework.",
+        "items", List.of(Map.of("id", "GOVERN 2", "title", "Accountability structures", "status", "covered")));
+    EvidencePackResponse pack = new EvidencePackResponse(
+        UUID.randomUUID(), Instant.parse("2026-10-05T12:00:00Z"), ReleaseDecision.REVIEW, Map.of(), List.of(),
+        List.of(), List.of(), List.of(), List.of(), Map.of(), Map.of(), Map.of(), "1.1", "a".repeat(64), "gen",
+        null, "", List.of(), List.of(), List.of(), Map.of(), Map.of(), MonitoringPlan.standIn(), "sig",
+        Map.of("nist-ai-rmf", nist));
+
+    byte[] pdf = EvidencePackPdfRenderer.render(pack, "Claims Triage AI");
+
+    com.lowagie.text.pdf.PdfReader reader = new com.lowagie.text.pdf.PdfReader(pdf);
+    com.lowagie.text.pdf.parser.PdfTextExtractor extractor = new com.lowagie.text.pdf.parser.PdfTextExtractor(reader);
+    StringBuilder text = new StringBuilder();
+    for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+      text.append(extractor.getTextFromPage(page)).append('\n');
+    }
+    String flat = text.toString().replaceAll("\\s+", " ");
+    assertThat(flat).contains("Framework crosswalks");
+    assertThat(flat).contains("GOVERN 2");
+    assertThat(flat).contains("covered");
+    assertThat(flat).contains("It is not an assessment of whether the system meets the framework.");
   }
 }

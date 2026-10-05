@@ -9,6 +9,8 @@ import java.util.UUID;
 import os.assurance.eu.api.assessment.AssessmentService;
 import os.assurance.eu.api.audit.AuditEvent;
 import os.assurance.eu.api.audit.AuditService;
+import os.assurance.eu.api.billing.EntitlementService;
+import os.assurance.eu.api.billing.Feature;
 import os.assurance.eu.api.auth.JwtService;
 import os.assurance.eu.api.corpus.CorpusQueryService;
 import os.assurance.eu.api.contract.DataContract;
@@ -16,6 +18,7 @@ import os.assurance.eu.api.contract.DataContractService;
 import os.assurance.eu.api.contract.DriftEvent;
 import os.assurance.eu.api.contract.DriftStatus;
 import os.assurance.eu.api.determination.DeterminationService;
+import os.assurance.eu.api.framework.CrosswalkService;
 import os.assurance.eu.api.proposal.MappingProposalService;
 import os.assurance.eu.api.publicclaims.PublicClaimsCatalog;
 import os.assurance.eu.api.publicclaims.PublicClaimsService;
@@ -43,6 +46,8 @@ public class EvidencePackService {
   private final AssessmentService assessment;
   private final Clock clock;
   private final JwtService jwtService;
+  private final CrosswalkService crosswalks;
+  private final EntitlementService entitlements;
   private final String generator;
 
   public EvidencePackService(
@@ -59,6 +64,8 @@ public class EvidencePackService {
       AssessmentService assessment,
       Clock clock,
       JwtService jwtService,
+      CrosswalkService crosswalks,
+      EntitlementService entitlements,
       @Value("${assurance.evidence-pack.generator:eu-ai-assurance-api/0.1.0}") String generator) {
     this.repository = repository;
     this.releaseGateService = releaseGateService;
@@ -73,6 +80,8 @@ public class EvidencePackService {
     this.assessment = assessment;
     this.clock = clock;
     this.jwtService = jwtService;
+    this.crosswalks = crosswalks;
+    this.entitlements = entitlements;
     this.generator = generator;
   }
 
@@ -138,6 +147,10 @@ public class EvidencePackService {
         acceptedArtifacts,
         evidenceCounts,
         monitoringPlan);
+    Map<String, Object> frameworks = frameworks(system.id());
+    if (frameworks != null) {
+      sealPayload.put("frameworks", frameworks);
+    }
     String contentSha256 = EvidencePackSealer.contentSha256(sealPayload);
     String signature = jwtService.signEvidence(Map.of(
         "contentSha256", contentSha256,
@@ -183,7 +196,18 @@ public class EvidencePackService {
         acceptedArtifacts,
         evidenceCounts,
         monitoringPlan,
-        signature);
+        signature,
+        frameworks);
+  }
+
+  /** Crosswalk views the tenant's plan includes, or null so the pack omits the key (and the seal covers none). */
+  private Map<String, Object> frameworks(UUID systemId) {
+    if (!entitlements.hasFeature(Feature.NIST_CROSSWALK) || crosswalks.find("nist-ai-rmf").isEmpty()) {
+      return null;
+    }
+    Map<String, Object> frameworks = new LinkedHashMap<>();
+    frameworks.put("nist-ai-rmf", crosswalks.view("nist-ai-rmf", systemId));
+    return frameworks;
   }
 
   public Map<String, Object> evgraphArtifactFiles(UUID systemId) {

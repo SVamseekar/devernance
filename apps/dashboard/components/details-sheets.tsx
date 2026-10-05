@@ -13,6 +13,7 @@ import { isPublicClaimsSystem, publicClaimsSlug } from "@/lib/public-claims";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { ObligationMapWizard } from "./obligation-map-wizard";
+import { FrameworksPanel } from "./frameworks-panel";
 import { Button } from "./ui/button";
 import {
   ShieldAlert,
@@ -37,7 +38,7 @@ interface SystemDetailsSheetProps {
 }
 
 export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: SystemDetailsSheetProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "approval">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "frameworks" | "approval">("details");
   const [obligationWizardOpen, setObligationWizardOpen] = useState(false);
   const { activeRole } = useDashboard();
 
@@ -80,6 +81,17 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
           )}
         >
           Details
+        </button>
+        <button
+          onClick={() => setActiveTab("frameworks")}
+          className={cn(
+            "flex-1 text-xs py-1.5 rounded-md font-medium transition-colors",
+            activeTab === "frameworks"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Frameworks
         </button>
         <button
           onClick={() => setActiveTab("approval")}
@@ -304,6 +316,8 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
       </div>
         </>
       )}
+
+      {activeTab === "frameworks" && <FrameworksPanel systemId={system.id} />}
 
       {activeTab === "approval" && (
         <ApprovalWorkflowPanel

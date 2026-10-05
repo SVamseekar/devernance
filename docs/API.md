@@ -763,8 +763,11 @@ Response:
 Seal notes:
 
 - `evidencePackVersion` is currently `"1.0"`.
-- `contentSha256` is SHA-256 over canonical JSON (sorted map keys, ISO-8601 instants)
-  of the pack fields **excluding** `contentSha256` itself.
+- `contentSha256` is SHA-256 over canonical JSON (every object's keys sorted, ISO-8601 instants)
+  of the pack fields **excluding** `contentSha256` and `signature`, with `"conformity": {}` added. Parsing the
+  exported JSON and re-serialising it this way reproduces the hash (see `docs/VERIFY_EVIDENCE_PACK.md`).
+- `frameworks` (Team and above, and trials) holds framework crosswalk views keyed by framework, e.g.
+  `frameworks["nist-ai-rmf"]`, inside the seal. The key is absent on plans without the feature.
 - `generator` identifies the service build (`assurance.evidence-pack.generator`).
 - `auditChainHead` is the tenant audit hash-chain tip **before** this export event (Part 6).
 - Export writes audit event `evidence_pack.exported` with payload
@@ -784,6 +787,42 @@ Same roles as JSON. Returns `Content-Type: application/pdf` with:
 
 PDF sections: system identity, risk summary, evidence/evals/contracts/approvals, audit
 excerpt, seal footer. Prefer the JSON pack for cryptographic verification of the seal.
+
+## Framework crosswalks
+
+```http
+GET /systems/{systemId}/frameworks/{framework}
+```
+
+`framework` is `nist-ai-rmf` (feature `NIST_CROSSWALK`, Team and above). Unknown framework or system → `404`;
+a plan without the feature → `402` with `code: feature_nist_crosswalk`.
+
+```json
+{
+  "framework": "nist-ai-rmf",
+  "version": "1.0",
+  "source": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+  "reviewed": false,
+  "disclaimer": "Mapping shows which evidence is relevant to each framework item. It is not an assessment of whether the system meets the framework.",
+  "items": [
+    {
+      "id": "GOVERN 2",
+      "title": "Accountability structures are in place ...",
+      "status": "covered",
+      "controls": ["HUMAN_OVERSIGHT"],
+      "evidence": ["POLICY"],
+      "requiredControls": ["HUMAN_OVERSIGHT"],
+      "requiredEvidence": ["POLICY"]
+    }
+  ]
+}
+```
+
+`status` per item: `covered` when at least one mapped control is `PASS` and at least one mapped evidence type is
+indexed; `partial` when only one holds; `no_evidence` otherwise. Every item is always listed. `reviewed` is false
+until the owner has checked the mapping against the source. Crosswalk files live in
+`services/api/src/main/resources/crosswalks/` and are validated at startup (unknown control codes or evidence types
+stop the application).
 
 ## Audit
 

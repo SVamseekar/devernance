@@ -18,6 +18,7 @@ import type {
   EvalRunOperationsView,
   EvidenceDocument,
   EvidencePack,
+  FrameworkView,
   Assessment,
   CorpusView,
   EvidenceQueryResponse,
@@ -64,7 +65,12 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+interface RequestOptions {
+  /** The caller shows its own inline upgrade note, so a 402 does not open the shell's upgrade prompt. */
+  quietPlanLimit?: boolean;
+}
+
+async function request<T>(path: string, init?: RequestInit, options?: RequestOptions): Promise<T> {
   const headers = new Headers(init?.headers);
   const isForm = typeof FormData !== "undefined" && init?.body instanceof FormData;
   if (init?.body !== undefined && !isForm && !headers.has("Content-Type")) {
@@ -82,7 +88,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // keep status text
     }
-    if (res.status === 402) {
+    if (res.status === 402 && !options?.quietPlanLimit) {
       // Plan limit: the shell shows an upgrade prompt for any screen that hits one.
       dispatchPlanLimit(message);
     }
@@ -148,6 +154,9 @@ export const api = {
     /** Primary sealed JSON evidence pack (authenticated proxy). */
     evidencePack: (id: string) => request<EvidencePack>(`/systems/${id}/evidence-pack`),
     assessment: (id: string) => request<Assessment>(`/systems/${id}/assessment`),
+    /** Framework crosswalk coverage (relevance, not conformity). 402 when the plan lacks it. */
+    framework: (id: string, framework: string) =>
+      request<FrameworkView>(`/systems/${id}/frameworks/${framework}`, undefined, { quietPlanLimit: true }),
     evgraphArtifacts: (id: string) =>
       request<Record<string, unknown>>(`/systems/${id}/evgraph-artifacts`),
     conformity: (id: string) => request<Record<string, unknown>>(`/systems/${id}/conformity`),

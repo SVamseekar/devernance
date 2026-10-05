@@ -101,4 +101,14 @@ class EvidencePackSealerTest {
     assertThat(EvidencePackSealer.contentSha256(t1))
         .isNotEqualTo(EvidencePackSealer.contentSha256(t2));
   }
+
+  record Event(String zeta, String alpha) {}
+
+  @Test
+  void recordFieldOrderDoesNotChangeTheHashSoExportedJsonCanBeRehashed() {
+    // A verifier parses the exported JSON into maps; the server hashes records. Both must canonicalise the same.
+    Map<String, Object> asRecord = Map.of("auditEvents", List.of(new Event("z", "a")));
+    Map<String, Object> asMap = Map.of("auditEvents", List.of(Map.of("alpha", "a", "zeta", "z")));
+    assertThat(EvidencePackSealer.contentSha256(asRecord)).isEqualTo(EvidencePackSealer.contentSha256(asMap));
+  }
 }

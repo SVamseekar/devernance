@@ -12,8 +12,9 @@ import java.util.Map;
 /**
  * Deterministic content seal for evidence packs.
  *
- * <p>Canonical form: JSON with map keys sorted alphabetically, ISO-8601 instants,
- * then SHA-256 over UTF-8 bytes. The {@code contentSha256} field is never included
+ * <p>Canonical form: the payload converted to plain JSON values (records become objects), every object's keys
+ * sorted alphabetically, ISO-8601 instants, then SHA-256 over UTF-8 bytes. A verifier who parses the exported
+ * JSON pack gets the same canonical form. The {@code contentSha256} field is never included
  * in the hashed payload.
  */
 public final class EvidencePackSealer {
@@ -30,7 +31,8 @@ public final class EvidencePackSealer {
    */
   public static String contentSha256(Map<String, Object> sealPayload) {
     try {
-      String canonical = MAPPER.writeValueAsString(sealPayload == null ? Map.of() : sealPayload);
+      Object plain = MAPPER.convertValue(sealPayload == null ? Map.of() : sealPayload, Object.class);
+      String canonical = MAPPER.writeValueAsString(plain);
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       byte[] hash = digest.digest(canonical.getBytes(StandardCharsets.UTF_8));
       return HexFormat.of().formatHex(hash);

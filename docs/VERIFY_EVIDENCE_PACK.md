@@ -17,5 +17,16 @@ assert claims["contentSha256"] == pack["contentSha256"], "hash mismatch"
 print("signature valid for system", claims["systemId"], "generated", claims["generatedAt"])
 ```
 
+To recompute `contentSha256`: drop `contentSha256` and `signature`, add `"conformity": {}`, serialise with every
+object's keys sorted and no whitespace, and hash the UTF-8 bytes with SHA-256:
+
+```python
+import hashlib, json
+body = {k: v for k, v in pack.items() if k not in ("contentSha256", "signature")}
+body["conformity"] = {}
+canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+assert hashlib.sha256(canonical.encode("utf-8")).hexdigest() == pack["contentSha256"], "pack edited"
+```
+
 Recomputing `contentSha256` yourself proves the pack was not edited after export; the signature proves Assurance OS
 produced it. Neither is a legal certification.

@@ -1,6 +1,7 @@
 package os.assurance.eu.api.system;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -36,5 +37,7 @@ public record EvidencePackResponse(
     Map<String, Object> acceptedArtifacts,
     Map<String, Integer> evidenceCounts,
     Map<String, Object> monitoringPlan,
-    String signature) {
+    String signature,
+    /** Framework crosswalk views keyed by framework; absent (null) when the plan lacks the feature. */
+    @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, Object> frameworks) {
 }
