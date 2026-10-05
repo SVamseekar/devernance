@@ -205,6 +205,26 @@ export interface FrameworkView {
   items: FrameworkItemStatus[];
 }
 
+/** One registered system in the AU automated-decision (APP 1.7-1.9) disclosure pack. */
+export interface AuAdmSystem {
+  systemId: string;
+  name: string;
+  status: "include" | "needs_input" | "not_applicable";
+  missing: string[];
+  reason: string;
+  draftStatement: string | null;
+}
+
+export interface AuAdmPack {
+  generatedAt: string;
+  obligationStart: string;
+  source: string;
+  legislation: string;
+  disclaimer: string;
+  elements: { clause: string; text: string }[];
+  systems: AuAdmSystem[];
+}
+
 /** Sealed evidence pack (JSON primary; PDF is Phase 6 export). */
 export interface EvidencePack {
   systemId: string;

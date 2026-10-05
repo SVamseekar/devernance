@@ -824,6 +824,24 @@ until the owner has checked the mapping against the source. Crosswalk files live
 `services/api/src/main/resources/crosswalks/` and are validated at startup (unknown control codes or evidence types
 stop the application).
 
+## AU automated-decision disclosure pack
+
+```http
+GET /packs/au-adm
+```
+
+Feature `AU_ADM_PACK` (Business and above); `402` with `code: feature_au_adm_pack` otherwise. For the Australian
+Privacy Act APP 1.7–1.9 privacy-policy duty that applies from 10 December 2026, lists every registered system:
+
+- `include` — purpose, decision impact, affected people, and data sources are recorded. `draftStatement` is built
+  only from those fields and starts with "Draft for review by your privacy counsel:". It says a person reviews the
+  decisions only when the system's `HUMAN_OVERSIGHT` control is `PASS`; otherwise "to be confirmed".
+- `needs_input` — `missing` names the empty fields; no draft is produced.
+- `not_applicable` — a minimal-risk system with no affected people recorded.
+
+The response also carries `obligationStart` (`2026-12-10`), `elements` (APP 1.8(a)–(c), official text), `source`
+(OAIC), `legislation`, and `disclaimer`.
+
 ## Audit
 
 ```http

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ReadinessRing } from "@/components/readiness-ring";
+import { AuAdmCard } from "@/components/au-adm-card";
 import { useDashboard } from "@/context/dashboard-context";
 import { useCertificationReadiness } from "@/hooks/use-certification-readiness";
 import { useAssessment } from "@/hooks/use-assessment";
@@ -305,6 +306,8 @@ function ReadinessPageInner() {
 
         </>
       )}
+
+      <AuAdmCard />
     </div>
   );
 }

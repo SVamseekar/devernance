@@ -19,6 +19,7 @@ import type {
   EvidenceDocument,
   EvidencePack,
   FrameworkView,
+  AuAdmPack,
   Assessment,
   CorpusView,
   EvidenceQueryResponse,
@@ -131,6 +132,10 @@ export interface ClassifyPayload {
 export type DpaAcceptance = { version: string | null; acceptedAt: string | null };
 
 export const api = {
+  packs: {
+    /** AU automated-decision disclosure pack (Business and above). Inline upgrade note on 402. */
+    auAdm: () => request<AuAdmPack>("/packs/au-adm", undefined, { quietPlanLimit: true }),
+  },
   systems: {
     list: () => request<AiSystem[]>("/systems"),
     get: (id: string) => request<AiSystem>(`/systems/${id}`),
