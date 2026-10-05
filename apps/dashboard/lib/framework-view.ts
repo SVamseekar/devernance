@@ -10,11 +10,17 @@ export interface FrameworkGroup {
   items: FrameworkItemStatus[];
 }
 
-/** Groups crosswalk items by the id's first word (the NIST function), NIST functions first in framework order. */
+/** Group key: ISO Annex A ids group by objective (A.6.2.4 → A.6); others by first word (NIST function, statute). */
+function groupKey(id: string): string {
+  const annexA = /^(A\.\d+)\./.exec(id);
+  return annexA ? annexA[1] : id.split(" ")[0];
+}
+
+/** Groups crosswalk items by function or objective, NIST functions first in framework order, others as listed. */
 export function groupByFunction(items: FrameworkItemStatus[]): FrameworkGroup[] {
   const groups = new Map<string, FrameworkItemStatus[]>();
   for (const item of items) {
-    const name = item.id.split(" ")[0];
+    const name = groupKey(item.id);
     groups.set(name, [...(groups.get(name) ?? []), item]);
   }
   const rank = (name: string) => {

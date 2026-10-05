@@ -797,6 +797,7 @@ GET /systems/{systemId}/frameworks/{framework}
 | `framework` | Type | Feature | Plans |
 |---|---|---|---|
 | `nist-ai-rmf` | crosswalk (NIST AI RMF 1.0 categories) | `NIST_CROSSWALK` | Team and above |
+| `iso-42001` | crosswalk (ISO/IEC 42001:2023 Annex A identifiers; titles are Assurance OS paraphrases, no ISO text) | `ISO_CROSSWALK` | Business and above |
 | `colorado-sb26-189` | checklist (Colorado SB 26-189 deployer duties; each item has `sourceUrl`) | `US_STATE_PACKS` | Business and above |
 
 Unknown framework or system → `404`; a plan without the feature → `402` with `code: feature_<feature lowercase>`.

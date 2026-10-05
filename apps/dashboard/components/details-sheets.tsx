@@ -322,6 +322,12 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
           <FrameworksPanel systemId={system.id} />
           <FrameworksPanel
             systemId={system.id}
+            framework="iso-42001"
+            label="ISO/IEC 42001:2023 Annex A (identifiers; titles are our paraphrases)"
+            upgradeText="Available on Business and above"
+          />
+          <FrameworksPanel
+            systemId={system.id}
             framework="colorado-sb26-189"
             label="Colorado SB 26-189"
             upgradeText="Available on Business and above"

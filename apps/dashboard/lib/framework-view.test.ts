@@ -21,8 +21,15 @@ describe("groupByFunction", () => {
   });
 
   it("keeps ids without a NIST function prefix in their own group, in input order", () => {
-    const groups = groupByFunction([item("SB26-189 §6-1-1702"), item("A.2.2")]);
-    assert.deepEqual(groups.map((g) => g.name), ["SB26-189", "A.2.2"]);
+    const groups = groupByFunction([item("SB26-189 §6-1-1703"), item("SB26-189 §6-1-1704(5)"), item("X 1")]);
+    assert.deepEqual(groups.map((g) => g.name), ["SB26-189", "X"]);
+    assert.equal(groups[0].items.length, 2);
+  });
+
+  it("groups ISO/IEC 42001 Annex A controls by their A.n objective", () => {
+    const groups = groupByFunction([item("A.2.2"), item("A.2.3"), item("A.6.1.2"), item("A.6.2.4"), item("A.10.3")]);
+    assert.deepEqual(groups.map((g) => g.name), ["A.2", "A.6", "A.10"]);
+    assert.equal(groups[1].items.length, 2);
   });
 
   it("counts covered items per group", () => {
