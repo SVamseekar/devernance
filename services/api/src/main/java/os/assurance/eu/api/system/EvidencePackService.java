@@ -10,7 +10,6 @@ import os.assurance.eu.api.assessment.AssessmentService;
 import os.assurance.eu.api.audit.AuditEvent;
 import os.assurance.eu.api.audit.AuditService;
 import os.assurance.eu.api.billing.EntitlementService;
-import os.assurance.eu.api.billing.Feature;
 import os.assurance.eu.api.auth.JwtService;
 import os.assurance.eu.api.corpus.CorpusQueryService;
 import os.assurance.eu.api.contract.DataContract;
@@ -202,12 +201,13 @@ public class EvidencePackService {
 
   /** Crosswalk views the tenant's plan includes, or null so the pack omits the key (and the seal covers none). */
   private Map<String, Object> frameworks(UUID systemId) {
-    if (!entitlements.hasFeature(Feature.NIST_CROSSWALK) || crosswalks.find("nist-ai-rmf").isEmpty()) {
-      return null;
-    }
-    Map<String, Object> frameworks = new LinkedHashMap<>();
-    frameworks.put("nist-ai-rmf", crosswalks.view("nist-ai-rmf", systemId));
-    return frameworks;
+    Map<String, Object> frameworks = new java.util.TreeMap<>();
+    CrosswalkService.FEATURES.forEach((framework, feature) -> {
+      if (crosswalks.find(framework).isPresent() && entitlements.hasFeature(feature)) {
+        frameworks.put(framework, crosswalks.view(framework, systemId));
+      }
+    });
+    return frameworks.isEmpty() ? null : frameworks;
   }
 
   public Map<String, Object> evgraphArtifactFiles(UUID systemId) {

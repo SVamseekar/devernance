@@ -194,10 +194,14 @@ export interface FrameworkItemStatus {
   evidence: string[];
   requiredControls: string[];
   requiredEvidence: string[];
+  /** Checklist items cite the statute section they come from. */
+  sourceUrl?: string | null;
 }
 
 export interface FrameworkView {
   framework: string;
+  /** crosswalk (framework items) or checklist (a law's duties). */
+  type: "crosswalk" | "checklist";
   version: string;
   source: string;
   reviewed: boolean;

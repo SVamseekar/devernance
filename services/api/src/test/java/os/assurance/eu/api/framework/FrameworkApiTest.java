@@ -133,6 +133,7 @@ class FrameworkApiTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.frameworks['nist-ai-rmf'].items.length()").value(19))
         .andExpect(jsonPath("$.frameworks['nist-ai-rmf'].disclaimer").value(DISCLAIMER))
+        .andExpect(jsonPath("$.frameworks['colorado-sb26-189'].type").value("checklist"))
         .andReturn().getResponse().getContentAsString();
     // The hash a customer recomputes from the exported JSON must cover the frameworks section.
     assertThat(recomputedSha(pack)).isEqualTo(json.readTree(pack).get("contentSha256").asText());

@@ -85,4 +85,13 @@ class CrosswalkServiceTest {
       assertThat(i.requiredEvidence()).isNotEmpty();
     });
   }
+
+  @Test
+  void aChecklistItemWithoutASourceFailsValidation() {
+    Crosswalk bad = new Crosswalk("colorado-sb26-189", "checklist", "2026", "src", "2026-10-05", "",
+        List.of(new Crosswalk.Item("SB26-189 §6-1-1703", "t", List.of("RECORD_KEEPING"), List.of("POLICY"))));
+    assertThatThrownBy(() -> CrosswalkService.validate(bad, KNOWN))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("sourceUrl");
+  }
 }

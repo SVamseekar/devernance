@@ -16,6 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import os.assurance.eu.api.billing.Feature;
 import os.assurance.eu.api.control.ControlService;
 import os.assurance.eu.api.control.ControlStatus;
 import os.assurance.eu.api.control.SystemControl;
@@ -29,6 +30,11 @@ import os.assurance.eu.api.sector.SectorPackRegistry;
 public class CrosswalkService {
   public static final String DISCLAIMER =
       "Mapping shows which evidence is relevant to each framework item. It is not an assessment of whether the system meets the framework.";
+  /** Framework key to the plan feature that unlocks it. Only these keys are served. */
+  public static final Map<String, Feature> FEATURES = Map.of(
+      "nist-ai-rmf", Feature.NIST_CROSSWALK,
+      "iso-42001", Feature.ISO_CROSSWALK,
+      "colorado-sb26-189", Feature.US_STATE_PACKS);
   public static final Set<String> EVIDENCE_TYPES = Set.of("DPIA", "POLICY", "MODEL_CARD", "VENDOR_DOC", "CONTROL_MAP");
 
   /** status is covered, partial, or no_evidence; controls/evidence are the mapped ones that are satisfied. */
@@ -39,7 +45,8 @@ public class CrosswalkService {
       List<String> controls,
       List<String> evidence,
       List<String> requiredControls,
-      List<String> requiredEvidence) {}
+      List<String> requiredEvidence,
+      String sourceUrl) {}
 
   private final Map<String, Crosswalk> byFramework;
   private final ControlService controls;
@@ -86,6 +93,9 @@ public class CrosswalkService {
     if (cw.framework() == null || cw.framework().isBlank()) {
       throw new IllegalStateException("Crosswalk without a framework key");
     }
+    if (!Crosswalk.CROSSWALK.equals(cw.type()) && !Crosswalk.CHECKLIST.equals(cw.type())) {
+      throw new IllegalStateException("Crosswalk " + cw.framework() + " has unknown type " + cw.type());
+    }
     if (cw.source() == null || cw.source().isBlank()) {
       throw new IllegalStateException("Crosswalk " + cw.framework() + " has no source");
     }
@@ -99,6 +109,9 @@ public class CrosswalkService {
       }
       if (!ids.add(item.id())) {
         throw new IllegalStateException("Crosswalk " + cw.framework() + " repeats item " + item.id());
+      }
+      if (Crosswalk.CHECKLIST.equals(cw.type()) && (item.sourceUrl() == null || item.sourceUrl().isBlank())) {
+        throw new IllegalStateException("Checklist " + cw.framework() + " item " + item.id() + " has no sourceUrl");
       }
       for (String code : item.controlCodes()) {
         if (!knownControlCodes.contains(code)) {
@@ -141,6 +154,7 @@ public class CrosswalkService {
     Crosswalk cw = get(framework);
     Map<String, Object> view = new LinkedHashMap<>();
     view.put("framework", cw.framework());
+    view.put("type", cw.type());
     view.put("version", cw.version());
     view.put("source", cw.source());
     view.put("reviewed", cw.reviewed());
@@ -166,7 +180,7 @@ public class CrosswalkService {
         status = "no_evidence";
       }
       out.add(new ItemStatus(item.id(), item.title(), status, passing, present,
-          item.controlCodes(), item.evidenceTypes()));
+          item.controlCodes(), item.evidenceTypes(), item.sourceUrl()));
     }
     return out;
   }

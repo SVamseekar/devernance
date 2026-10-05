@@ -15,10 +15,6 @@ import os.assurance.eu.api.system.AiSystemRepository;
 @RestController
 @RequestMapping("/api/v1/systems/{systemId}/frameworks")
 public class FrameworkController {
-  static final Map<String, Feature> FEATURE = Map.of(
-      "nist-ai-rmf", Feature.NIST_CROSSWALK,
-      "iso-42001", Feature.ISO_CROSSWALK);
-
   private final CrosswalkService crosswalks;
   private final EntitlementService entitlements;
   private final AiSystemRepository systems;
@@ -31,7 +27,7 @@ public class FrameworkController {
 
   @GetMapping("/{framework}")
   public Map<String, Object> coverage(@PathVariable UUID systemId, @PathVariable String framework) {
-    Feature feature = FEATURE.get(framework);
+    Feature feature = CrosswalkService.FEATURES.get(framework);
     if (feature == null || crosswalks.find(framework).isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown framework");
     }

@@ -17,10 +17,16 @@ interface FrameworksPanelProps {
   systemId: string;
   framework?: string;
   label?: string;
+  upgradeText?: string;
 }
 
 /** Framework crosswalk for one system: which evidence is relevant to each item. Never a conformity verdict. */
-export function FrameworksPanel({ systemId, framework = "nist-ai-rmf", label = "NIST AI RMF 1.0" }: FrameworksPanelProps) {
+export function FrameworksPanel({
+  systemId,
+  framework = "nist-ai-rmf",
+  label = "NIST AI RMF 1.0",
+  upgradeText = FRAMEWORK_UPGRADE_TEXT,
+}: FrameworksPanelProps) {
   const view = useQuery({
     queryKey: ["framework", systemId, framework],
     queryFn: () => api.systems.framework(systemId, framework),
@@ -28,14 +34,14 @@ export function FrameworksPanel({ systemId, framework = "nist-ai-rmf", label = "
   });
 
   if (view.isLoading) {
-    return <p className="text-xs text-muted-foreground">Loading {label} crosswalk…</p>;
+    return <p className="text-xs text-muted-foreground">Loading {label}…</p>;
   }
   if (view.error instanceof ApiError && view.error.status === 402) {
     return (
       <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs">
-        <p className="font-semibold text-foreground">{label} crosswalk</p>
+        <p className="font-semibold text-foreground">{label}</p>
         <p className="mt-1 text-muted-foreground">
-          {FRAMEWORK_UPGRADE_TEXT}.{" "}
+          {upgradeText}.{" "}
           <Link href="/settings#billing" className="text-primary underline-offset-4 hover:underline">
             See plans
           </Link>
@@ -44,7 +50,7 @@ export function FrameworksPanel({ systemId, framework = "nist-ai-rmf", label = "
     );
   }
   if (view.error || !view.data) {
-    return <p className="text-xs text-destructive">Could not load the {label} crosswalk. Try again in a moment.</p>;
+    return <p className="text-xs text-destructive">Could not load {label}. Try again in a moment.</p>;
   }
 
   const data = view.data;
@@ -52,7 +58,7 @@ export function FrameworksPanel({ systemId, framework = "nist-ai-rmf", label = "
     <div className="space-y-4">
       <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs">
         <p className="font-semibold text-foreground">
-          {label} crosswalk
+          {label} {data.type === "checklist" ? "checklist" : "crosswalk"}
           {!data.reviewed && <span className="ml-2 font-normal text-muted-foreground">(mapping pending review)</span>}
         </p>
         <p className="mt-1 text-muted-foreground">{data.disclaimer}</p>
@@ -83,6 +89,14 @@ export function FrameworksPanel({ systemId, framework = "nist-ai-rmf", label = "
                   Controls: {item.requiredControls.map((c) => (item.controls.includes(c) ? `${c} ✓` : c)).join(", ") || "none"}
                   {" · "}
                   Evidence: {item.requiredEvidence.map((e) => (item.evidence.includes(e) ? `${e} ✓` : e)).join(", ") || "none"}
+                  {item.sourceUrl && (
+                    <>
+                      {" · "}
+                      <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                        Statute
+                      </a>
+                    </>
+                  )}
                 </p>
               </li>
             ))}

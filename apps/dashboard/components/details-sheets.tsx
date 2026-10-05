@@ -317,7 +317,17 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
         </>
       )}
 
-      {activeTab === "frameworks" && <FrameworksPanel systemId={system.id} />}
+      {activeTab === "frameworks" && (
+        <div className="space-y-6">
+          <FrameworksPanel systemId={system.id} />
+          <FrameworksPanel
+            systemId={system.id}
+            framework="colorado-sb26-189"
+            label="Colorado SB 26-189"
+            upgradeText="Available on Business and above"
+          />
+        </div>
+      )}
 
       {activeTab === "approval" && (
         <ApprovalWorkflowPanel

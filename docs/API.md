@@ -766,8 +766,8 @@ Seal notes:
 - `contentSha256` is SHA-256 over canonical JSON (every object's keys sorted, ISO-8601 instants)
   of the pack fields **excluding** `contentSha256` and `signature`, with `"conformity": {}` added. Parsing the
   exported JSON and re-serialising it this way reproduces the hash (see `docs/VERIFY_EVIDENCE_PACK.md`).
-- `frameworks` (Team and above, and trials) holds framework crosswalk views keyed by framework, e.g.
-  `frameworks["nist-ai-rmf"]`, inside the seal. The key is absent on plans without the feature.
+- `frameworks` holds the view of every framework the plan includes, keyed by framework (for example
+  `frameworks["nist-ai-rmf"]`), inside the seal. The key is absent when the plan includes none.
 - `generator` identifies the service build (`assurance.evidence-pack.generator`).
 - `auditChainHead` is the tenant audit hash-chain tip **before** this export event (Part 6).
 - Export writes audit event `evidence_pack.exported` with payload
@@ -794,12 +794,17 @@ excerpt, seal footer. Prefer the JSON pack for cryptographic verification of the
 GET /systems/{systemId}/frameworks/{framework}
 ```
 
-`framework` is `nist-ai-rmf` (feature `NIST_CROSSWALK`, Team and above). Unknown framework or system → `404`;
-a plan without the feature → `402` with `code: feature_nist_crosswalk`.
+| `framework` | Type | Feature | Plans |
+|---|---|---|---|
+| `nist-ai-rmf` | crosswalk (NIST AI RMF 1.0 categories) | `NIST_CROSSWALK` | Team and above |
+| `colorado-sb26-189` | checklist (Colorado SB 26-189 deployer duties; each item has `sourceUrl`) | `US_STATE_PACKS` | Business and above |
+
+Unknown framework or system → `404`; a plan without the feature → `402` with `code: feature_<feature lowercase>`.
 
 ```json
 {
   "framework": "nist-ai-rmf",
+  "type": "crosswalk",
   "version": "1.0",
   "source": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
   "reviewed": false,
@@ -812,7 +817,8 @@ a plan without the feature → `402` with `code: feature_nist_crosswalk`.
       "controls": ["HUMAN_OVERSIGHT"],
       "evidence": ["POLICY"],
       "requiredControls": ["HUMAN_OVERSIGHT"],
-      "requiredEvidence": ["POLICY"]
+      "requiredEvidence": ["POLICY"],
+      "sourceUrl": null
     }
   ]
 }
