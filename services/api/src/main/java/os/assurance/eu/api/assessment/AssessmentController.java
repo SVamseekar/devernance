@@ -2,7 +2,6 @@ package os.assurance.eu.api.assessment;
 
 import os.assurance.eu.api.billing.EntitlementService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -88,6 +87,6 @@ public class AssessmentController {
   public record ExceptionRequest(
       @NotNull UUID proposalId,
       @NotBlank @Size(max = 2048) String rationale,
-      @NotNull @Future LocalDate expiresOn) {
+      @NotNull LocalDate expiresOn) {
   }
 }
