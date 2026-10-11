@@ -56,10 +56,7 @@ public class CrosswalkService {
       ObjectMapper mapper, SectorPackRegistry sectorPacks, ControlService controls, EvidenceRepository evidence) {
     this.controls = controls;
     this.evidence = evidence;
-    Set<String> known = new HashSet<>(ControlService.baselineCodes());
-    for (SectorPack pack : sectorPacks.enabledPacks()) {
-      pack.extraControls().stream().map(SectorControlDef::code).forEach(known::add);
-    }
+    Set<String> known = knownControlCodes(sectorPacks);
     Map<String, Crosswalk> loaded = new LinkedHashMap<>();
     for (Crosswalk cw : load(mapper)) {
       validate(cw, known);
@@ -68,6 +65,15 @@ public class CrosswalkService {
       }
     }
     this.byFramework = Map.copyOf(loaded);
+  }
+
+  /** Baseline control codes plus the extra controls of every enabled sector pack. */
+  public static Set<String> knownControlCodes(SectorPackRegistry sectorPacks) {
+    Set<String> known = new HashSet<>(ControlService.baselineCodes());
+    for (SectorPack pack : sectorPacks.enabledPacks()) {
+      pack.extraControls().stream().map(SectorControlDef::code).forEach(known::add);
+    }
+    return known;
   }
 
   /** Reads every {@code classpath:crosswalks/*.json}. Fails fast on unreadable files. */
@@ -128,6 +134,11 @@ public class CrosswalkService {
     }
   }
 
+  /** True for a stored, searchable document, including one whose suspicious lines were removed on ingestion. */
+  public static boolean isIndexed(String ingestionStatus) {
+    return "indexed".equalsIgnoreCase(ingestionStatus) || "indexed_with_warnings".equalsIgnoreCase(ingestionStatus);
+  }
+
   public Optional<Crosswalk> find(String framework) {
     return Optional.ofNullable(byFramework.get(framework));
   }
@@ -142,7 +153,7 @@ public class CrosswalkService {
         .collect(Collectors.toMap(SystemControl::controlCode, SystemControl::status,
             (a, b) -> a == ControlStatus.PASS || b == ControlStatus.PASS ? ControlStatus.PASS : a));
     Set<String> indexed = evidence.findDocumentsBySystemId(systemId).stream()
-        .filter(d -> "indexed".equalsIgnoreCase(d.ingestionStatus()))
+        .filter(d -> isIndexed(d.ingestionStatus()))
         .map(d -> d.type())
         .collect(Collectors.toSet());
     return coverage(get(framework), statuses, indexed);

@@ -849,6 +849,57 @@ Privacy Act APP 1.7–1.9 privacy-policy duty that applies from 10 December 2026
 The response also carries `obligationStart` (`2026-12-10`), `elements` (APP 1.8(a)–(c), official text), `source`
 (OAIC), `legislation`, and `disclaimer`.
 
+## Questionnaire answer export
+
+```http
+GET /systems/{systemId}/questionnaire-export?format=json|csv
+```
+
+Feature `QUESTIONNAIRE_EXPORT` (Business and above); `402` with `code: feature_questionnaire_export` otherwise.
+`format` defaults to `json`; any other value than `json` or `csv` → `400`. Unknown system → `404`.
+
+Drafts answers to 25 common AI-vendor due-diligence questions (`ai-vendor-core`) for one system. An answer is
+written only when every fact its template names is recorded for the system (system fields, a control with status
+`PASS`, an indexed document of the named type, approvals, completed evaluations, data contracts, audit events).
+If any fact is missing the answer is exactly `Not recorded in Assurance OS — answer manually.`, `status` is
+`manual`, and `missing` names the facts. Nothing is inferred.
+
+```json
+{
+  "questionnaire": "ai-vendor-core",
+  "version": "1.0",
+  "systemId": "…",
+  "systemName": "Claims triage",
+  "generatedAt": "2026-10-11T09:00:00Z",
+  "disclaimer": "Draft answers filled only from what is recorded in Assurance OS for this system. Review every answer before you send it. This is not legal advice.",
+  "answered": 9,
+  "manual": 16,
+  "answers": [
+    {
+      "id": "AV-12",
+      "topic": "human-oversight",
+      "question": "How do people oversee the system's outputs and decisions?",
+      "answer": "The human oversight control was marked passing on 2026-10-09. Policy on file: Human oversight policy v3.",
+      "status": "answered",
+      "evidence": [
+        { "kind": "control", "ref": "HUMAN_OVERSIGHT", "status": "PASS", "updatedAt": "2026-10-09T08:12:44Z" },
+        { "kind": "document", "ref": "POLICY", "status": "indexed", "id": "…", "title": "Human oversight policy v3", "sha256": "…", "createdAt": "…" }
+      ],
+      "missing": []
+    }
+  ]
+}
+```
+
+`evidence` entries point at what backs the answer: `control` (the system's control and its real status, or
+`NOT_ATTACHED`), `document` (each indexed document of that type with its checksum, or `none_indexed`), and `pack`
+(`ref` is a path into the signed evidence pack JSON, for example `riskClassification.modelName`).
+
+The CSV has the columns `id,topic,question,answer,status,evidence`, is UTF-8 with a byte-order mark, uses CRLF line
+endings, and quotes cells as RFC 4180 requires. A cell that starts with `=`, `+`, `-` or `@` is prefixed with `'` so
+a spreadsheet does not run it as a formula. The question bank lives in
+`services/api/src/main/resources/questionnaires/ai-vendor-core.json` and is validated at startup.
+
 ## Audit
 
 ```http

@@ -12,6 +12,9 @@ import org.springframework.data.jpa.repository.Query;
 public interface EvalRunJpaRepository extends JpaRepository<EvalRunEntity, UUID> {
   Optional<EvalRunEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
+  Optional<EvalRunEntity> findFirstByTenantIdAndSystemIdAndStatusOrderByCompletedAtDesc(
+      UUID tenantId, UUID systemId, String status);
+
   long countByTenantIdAndStatus(UUID tenantId, String status);
 
   List<EvalRunEntity> findAllByTenantIdAndStatusOrderByQueuedAtAsc(UUID tenantId, String status);

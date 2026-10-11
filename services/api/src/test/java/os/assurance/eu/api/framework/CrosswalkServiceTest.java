@@ -94,4 +94,12 @@ class CrosswalkServiceTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("sourceUrl");
   }
+
+  @Test
+  void aDocumentIndexedWithWarningsStillCountsAsIndexed() {
+    assertThat(CrosswalkService.isIndexed("indexed")).isTrue();
+    assertThat(CrosswalkService.isIndexed("indexed_with_warnings")).isTrue();
+    assertThat(CrosswalkService.isIndexed("failed")).isFalse();
+    assertThat(CrosswalkService.isIndexed(null)).isFalse();
+  }
 }

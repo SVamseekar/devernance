@@ -31,6 +31,13 @@ public class EvalRunRepository {
   }
 
   @Transactional(readOnly = true)
+  public Optional<EvalRun> findLatestCompleted(UUID systemId) {
+    return repository
+        .findFirstByTenantIdAndSystemIdAndStatusOrderByCompletedAtDesc(tenantContext.tenantId(), systemId, "completed")
+        .map(EvalRunEntity::toDomain);
+  }
+
+  @Transactional(readOnly = true)
   public long countByStatus(String status) {
     return repository.countByTenantIdAndStatus(tenantContext.tenantId(), status);
   }
