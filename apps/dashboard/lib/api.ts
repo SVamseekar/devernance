@@ -44,6 +44,7 @@ import type {
 } from "./public-claims";
 
 import { loginRedirectHref } from "./auth-redirect";
+import { SYSTEM_EXPORTS, downloadFilename, exportPath, type SystemExportKind } from "./export-view";
 
 const BASE = "/api/proxy";
 
@@ -184,6 +185,20 @@ export const api = {
       const blob = await res.blob();
       triggerBrowserDownload(blob, filename);
       return { contentSha256, filename };
+    },
+    /** Questionnaire CSV or GRC ZIP for one system. 402 opens the upgrade prompt and throws ApiError. */
+    downloadExport: async (id: string, kind: SystemExportKind): Promise<{ filename: string }> => {
+      const descriptor = SYSTEM_EXPORTS.find((e) => e.kind === kind)!;
+      const res = await fetch(`${BASE}${exportPath(id, kind)}`);
+      if (res.status === 401) {
+        redirectToLoginOnUnauthorized();
+      }
+      const limit = await reportPlanLimit(res);
+      if (limit) throw new ApiError(402, limit);
+      if (!res.ok) throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+      const filename = downloadFilename(res.headers.get("Content-Disposition"), descriptor.fallbackFilename(id));
+      triggerBrowserDownload(await res.blob(), filename);
+      return { filename };
     },
     /** Certification readiness score + gaps (not legal certification). */
     certificationReadiness: (id: string) =>

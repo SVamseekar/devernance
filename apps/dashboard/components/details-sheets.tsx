@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import Link from "next/link";
 import { ObligationMapWizard } from "./obligation-map-wizard";
 import { FrameworksPanel } from "./frameworks-panel";
+import { SystemExportsPanel } from "./system-exports-panel";
 import { Button } from "./ui/button";
 import {
   ShieldAlert,
@@ -319,6 +320,7 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
 
       {activeTab === "frameworks" && (
         <div className="space-y-6">
+          <SystemExportsPanel systemId={system.id} />
           <FrameworksPanel systemId={system.id} />
           <FrameworksPanel
             systemId={system.id}
