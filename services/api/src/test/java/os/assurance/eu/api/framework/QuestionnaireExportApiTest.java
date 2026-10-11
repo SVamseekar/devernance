@@ -10,8 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import os.assurance.eu.api.email.EmailSender;
+import os.assurance.eu.api.eval.EvalRun;
+import os.assurance.eu.api.eval.EvalRunEntity;
+import os.assurance.eu.api.eval.EvalRunJpaRepository;
+import os.assurance.eu.api.system.ReleaseDecision;
 import os.assurance.eu.api.tenant.UserJpaRepository;
 
 @SpringBootTest(properties = {
@@ -40,6 +46,7 @@ class QuestionnaireExportApiTest {
   @Autowired ObjectMapper json;
   @Autowired JdbcTemplate jdbc;
   @Autowired UserJpaRepository users;
+  @Autowired EvalRunJpaRepository evalRuns;
   @MockitoSpyBean EmailSender emailSender;
   TestWorkspaces workspaces;
 
@@ -123,6 +130,48 @@ class QuestionnaireExportApiTest {
     assertThat(answer(export, "eu-ai-act-risk-class").get("answer").asText()).contains("HIGH").contains("fixture");
     assertThat(answer(export, "incident-response").get("answer").asText()).isEqualTo(MANUAL);
     assertThat(answer(export, "eval-coverage").get("answer").asText()).isEqualTo(MANUAL);
+  }
+
+  private void saveEvalRun(TestWorkspaces.Workspace w, String systemId, String status, String dataset,
+      Instant completedAt) {
+    Instant queued = Instant.parse("2026-09-01T00:00:00Z");
+    evalRuns.save(new EvalRunEntity(w.tenantId(), new EvalRun(UUID.randomUUID(), UUID.fromString(systemId), null,
+        status, dataset, "triage-2.4", "prompt-7", 0.85, Map.of(), ReleaseDecision.PASS, queued, queued, queued,
+        completedAt, null, 1, 3, null)));
+  }
+
+  @Test
+  void evaluationsContractsAuditAndNistAnswerFromTheirOwnRecords() throws Exception {
+    var w = workspaces.signUp();
+    String id = workspaces.createSystem(w, "Claims triage", "high", "");
+    saveEvalRun(w, id, "completed", "golden-old", Instant.parse("2026-09-02T10:00:00Z"));
+    saveEvalRun(w, id, "completed", "golden-new", Instant.parse("2026-09-20T10:00:00Z"));
+    saveEvalRun(w, id, "queued", "golden-queued", null);
+    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/data-contracts")
+            .header("Authorization", w.bearer()).contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+            .content("{\"systemId\":\"" + id + "\",\"name\":\"claims-feed\",\"owner\":\"Data\",\"version\":\"3\"}"))
+        .andExpect(status().is2xxSuccessful());
+    workspaces.passControl(w, id, "HUMAN_OVERSIGHT");
+    workspaces.indexDocument(w, id, "POLICY", "Oversight policy");
+
+    JsonNode export = export(w, id);
+    assertThat(answer(export, "eval-coverage").get("answer").asText())
+        .contains("2026-09-20").contains("golden-new").contains("triage-2.4").contains("PASS")
+        .doesNotContain("golden-old").doesNotContain("golden-queued");
+    assertThat(answer(export, "data-quality").get("answer").asText()).contains("claims-feed (version 3)");
+    assertThat(answer(export, "audit-trail").get("status").asText()).isEqualTo("answered");
+    assertThat(answer(export, "data-retention").get("status").asText()).isEqualTo("answered");
+    assertThat(answer(export, "release-gate").get("status").asText()).isEqualTo("answered");
+    assertThat(answer(export, "nist-alignment").get("answer").asText()).contains(" of 19 categories");
+    // No approval has been given, so change control is not answered from an empty workflow.
+    assertThat(answer(export, "change-control").get("answer").asText()).doesNotContain("{");
+  }
+
+  @Test
+  void aSystemWithNothingMappedLeavesNistAlignmentManual() throws Exception {
+    var w = workspaces.signUp();
+    String id = workspaces.createSystem(w, "Claims triage", "high", "");
+    assertThat(answer(export(w, id), "nist-alignment").get("answer").asText()).isEqualTo(MANUAL);
   }
 
   @Test

@@ -802,6 +802,12 @@ GET /systems/{systemId}/frameworks/{framework}
 
 Unknown framework or system → `404`; a plan without the feature → `402` with `code: feature_<feature lowercase>`.
 
+A crosswalk is live only once it has been reviewed against its source (`reviewedBy` set in its JSON file). With
+`assurance.frameworks.serve-unreviewed=false` (the default in the `postgres` profile; env
+`ASSURANCE_FRAMEWORKS_SERVE_UNREVIEWED`) an unreviewed crosswalk returns `404`, is left out of the evidence pack,
+and is not cited by the questionnaire export. Local and test runs serve unreviewed crosswalks for preview, marked
+`"reviewed": false`.
+
 ```json
 {
   "framework": "nist-ai-rmf",

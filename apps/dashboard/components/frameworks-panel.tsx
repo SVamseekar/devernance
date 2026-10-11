@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { FRAMEWORK_UPGRADE_TEXT, groupByFunction, statusLabel } from "@/lib/framework-view";
+import { FRAMEWORK_PENDING_TEXT, FRAMEWORK_UPGRADE_TEXT, groupByFunction, statusLabel } from "@/lib/framework-view";
 import type { FrameworkItemStatus } from "@/lib/types";
 
 const CHIP: Record<FrameworkItemStatus["status"], string> = {
@@ -46,6 +46,15 @@ export function FrameworksPanel({
             See plans
           </Link>
         </p>
+      </div>
+    );
+  }
+  if (view.error instanceof ApiError && view.error.status === 404) {
+    // The mapping exists but has not been reviewed against its source yet, so it is not served.
+    return (
+      <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs">
+        <p className="font-semibold text-foreground">{label}</p>
+        <p className="mt-1 text-muted-foreground">{FRAMEWORK_PENDING_TEXT}</p>
       </div>
     );
   }

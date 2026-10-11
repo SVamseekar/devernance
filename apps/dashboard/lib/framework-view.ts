@@ -1,6 +1,7 @@
 import type { FrameworkItemStatus } from "./types";
 
 export const FRAMEWORK_UPGRADE_TEXT = "Available on Team and above";
+export const FRAMEWORK_PENDING_TEXT = "Coming soon. This mapping is being reviewed against its source.";
 
 const NIST_FUNCTIONS = ["GOVERN", "MAP", "MEASURE", "MANAGE"];
 

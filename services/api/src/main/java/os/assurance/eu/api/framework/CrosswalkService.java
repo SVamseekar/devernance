@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -51,11 +52,14 @@ public class CrosswalkService {
   private final Map<String, Crosswalk> byFramework;
   private final ControlService controls;
   private final EvidenceRepository evidence;
+  private final boolean serveUnreviewed;
 
   public CrosswalkService(
-      ObjectMapper mapper, SectorPackRegistry sectorPacks, ControlService controls, EvidenceRepository evidence) {
+      ObjectMapper mapper, SectorPackRegistry sectorPacks, ControlService controls, EvidenceRepository evidence,
+      @Value("${assurance.frameworks.serve-unreviewed:false}") boolean serveUnreviewed) {
     this.controls = controls;
     this.evidence = evidence;
+    this.serveUnreviewed = serveUnreviewed;
     Set<String> known = knownControlCodes(sectorPacks);
     Map<String, Crosswalk> loaded = new LinkedHashMap<>();
     for (Crosswalk cw : load(mapper)) {
@@ -139,8 +143,14 @@ public class CrosswalkService {
     return "indexed".equalsIgnoreCase(ingestionStatus) || "indexed_with_warnings".equalsIgnoreCase(ingestionStatus);
   }
 
+  /** A crosswalk is live once it has been reviewed against its source, or when unreviewed ones are allowed. */
+  public static boolean live(Crosswalk crosswalk, boolean serveUnreviewed) {
+    return serveUnreviewed || crosswalk.reviewed();
+  }
+
+  /** The crosswalk for a framework key, only while it is live; the API, the pack and exports all go through here. */
   public Optional<Crosswalk> find(String framework) {
-    return Optional.ofNullable(byFramework.get(framework));
+    return Optional.ofNullable(byFramework.get(framework)).filter(cw -> live(cw, serveUnreviewed));
   }
 
   public Crosswalk get(String framework) {
