@@ -380,16 +380,11 @@ public class QuestionnaireExportService {
 
   /** RFC 4180 with a UTF-8 byte-order mark (so spreadsheets read the dash in {@link #MANUAL} correctly). */
   public static String toCsv(List<AnswerRow> rows) {
-    StringBuilder csv = new StringBuilder("﻿id,topic,question,answer,status,evidence\r\n");
+    StringBuilder csv = new StringBuilder(Csv.BOM)
+        .append(Csv.row(List.of("id", "topic", "question", "answer", "status", "evidence")));
     for (AnswerRow row : rows) {
-      csv.append(cell(row.id())).append(',')
-          .append(cell(row.topic())).append(',')
-          .append(cell(row.question())).append(',')
-          .append(cell(row.answer())).append(',')
-          .append(cell(row.status())).append(',')
-          .append(cell(row.evidence().stream().map(QuestionnaireExportService::label)
-              .collect(Collectors.joining("; "))))
-          .append("\r\n");
+      csv.append(Csv.row(List.of(row.id(), row.topic(), row.question(), row.answer(), row.status(),
+          row.evidence().stream().map(QuestionnaireExportService::label).collect(Collectors.joining("; ")))));
     }
     return csv.toString();
   }
@@ -405,18 +400,6 @@ public class QuestionnaireExportService {
               + (reference.get("sha256") == null ? "" : " [sha256 " + reference.get("sha256") + "]");
       default -> "pack " + ref;
     };
-  }
-
-  /** Quotes as RFC 4180 requires and stops a spreadsheet treating recorded text as a formula. */
-  static String cell(String value) {
-    String text = value == null ? "" : value;
-    if (!text.isEmpty() && "=+-@\t\r".indexOf(text.charAt(0)) >= 0) {
-      text = "'" + text;
-    }
-    if (text.contains(",") || text.contains("\"") || text.contains("\n") || text.contains("\r")) {
-      return "\"" + text.replace("\"", "\"\"") + "\"";
-    }
-    return text;
   }
 
   private static void put(Map<String, String> facts, String key, String value) {

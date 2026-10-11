@@ -900,6 +900,29 @@ endings, and quotes cells as RFC 4180 requires. A cell that starts with `=`, `+`
 a spreadsheet does not run it as a formula. The question bank lives in
 `services/api/src/main/resources/questionnaires/ai-vendor-core.json` and is validated at startup.
 
+## GRC export
+
+```http
+GET /systems/{systemId}/grc-export
+```
+
+Feature `INTEGRATIONS` (Business and above); `402` with `code: feature_integrations` otherwise. Same roles as the
+evidence pack. Unknown system → `404`. Returns `application/zip` named `grc-export-<systemId>-<timestamp>.zip`,
+with the pack hash in the `X-Content-Sha256` header, for upload as custom evidence to a GRC tool such as Vanta or
+Drata:
+
+| File | Content |
+|---|---|
+| `evidence-index.csv` | One row per indexed document: `document_id`, `document_title`, `type`, `created_date`, `sha256`, `pack_content_sha256`, `pack_signature_key_id` |
+| `evidence-pack.json` | A freshly built signed evidence pack (the same content as `GET /systems/{systemId}/evidence-pack`) |
+| `VERIFY_EVIDENCE_PACK.md` | How to check the pack's signature and recompute its hash |
+
+`sha256` is the checksum recorded when the document was ingested: SHA-256 of the extracted text, unless the uploader
+supplied a checksum of their own. `pack_content_sha256` and `pack_signature_key_id` tie each row to the pack in the
+same ZIP. The pack is signed; the CSV is an index of it and is not itself signed. Each export is recorded in the
+audit ledger as `evidence_pack.exported` with `format: grc-zip`. The CSV follows the same rules as the
+questionnaire CSV (UTF-8 with byte-order mark, CRLF, RFC 4180 quoting, formula cells neutralised).
+
 ## Audit
 
 ```http
