@@ -116,7 +116,8 @@ export default function DocsPage() {
                   them. Then attach evidence: model cards, evaluation runs, data contracts and approvals.
                 </p>
                 <p>
-                  Copy the system ID from the system page. CI uses it as <code className={code}>SYSTEM_ID</code>.
+                  Copy the system ID from the system page. Store it as a CI variable named{" "}
+                  <code className={code}>ASSURANCE_SYSTEM_ID</code>.
                 </p>
               </Step>
 
@@ -129,7 +130,14 @@ export default function DocsPage() {
               </Step>
 
               <Step n={4} id="ci" title="Add the gate to CI">
-                <p>Use the GitHub Actions job, or call the endpoint from any CI that can run curl.</p>
+                <p>
+                  On GitHub, add the{" "}
+                  <a href="https://github.com/SVamseekar/assurance-os-release-gate" className="font-medium text-brand hover:underline">
+                    Assurance OS release gate action
+                  </a>
+                  : one step, no scripts. It fails the job on <code className={code}>BLOCKED</code> and writes the
+                  blockers to the job summary. Any other CI can call the endpoint with curl.
+                </p>
                 <CodeTabs tabs={gateSnippets.filter((t) => t.label !== "API response")} />
               </Step>
 
