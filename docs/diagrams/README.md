@@ -209,4 +209,3 @@ flowchart LR
 Package-level dependencies inside the Spring Boot API (jdeps).
 
 ![API package dependencies](generated/api-packages.svg)
-

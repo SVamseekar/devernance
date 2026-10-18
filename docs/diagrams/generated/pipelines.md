@@ -74,4 +74,3 @@ flowchart LR
   trigger_0 --> release_gate
   trigger_1 --> release_gate
 ```
-

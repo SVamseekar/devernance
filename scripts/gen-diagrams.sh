@@ -144,4 +144,9 @@ section_img() { # title, file, caption
     "Package-level dependencies inside the Spring Boot API (jdeps)."
 } > "$INDEX"
 
+# End each Markdown file with exactly one newline (pre-commit end-of-file-fixer).
+for md in "$INDEX" "$OUT/pipelines.md"; do
+  python3 -c 'import sys; p = sys.argv[1]; t = open(p).read().rstrip("\n") + "\n"; open(p, "w").write(t)' "$md"
+done
+
 echo "Done. Open $INDEX (Markdown preview) or view it on GitHub."
