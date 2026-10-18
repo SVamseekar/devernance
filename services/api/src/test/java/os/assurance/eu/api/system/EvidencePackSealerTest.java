@@ -17,7 +17,7 @@ class EvidencePackSealerTest {
 
     Map<String, Object> first = EvidencePackSealer.sealPayload(
         "1.0",
-        "eu-ai-assurance-api/0.1.0",
+        "devernance-api/0.1.0",
         "abc123chainhead",
         systemId,
         fixed,
@@ -31,7 +31,7 @@ class EvidencePackSealerTest {
 
     Map<String, Object> second = EvidencePackSealer.sealPayload(
         "1.0",
-        "eu-ai-assurance-api/0.1.0",
+        "devernance-api/0.1.0",
         "abc123chainhead",
         systemId,
         fixed,
@@ -58,7 +58,7 @@ class EvidencePackSealerTest {
 
     Map<String, Object> base = EvidencePackSealer.sealPayload(
         "1.0",
-        "eu-ai-assurance-api/0.1.0",
+        "devernance-api/0.1.0",
         null,
         systemId,
         fixed,
@@ -72,7 +72,7 @@ class EvidencePackSealerTest {
 
     Map<String, Object> changed = EvidencePackSealer.sealPayload(
         "1.0",
-        "eu-ai-assurance-api/0.1.0",
+        "devernance-api/0.1.0",
         null,
         systemId,
         fixed,

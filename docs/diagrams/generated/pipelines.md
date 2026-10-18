@@ -70,7 +70,7 @@ flowchart LR
 flowchart LR
   trigger_0(["workflow_call"])
   trigger_1(["workflow_dispatch"])
-  release_gate["Assurance OS release gate"]
+  release_gate["Devernance release gate"]
   trigger_0 --> release_gate
   trigger_1 --> release_gate
 ```

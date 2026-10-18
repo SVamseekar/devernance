@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CheckCircle2 } from "lucide-react";
 
-import { AssuranceMark } from "@/components/marketing/brand-icons";
+import { DevernanceMark } from "@/components/marketing/brand-icons";
 import { PLANS } from "@/lib/pricing";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
@@ -78,7 +78,7 @@ export function AuthCard({
     <div className="mk-light flex min-h-screen bg-white font-sans text-ink [&_.font-heading]:font-sans [&_.font-heading]:font-bold">
       <aside className="mk-night relative hidden flex-col justify-between p-12 text-white lg:flex lg:w-[44%] xl:px-16">
         <Link href="/" className="inline-flex items-center gap-2.5 text-[17px] font-bold tracking-tight">
-          <AssuranceMark className="size-8" />
+          <DevernanceMark className="size-8" />
           {siteConfig.shortName}
         </Link>
         <div>
@@ -118,7 +118,7 @@ export function AuthCard({
       <div className="flex flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-line px-4 sm:px-6 lg:border-0 lg:px-10">
           <Link href="/" className="inline-flex items-center gap-2 text-[15px] font-bold lg:invisible">
-            <AssuranceMark className="size-7" />
+            <DevernanceMark className="size-7" />
             {siteConfig.shortName}
           </Link>
           <p className="text-sm text-ink-muted">

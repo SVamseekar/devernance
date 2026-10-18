@@ -11,7 +11,7 @@ const tab = (label: string) => {
 describe("gateSnippets", () => {
   it("uses the published GitHub Action on its major tag", () => {
     const code = tab("GitHub Actions");
-    assert.match(code, /uses: SVamseekar\/assurance-os-release-gate@v1\n/);
+    assert.match(code, /uses: SVamseekar\/devernance-release-gate@v1\n/);
     for (const input of ["api-key", "system-id", "api-url"]) {
       assert.match(code, new RegExp(`${input}: \\$\\{\\{`), input);
     }

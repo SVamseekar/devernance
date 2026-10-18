@@ -21,6 +21,7 @@ export function deadlinesToIcs(deadlines: Deadline[], now: Date = new Date()): s
     next.setUTCDate(next.getUTCDate() + 1);
     lines.push(
       "BEGIN:VEVENT",
+      // Kept from before the Devernance rename: calendars match re-imports by UID, so a new UID duplicates every event.
       `UID:${d.id}@assurance-os`,
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${day}`,

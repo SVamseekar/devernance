@@ -1,6 +1,6 @@
 # Deployment runbook (Part 9)
 
-How to run EU AI Assurance OS locally with Docker and how to deploy the production split: **Vercel dashboard** + **hosted Spring API** + **Postgres**.
+How to run Devernance locally with Docker and how to deploy the production split: **Vercel dashboard** + **hosted Spring API** + **Postgres**.
 
 Related: [NFR.md](./NFR.md) (secrets/encryption), [OPS.md](./OPS.md) (CI gate + metrics), [SECURITY.md](./SECURITY.md), root [`.env.example`](../.env.example), [`infra/README.md`](../infra/README.md).
 
@@ -157,7 +157,7 @@ Terraform under `infra/terraform/` is a **skeleton** (validate/fmt only) and is 
 5. `cd /opt/aos && docker compose -f docker-compose.prod.yml --env-file .env up -d`, then wait for `docker compose ps`
    to show `api` healthy (first boot downloads the embedding model; allow 3 minutes).
 6. `sudo mv /tmp/aos-update.* /etc/systemd/system/ && chmod +x /opt/aos/aos-update.sh && sudo systemctl daemon-reload && sudo systemctl enable --now aos-update.timer`
-7. Verify: `https://app.<domain>/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
+7. Verify: `https://app.devernance.com/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
 
 ---
 
@@ -191,7 +191,7 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 
 ### B. API
 
-1. Build image: `docker build -f infra/Dockerfile -t eu-ai-assurance-api:$TAG .`
+1. Build image: `docker build -f infra/Dockerfile -t devernance-api:$TAG .`
 2. Push to your registry.
 3. Set env from secret manager (table above).
 4. Expose port 8080; probes:
@@ -206,13 +206,13 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 
 **Live domains:** `https://euassuranceai.souravamseekar.com`, `https://eu-ai-assurance.vercel.app`
 
-**Git root directory:** `apps/dashboard` (monorepo `SVamseekar/eu-ai-assurance-os`, production branch `main`)
+**Git root directory:** `apps/dashboard` (monorepo `SVamseekar/devernance`, production branch `main`)
 
 There is a second Vercel project `eu-ai-assurance-os` linked to the same GitHub repo for historical monorepo hooks. It is configured with **Ignore Build Step = `exit 1`** so it never builds (avoids burning Hobby build quota / rate limits on every PR). Do **not** use it for production.
 
 #### One-time project setup
 
-1. Project **eu-ai-assurance** → Git: connect `SVamseekar/eu-ai-assurance-os` → Root Directory **`apps/dashboard`** → Framework Next.js.
+1. Project **eu-ai-assurance** → Git: connect `SVamseekar/devernance` → Root Directory **`apps/dashboard`** → Framework Next.js.
 2. Project **eu-ai-assurance-os** (stub): set Ignore Build Step to `exit 1`, or disconnect Git entirely.
 3. Env on **eu-ai-assurance** (Production + Preview as needed):
    - `ASSURANCE_API_BASE_URL=https://api.example.com` (server-side only)
@@ -254,9 +254,12 @@ API_KEY=... SYSTEM_ID=... ./scripts/ci-release-gate.sh
 
 ### E. Cutover from Vercel and the Dell lab (owner)
 
+Product domain: `devernance.com`, chosen on 18 October 2026 and not registered yet. The full switch checklist is in
+[BRAND.md](./BRAND.md#domain-day-checklist).
+
 1. With production healthy on Oracle, add OAuth redirect URIs
-   `https://app.<domain>/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
-2. Redirect `euassuranceai.souravamseekar.com/*` → `https://<domain>/$1` (301, path and query kept).
+   `https://app.devernance.com/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
+2. Redirect `euassuranceai.souravamseekar.com/*` → `https://devernance.com/$1` (301, path and query kept).
 3. Start production with a fresh database unless a real customer used the old system (the Dell database holds demo
    data). To migrate: `pg_dump` the Dell Postgres and restore with the [OPS.md](./OPS.md#restore-from-backup) runbook.
 4. After 7 days of clean redirects, remove both Vercel projects and stop the Dell lab tunnel.
@@ -290,11 +293,11 @@ Never force-push Flyway `schema_history` repairs in production without a backup.
 ```bash
 docker build -f infra/Dockerfile.dashboard \
   --build-arg NEXT_PUBLIC_SITE_URL=https://app.example.com \
-  -t eu-ai-assurance-dashboard .
+  -t devernance-dashboard .
 
 docker run -p 3000:3000 \
   -e ASSURANCE_API_BASE_URL=https://api.example.com \
-  eu-ai-assurance-dashboard
+  devernance-dashboard
 ```
 
 Requires `DOCKER_BUILD=1` standalone output (set in the Dockerfile). In production this image runs behind Cloudflare Tunnel (section 2).

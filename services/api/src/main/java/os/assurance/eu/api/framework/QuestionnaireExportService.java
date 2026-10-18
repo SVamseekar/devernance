@@ -53,8 +53,8 @@ import os.assurance.eu.api.workflow.StageStatus;
 @Service
 public class QuestionnaireExportService {
   public static final String RESOURCE = "questionnaires/ai-vendor-core.json";
-  public static final String MANUAL = "Not recorded in Assurance OS — answer manually.";
-  public static final String DISCLAIMER = "Draft answers filled only from what is recorded in Assurance OS for this "
+  public static final String MANUAL = "Not recorded in Devernance — answer manually.";
+  public static final String DISCLAIMER = "Draft answers filled only from what is recorded in Devernance for this "
       + "system. Review every answer before you send it. This is not legal advice.";
   static final String NIST = "nist-ai-rmf";
 

@@ -1,8 +1,8 @@
 # Part 16 — Channel changes overview (documentation only)
 
-**Date:** 2026-07-20  
-**Canon:** `docs/METRICS_CANONICAL.md` (measured tip `c0d5cd4`, freeze 2026-07-20)  
-**Product tip context:** `origin/main` @ `85ac589` (Part 11 complete)  
+**Date:** 2026-07-20
+**Canon:** `docs/METRICS_CANONICAL.md` (measured tip `c0d5cd4`, freeze 2026-07-20)
+**Product tip context:** `origin/main` @ `85ac589` (Part 11 complete)
 **Rule:** This packet **documents** proposed channel updates. It does **not** edit live CV binaries. Apply manually only when approved.
 
 ## Asset status
@@ -13,14 +13,14 @@
 | CV PDF | `/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.pdf` | **Unchanged** (restored to original content) |
 | Pitch PDF | `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck.pdf` | **Not modified** — proposed text in MD only |
 | Portfolio `projects.ts` | `…/martisouravamseekar-portfolio/src/data/projects.ts` | **Not applied** — proposed entry in MD only |
-| Markdown CV variants | `Projects/SouraVamseekarMarti_CV_*.md` | No EU AI Assurance block today; optional paste in MD pack |
+| Markdown CV variants | `Projects/SouraVamseekarMarti_CV_*.md` | No Devernance block today; optional paste in MD pack |
 
 ## Companion files (this folder)
 
 | File | Contents |
 |------|----------|
 | `2026-07-20-part-16-cv-proposed-changes.md` | CV before → after, paste-ready block, forbidden claim list |
-| `2026-07-20-part-16-portfolio-proposed-changes.md` | Full proposed EU AI Assurance OS entry + before/after metrics |
+| `2026-07-20-part-16-portfolio-proposed-changes.md` | Full proposed Devernance entry + before/after metrics |
 | `2026-07-20-part-16-pitch-proposed-changes.md` | Pitch slide before → after, optional metric bullets |
 | `2026-07-20-part-16-cross-channel-checklist.md` | Checklist E + residual risks |
 
@@ -41,11 +41,11 @@
 | Public product year | **2026** |
 | OAuth | Implemented (Google + Microsoft); **prod smoke pending** |
 | Live URL | https://euassuranceai.souravamseekar.com |
-| GitHub | https://github.com/SVamseekar/eu-ai-assurance-os |
+| GitHub | https://github.com/SVamseekar/devernance |
 
 ## Public one-liner (all channels)
 
-> EU AI Assurance OS is a multi-tenant governance control plane that helps teams ship AI systems into the EU market with guided risk classification, cited-evidence RAG, eval and contract gates, assisted obligation maps, certification readiness scoring, and audit-ready evidence packs — without claiming legal certification or notified-body status.
+> Devernance is a multi-tenant governance control plane that helps teams ship AI systems into the EU market with guided risk classification, cited-evidence RAG, eval and contract gates, assisted obligation maps, certification readiness scoring, and audit-ready evidence packs — without claiming legal certification or notified-body status.
 
 ## Forbidden claims (all channels)
 

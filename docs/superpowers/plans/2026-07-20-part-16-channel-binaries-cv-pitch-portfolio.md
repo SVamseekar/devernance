@@ -30,14 +30,14 @@ Also update EU/DE markdown CV variants under `Projects/SouraVamseekarMarti_CV_*.
 
 ### Task 16.2: Portfolio website (code)
 
-- [ ] **Step 1:** Update `projects.ts` EU AI Assurance OS entry from freeze.
+- [ ] **Step 1:** Update `projects.ts` Devernance entry from freeze.
 - [ ] **Step 2:** SEO keywords/description if they mention wrong stack.
 - [ ] **Step 3:** Deploy portfolio (Vercel) and verify live.
 - [ ] **Step 4:** Commit in Portfolio repo with conventional message.
 
 ### Task 16.3: CV DOCX (+ PDF)
 
-- [ ] **Step 1:** Open DOCX; replace EU AI Assurance OS bullets with freeze text (see investigation channel instructions; refresh from Part 2).
+- [ ] **Step 1:** Open DOCX; replace Devernance bullets with freeze text (see investigation channel instructions; refresh from Part 2).
 - [ ] **Step 2:** Align WorkforceGuard/Aequitas/Masova only if those canons exist—do not invent.
 - [ ] **Step 3:** Export PDF; keep DOCX + PDF in sync.
 - [ ] **Step 4:** Optionally copy PDF into Portfolio public assets if site hosts CV.
@@ -46,21 +46,21 @@ Also update EU/DE markdown CV variants under `Projects/SouraVamseekarMarti_CV_*.
 
 ### Task 16.4: Pitch deck
 
-- [ ] **Step 1:** Locate editable source (PPTX). If only PDF: recreate EU AI Assurance slide in PPTX then export, or use `pptx` skill.
-- [ ] **Step 2:** Fix EU AI Assurance metrics slide (HMAC claim, live-since, stack).
+- [ ] **Step 1:** Locate editable source (PPTX). If only PDF: recreate Devernance slide in PPTX then export, or use `pptx` skill.
+- [ ] **Step 2:** Fix Devernance metrics slide (HMAC claim, live-since, stack).
 - [ ] **Step 3:** Keep NVIDIA Inception framing if still submitting; metrics must stay honest.
 - [ ] **Step 4:** Save dated copy: `MSV_AI_Labs_Pitch_Deck_YYYY-MM-DD.pdf`.
 
 ### Task 16.5: Cross-channel checklist
 
-- [ ] Same product one-liner  
-- [ ] Same risk class names  
-- [ ] Same release decisions  
-- [ ] Same embedding stack  
-- [ ] Same auth story  
-- [ ] Same Flyway range / phase status  
-- [ ] Same live URL + GitHub URL  
-- [ ] New features: assisted determination / readiness / reg feed / sector packs only if live  
+- [ ] Same product one-liner
+- [ ] Same risk class names
+- [ ] Same release decisions
+- [ ] Same embedding stack
+- [ ] Same auth story
+- [ ] Same Flyway range / phase status
+- [ ] Same live URL + GitHub URL
+- [ ] New features: assisted determination / readiness / reg feed / sector packs only if live
 
 ### Task 16.6: Signoff
 
@@ -69,7 +69,7 @@ Also update EU/DE markdown CV variants under `Projects/SouraVamseekarMarti_CV_*.
 
 ### Done when
 
-- [ ] Portfolio live matches canon  
-- [ ] CV DOCX+PDF match canon  
-- [ ] Pitch deck match canon  
-- [ ] Signoff doc filed  
+- [ ] Portfolio live matches canon
+- [ ] CV DOCX+PDF match canon
+- [ ] Pitch deck match canon
+- [ ] Signoff doc filed

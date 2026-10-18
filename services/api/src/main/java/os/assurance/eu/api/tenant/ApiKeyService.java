@@ -40,7 +40,7 @@ public class ApiKeyService {
     }
     byte[] bytes = new byte[32];
     random.nextBytes(bytes);
-    String raw = "aos_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    String raw = "dvn_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     String prefix = raw.substring(0, 12);
     ApiKeyEntity saved = keys.save(new ApiKeyEntity(UUID.randomUUID(), ApiKeyHasher.sha256Hex(raw),
         tenantContext.tenantId(), tenantContext.actorId(), clock.instant(), cleanName, prefix));

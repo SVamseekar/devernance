@@ -14,8 +14,8 @@
   <groupId>os.assurance.eu</groupId>
   <artifactId>api</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <name>EU AI Assurance OS API</name>
-  <description>Backend MVP for EU AI assurance workflows</description>
+  <name>Devernance API</name>
+  <description>Backend MVP for Devernance governance workflows</description>
 
   <properties>
     <java.version>17</java.version>

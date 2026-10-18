@@ -622,7 +622,7 @@ function buildEvidencePack() {
   const reviewSystems = state.systems.filter((system) => system.decision === "Review");
 
   return {
-    product: "EU AI Assurance OS",
+    product: "Devernance",
     generatedAt,
     scope: "EU AI Act, GDPR, data governance, evaluation gates, and audit-readiness controls",
     summary: {
@@ -663,7 +663,7 @@ function exportPack() {
   const pack = buildEvidencePack();
   const blocked = state.systems.filter((system) => system.decision === "Blocked").map((system) => system.name).join(", ");
   addAudit("Evidence pack export prepared for legal and compliance reviewers.");
-  downloadJson(`eu-ai-assurance-evidence-${new Date().toISOString().slice(0, 10)}.json`, pack);
+  downloadJson(`devernance-evidence-${new Date().toISOString().slice(0, 10)}.json`, pack);
   saveState();
   showToast(`Evidence pack ready: blocked systems - ${blocked || "none"}`);
 }
@@ -713,7 +713,7 @@ async function init() {
   qs("#exportPack").addEventListener("click", exportPack);
 }
 
-window.euAiAssurance = {
+window.devernance = {
   buildEvidencePack,
   getState: () => structuredClone(state)
 };

@@ -1,6 +1,6 @@
 # NARRATIVE BRIEF
 
-I built EU AI Assurance OS to solve a specific problem I kept encountering in production engineering: how do you convert the regulatory requirement of "can we legally ship this AI system into the EU" into an executable, machine-computable decision rather than a manual spreadsheet process and a folder of static PDFs?
+I built Devernance to solve a specific problem I kept encountering in production engineering: how do you convert the regulatory requirement of "can we legally ship this AI system into the EU" into an executable, machine-computable decision rather than a manual spreadsheet process and a folder of static PDFs?
 
 The EU AI Act establishes a risk-tiered compliance model. The higher an AI system's risk tier—from Minimal and Limited up to High and Prohibited—the more statutory evidence, model testing, data governance, and human sign-off an organization must produce prior to deployment. Conceptually, this framework is straightforward. In engineering reality, compliance evidence is fragmented across isolated teams using incompatible tools:
 - ML engineers measure benchmark evaluation scores and prompt versions in MLOps platforms.
@@ -8,7 +8,7 @@ The EU AI Act establishes a risk-tiered compliance model. The higher an AI syste
 - Data platform engineers track schema changes and upstream drift in data catalogs.
 - Legal teams require explicit statutory risk rationales and formal sign-off records.
 
-None of the standard MLOps platforms treat legal compliance and release gate validation as first-class software concerns, and standard GRC software lacks awareness of model evaluation thresholds or real-time data contract drift. 
+None of the standard MLOps platforms treat legal compliance and release gate validation as first-class software concerns, and standard GRC software lacks awareness of model evaluation thresholds or real-time data contract drift.
 
 To bridge this gap, I designed and built a multi-tenant governance control plane that bridges engineering and compliance: an AI system registry with guided risk classification, an EU AI Act control catalog, cited-evidence RAG scoped per tenant, an asynchronous evaluation queue worker, data contract drift monitoring, multi-stage human approval workflows, and an append-only audit ledger. Crucially, all of these signals feed into a single computed release decision (`PASS`, `REVIEW`, or `BLOCKED`) exposed both to an interactive web dashboard and to CI/CD deployment pipelines via a machine-readable endpoint returning process exit codes.
 

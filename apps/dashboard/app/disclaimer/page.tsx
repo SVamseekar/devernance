@@ -8,7 +8,7 @@ import { siteConfig } from "@/lib/site-config";
 
 const title = "Disclaimer";
 const description =
-  "Important limitations: EU AI Assurance OS is not legal advice, not a notified body, and does not issue EU AI Act certifications.";
+  "Important limitations: Devernance is not legal advice, not a notified body, and does not issue EU AI Act certifications.";
 
 export const metadata: Metadata = {
   title,

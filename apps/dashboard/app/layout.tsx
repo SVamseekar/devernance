@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     "AI evidence pack",
     "AI release gate",
     "fail-closed AI governance",
-    "EU AI Assurance OS",
+    "Devernance",
   ],
   authors: [{ name: "Marti Soura Vamseekar", url: siteConfig.url }],
   alternates: {

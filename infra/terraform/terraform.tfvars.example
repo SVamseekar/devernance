@@ -1,7 +1,7 @@
 # Copy to terraform.tfvars locally (gitignored if you add the pattern).
 # Never put real cloud credentials or secret values here.
 
-project_name  = "eu-ai-assurance"
+project_name  = "devernance"
 environment   = "dev"
 region        = "eu-west-1"
 
@@ -12,7 +12,7 @@ api_memory        = "2Gi"
 enable_object_storage = true
 
 tags = {
-  app         = "eu-ai-assurance-os"
+  app         = "devernance"
   environment = "dev"
   managed     = "terraform-skeleton"
 }

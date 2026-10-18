@@ -15,7 +15,7 @@ Dependabot `Signed-off-by` is allowed.
 
 ## `ci-release-gate.sh` (Part 8)
 
-Call Assurance OS from a deploy pipeline and fail when the system is BLOCKED.
+Call Devernance from a deploy pipeline and fail when the system is BLOCKED.
 
 ```bash
 ASSURANCE_API_BASE=http://localhost:8080 \

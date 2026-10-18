@@ -1,4 +1,4 @@
-# EU AI Assurance OS — Canonical Metrics
+# Devernance — Canonical Metrics
 
 **Measured date:** 2026-07-20
 **Git tip at freeze:** `c0d5cd4` (`origin/main` — Part 3 complete: live legal + demo verified)
@@ -35,9 +35,9 @@ ls services/api/src/main/resources/db/postgresql/
 
 | Metric | Value | Notes |
 |--------|-------|--------|
-| Product | EU AI Assurance OS | Governance control plane for EU AI Act release governance |
+| Product | Devernance (formerly EU AI Assurance OS, renamed 2026-10-18) | Governance control plane for EU AI Act release governance |
 | Live URL | https://euassuranceai.souravamseekar.com | Landing + dashboard shell |
-| Repo | https://github.com/SVamseekar/eu-ai-assurance-os | Public |
+| Repo | https://github.com/SVamseekar/devernance | Public |
 | Backend | Java **17** · Spring Boot **4.1.1** · Tika **4.0.0** | `services/api/pom.xml` |
 | Frontend | Next.js **16.2.9** · React **19.2.4** · TypeScript | `apps/dashboard/package.json` |
 | Embeddings | DJL + ONNX Runtime · `sentence-transformers/all-MiniLM-L6-v2` | Postgres profile default `djl-sentence` |
@@ -94,7 +94,7 @@ ls services/api/src/main/resources/db/postgresql/
 
 ## Public one-liner
 
-> EU AI Assurance OS is a multi-tenant governance control plane that helps teams ship AI systems into the EU market with guided risk classification, cited-evidence RAG, eval and contract gates, assisted obligation maps, certification readiness scoring, and audit-ready evidence packs — without claiming legal certification or notified-body status.
+> Devernance is a multi-tenant governance control plane that helps teams ship AI systems into the EU market with guided risk classification, cited-evidence RAG, eval and contract gates, assisted obligation maps, certification readiness scoring, and audit-ready evidence packs — without claiming legal certification or notified-body status.
 
 ---
 

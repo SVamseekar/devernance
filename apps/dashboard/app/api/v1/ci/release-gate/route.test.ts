@@ -24,18 +24,18 @@ describe("GET /api/v1/ci/release-gate", () => {
         headers: { "Content-Type": "application/json" },
       });
     };
-    const res = await GET(request({ "X-Api-Key": "aos_key", Cookie: "session_access=secret" }));
+    const res = await GET(request({ "X-Api-Key": "dvn_key", Cookie: "session_access=secret" }));
     assert.equal(res.status, 200);
     assert.deepEqual(await res.json(), { decision: "PASS", exitCode: 0 });
     assert.match(url, /\/api\/v1\/ci\/release-gate\?systemId=abc$/);
-    assert.equal(sent["X-Api-Key"], "aos_key");
+    assert.equal(sent["X-Api-Key"], "dvn_key");
     assert.equal(sent["Cookie"], undefined);
     assert.equal(sent["Authorization"], undefined);
   });
 
   it("passes a rejected key through as 401", async () => {
     globalThis.fetch = async () => new Response("{}", { status: 401 });
-    assert.equal((await GET(request({ "X-Api-Key": "aos_bad" }))).status, 401);
+    assert.equal((await GET(request({ "X-Api-Key": "dvn_bad" }))).status, 401);
   });
 
   it("answers 401 without calling the API when no key is sent", async () => {
@@ -52,6 +52,6 @@ describe("GET /api/v1/ci/release-gate", () => {
     globalThis.fetch = async () => {
       throw new TypeError("fetch failed");
     };
-    assert.equal((await GET(request({ "X-Api-Key": "aos_key" }))).status, 503);
+    assert.equal((await GET(request({ "X-Api-Key": "dvn_key" }))).status, 503);
   });
 });

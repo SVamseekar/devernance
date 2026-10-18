@@ -1,22 +1,22 @@
 # Part 16 — CV proposed changes (do not auto-apply)
 
-**Target (live — leave alone until you approve):**  
-`/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.docx`  
+**Target (live — leave alone until you approve):**
+`/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.docx`
 `/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.pdf`
 
-**Optional later copies (if you want a parallel file, not overwrite):**  
-`Marti_Soura_Vamseekar_CV_Part16_metrics.docx`  
+**Optional later copies (if you want a parallel file, not overwrite):**
+`Marti_Soura_Vamseekar_CV_Part16_metrics.docx`
 `Marti_Soura_Vamseekar_CV_Part16_metrics.pdf`
 
-**Canon:** `docs/METRICS_CANONICAL.md`  
-**Scope:** Only the **EU AI Assurance OS** project block (and any summary lines that over-claim this product’s stack). Do **not** invent numbers. Leave WorkforceGuard / Aequitas / Masova / Bharat Alpha claims alone unless their own canons exist.
+**Canon:** `docs/METRICS_CANONICAL.md`
+**Scope:** Only the **Devernance** project block (and any summary lines that over-claim this product’s stack). Do **not** invent numbers. Leave WorkforceGuard / Aequitas / Masova / Bharat Alpha claims alone unless their own canons exist.
 
 ---
 
 ## A. Current text (as of original CV — before any Part 16 edit)
 
 ```text
-EU AI Assurance OS — Governance Control Plane for EU AI Act  ·  GitHub
+Devernance — Governance Control Plane for EU AI Act  ·  GitHub
 
 Spring Boot · Java · Next.js 14 · FAISS + pgvector HNSW · Multi-tenant ·
 Regulated AI teams
@@ -57,10 +57,10 @@ Regulated AI teams
 
 ## C. Paste-ready replacement (English) — recommended
 
-Replace the entire EU AI Assurance OS project block with:
+Replace the entire Devernance project block with:
 
 ```text
-EU AI Assurance OS — Governance Control Plane for EU AI Act  ·  GitHub
+Devernance — Governance Control Plane for EU AI Act  ·  GitHub
 Spring Boot 3.3 · Java 17 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings · Multi-tenant
 
 • Governance: AI system registry with guided EU AI Act risk classification
@@ -86,7 +86,7 @@ Spring Boot 3.3 · Java 17 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings
 ### Shorter 3-bullet variant (if space is tight on the DOCX)
 
 ```text
-EU AI Assurance OS — Governance Control Plane for EU AI Act  ·  GitHub
+Devernance — Governance Control Plane for EU AI Act  ·  GitHub
 Spring Boot 3.3 · Java 17 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings · Multi-tenant
 
 • Governance: guided EU AI Act risk classification (Minimal / Limited / High / Prohibited),
@@ -109,7 +109,7 @@ Spring Boot 3.3 · Java 17 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings
 
 **Leave alone if they correctly describe other products** (e.g. FAISS for Aequitas / Bharat Alpha is fine).
 
-Do **not** state that EU AI Assurance OS uses FAISS or Next.js 14 anywhere in summary or skills when naming this product.
+Do **not** state that Devernance uses FAISS or Next.js 14 anywhere in summary or skills when naming this product.
 
 Governance skills line already using “SHA-256 / HMAC-SHA-256 audit chains” is acceptable if framed generally; prefer precision when naming this product: **hash-chained audit ledger** + **HMAC eval-result callbacks**.
 
@@ -123,14 +123,14 @@ Paths (if still used / published):
 - `/Users/souravamseekarmarti/Projects/SouraVamseekarMarti_CV_EU_DE_AT.md`
 - `/Users/souravamseekarmarti/Projects/SouraVamseekarMarti_CV_EU_NL_IE_UK.md`
 
-As of 2026-07-20 these files **do not contain** an EU AI Assurance OS project block (older project set). If you still publish them, **add** section C above under PROJECTS — do not invent other product metrics.
+As of 2026-07-20 these files **do not contain** a Devernance project block (older project set). If you still publish them, **add** section C above under PROJECTS — do not invent other product metrics.
 
 ---
 
 ## F. Apply instructions (manual only)
 
 1. Open original DOCX (or **Save As** a Part16-dated copy first).
-2. Replace only the EU AI Assurance OS block with section C.
+2. Replace only the Devernance block with section C.
 3. Export PDF from that DOCX so DOCX + PDF stay in sync.
 4. Optionally copy PDF into portfolio `public/` if the site hosts CV.
 5. Do not claim production OAuth verified until `docs/oauth-production-smoke-test.md` is signed off.

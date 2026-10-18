@@ -91,7 +91,7 @@ class QuestionnaireExportServiceTest {
     var answer = QuestionnaireExportService.answer(question("human-oversight"), Map.of(
         "control.HUMAN_OVERSIGHT.passedOn", "2026-10-09"));
     assertThat(answer.status()).isEqualTo("manual");
-    assertThat(answer.answer()).isEqualTo("Not recorded in Assurance OS — answer manually.");
+    assertThat(answer.answer()).isEqualTo("Not recorded in Devernance — answer manually.");
     assertThat(answer.missing()).containsExactly("evidence.POLICY.titles");
   }
 

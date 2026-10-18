@@ -397,7 +397,7 @@ export const api = {
       const res = await fetch(`${BASE}/account/export`);
       if (res.status === 401) redirectToLoginOnUnauthorized();
       if (!res.ok) throw new ApiError(res.status, "Export failed");
-      triggerBrowserDownload(await res.blob(), "assurance-os-export.zip");
+      triggerBrowserDownload(await res.blob(), "devernance-export.zip");
     },
     /** Schedules deletion in 30 days; the typed name must match exactly. */
     deleteWorkspace: (confirmOrganisationName: string) =>

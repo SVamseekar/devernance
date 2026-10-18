@@ -2,7 +2,7 @@
 
 ## System Overview
 
-EU AI Assurance OS is a multi-tenant SaaS governance control plane. **Implemented stack:** Spring Boot 4.1.1 API + Next.js 16 dashboard + PostgreSQL (or H2 for local tests). Kafka is **not** required; the eval worker uses a durable DB claim queue.
+Devernance is a multi-tenant SaaS governance control plane. **Implemented stack:** Spring Boot 4.1.1 API + Next.js 16 dashboard + PostgreSQL (or H2 for local tests). Kafka is **not** required; the eval worker uses a durable DB claim queue.
 
 ```mermaid
 flowchart LR

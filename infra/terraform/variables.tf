@@ -1,7 +1,7 @@
 variable "project_name" {
   description = "Short name used for resource naming conventions."
   type        = string
-  default     = "eu-ai-assurance"
+  default     = "devernance"
 }
 
 variable "environment" {
@@ -44,7 +44,7 @@ variable "tags" {
   description = "Common tags / labels applied by real modules later."
   type        = map(string)
   default = {
-    app     = "eu-ai-assurance-os"
+    app     = "devernance"
     managed = "terraform-skeleton"
   }
 }

@@ -19,9 +19,9 @@ Standard MLOps tooling (e.g., MLflow, Weights & Biases, Arize) tracks model perf
 
 ---
 
-## What EU AI Assurance OS Is
+## What Devernance Is
 
-EU AI Assurance OS is an open-source, multi-tenant governance control plane and decision engine designed to bridge this gap. It acts as the system of record and execution gate that sits directly in front of an AI system's deployment pipeline.
+Devernance is an open-source, multi-tenant governance control plane and decision engine designed to bridge this gap. It acts as the system of record and execution gate that sits directly in front of an AI system's deployment pipeline.
 
 Key capabilities implemented in the codebase:
 - **AI System Registry**: Registers AI systems with metadata including system name, purpose, model/vendor details, sector, deployment region, decision impact level, and affected user demographics.
@@ -45,23 +45,23 @@ Key capabilities implemented in the codebase:
 
 From the perspective of the system builder, existing approaches fail due to structural mismatches:
 
-1. **Spreadsheets & Ticket Trackers Don't Compute Executable Decisions**  
+1. **Spreadsheets & Ticket Trackers Don't Compute Executable Decisions**
    A compliance officer can track "DPIA completed: Yes/No" in Jira or Excel, but deployment pipelines cannot query a spreadsheet during a CI/CD run. Furthermore, spreadsheets cannot enforce rules such as "if eval score < 78, block deployment regardless of sign-offs." `ReleaseGateService` encodes this logic as executable code.
 
-2. **MLOps Eval Tools Lack Legal & Governance Context**  
+2. **MLOps Eval Tools Lack Legal & Governance Context**
    Generic eval frameworks (e.g., Ragas, DeepEval) compute numeric scores for accuracy or toxicity. However, they are unaware of legal risk tiers, human oversight requirements, or data contract drift. A system can achieve a 95% eval score and still be illegal to ship under Article 14 if required human oversight mechanisms are unverified.
 
-3. **Generic Document Chatbots Lack Scoping and Mandatory Citations**  
-   Standard enterprise Q&A bots can hallucinate or mix context across tenants. In a regulatory audit, an uncited or plausible-sounding hallucinated answer is worse than no answer. EU AI Assurance OS enforces tenant-isolated, system-isolated retrieval with mandatory chunk citations and prompt-injection filtering.
+3. **Generic Document Chatbots Lack Scoping and Mandatory Citations**
+   Standard enterprise Q&A bots can hallucinate or mix context across tenants. In a regulatory audit, an uncited or plausible-sounding hallucinated answer is worse than no answer. Devernance enforces tenant-isolated, system-isolated retrieval with mandatory chunk citations and prompt-injection filtering.
 
-4. **Standard Database Logs Lack Tamper-Evident Integrity**  
+4. **Standard Database Logs Lack Tamper-Evident Integrity**
    Standard `audit_logs` SQL tables with application-level insert conventions do not satisfy external auditors because rows can be modified or deleted directly by DBAs or via compromised credentials. The hash-chained ledger ensures any historical row modification breaks the cryptographic hash chain, making tampering immediately detectable.
 
-5. **Risk of Overclaiming Legal Certification**  
-   Many compliance vendors market "automated compliance" or "AI-driven certification." EU AI Assurance OS explicitly rejects this framing. The codebase and documentation enforce strict disclaimers: the tool is **not** a Notified Body, cannot issue statutory CE certificates, and enforces human-in-the-loop validation at every boundary.
+5. **Risk of Overclaiming Legal Certification**
+   Many compliance vendors market "automated compliance" or "AI-driven certification." Devernance explicitly rejects this framing. The codebase and documentation enforce strict disclaimers: the tool is **not** a Notified Body, cannot issue statutory CE certificates, and enforces human-in-the-loop validation at every boundary.
 
 ---
 
 ## Lineage & Prior Art Context
 
-As documented in `docs/PRD.md` §10, the design of EU AI Assurance OS incorporates concepts from earlier internal/project specifications named "ComplianceGuard RAG," "EvalForge," and "Data Contracts AI." In this repository, these concepts have been unified into a single monolithic domain architecture.
+As documented in `docs/PRD.md` §10, the design of Devernance incorporates concepts from earlier internal/project specifications named "ComplianceGuard RAG," "EvalForge," and "Data Contracts AI." In this repository, these concepts have been unified into a single monolithic domain architecture.

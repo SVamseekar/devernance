@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AssuranceMark, EuFlag, GithubIcon } from "@/components/marketing/brand-icons";
+import { DevernanceMark, EuFlag, GithubIcon } from "@/components/marketing/brand-icons";
 import { footerColumns, legalLinks } from "@/lib/marketing-nav";
 import { siteConfig } from "@/lib/site-config";
 
@@ -30,7 +30,7 @@ export function SiteFooter() {
         <div className="grid gap-8 lg:grid-cols-[1.1fr_3fr]">
           <div>
             <Link href="/" className="inline-flex items-center gap-2.5 text-base font-bold tracking-tight">
-              <AssuranceMark className="h-7 w-7" />
+              <DevernanceMark className="h-7 w-7" />
               {siteConfig.shortName}
             </Link>
             <p className="mt-3 max-w-xs text-sm text-on-dark-muted">

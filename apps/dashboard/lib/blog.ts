@@ -152,7 +152,7 @@ export const POSTS: BlogPost[] = [
       { type: "h2", text: "The workflow step" },
       {
         type: "code",
-        text: `- name: Check Assurance OS release gate
+        text: `- name: Check Devernance release gate
   env:
     API_KEY: \${{ secrets.ASSURANCE_API_KEY }}
     SYSTEM_ID: \${{ vars.ASSURANCE_SYSTEM_ID }}

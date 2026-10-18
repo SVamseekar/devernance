@@ -1,22 +1,22 @@
 # Part 16 — Pitch deck proposed changes (do not auto-apply)
 
-**Current asset:** `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck.pdf`  
-**Also seen:** `Projects/MaSoVa-restaurant-management-system/docs/MSV_AI_Labs_Pitch_Deck.pdf`  
-**Editable source:** PPTX not found in common paths (PDF produced via PptxGenJS / LibreOffice).  
-**Suggested dated output (when you apply):**  
+**Current asset:** `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck.pdf`
+**Also seen:** `Projects/MaSoVa-restaurant-management-system/docs/MSV_AI_Labs_Pitch_Deck.pdf`
+**Editable source:** PPTX not found in common paths (PDF produced via PptxGenJS / LibreOffice).
+**Suggested dated output (when you apply):**
 `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck_2026-07-20.pdf`
 
-**Canon:** `docs/METRICS_CANONICAL.md`  
-**Scope:** Fix **EU AI Assurance OS** slide (and any deck-wide line that falsely attributes FAISS / Next 14 / live-since-2024 to *this* product). Keep NVIDIA Inception framing; keep other products’ own metrics honest.
+**Canon:** `docs/METRICS_CANONICAL.md`
+**Scope:** Fix **Devernance** slide (and any deck-wide line that falsely attributes FAISS / Next 14 / live-since-2024 to *this* product). Keep NVIDIA Inception framing; keep other products’ own metrics honest.
 
 ---
 
-## A. Current EU AI Assurance OS slide (extracted 2026-07-20)
+## A. Current Devernance slide (extracted 2026-07-20)
 
 **Title / badge**
 
-- Product: EU AI Assurance OS  
-- Subtitle: The compliance control plane for the EU AI Act  
+- Product: Devernance
+- Subtitle: The compliance control plane for the EU AI Act
 - Badge: **Live since 2024** ← wrong for public product year freeze
 
 **Body**
@@ -37,7 +37,7 @@
 
 ---
 
-## B. Before → after (EU AI Assurance only)
+## B. Before → after (Devernance only)
 
 | Current / wrong | Corrected |
 |-----------------|-----------|
@@ -49,16 +49,16 @@
 | Legal certification tone | Certification **readiness**; **assisted** obligations |
 | FAISS for this product | **Do not** list FAISS on this product (DJL/ONNX OK) |
 
-**Shared infra / “Why NVIDIA” slides:** FAISS may remain as multi-product portfolio claim (Aequitas / Bharat Alpha use FAISS). Do not imply EU AI Assurance OS uses FAISS.
+**Shared infra / “Why NVIDIA” slides:** FAISS may remain as multi-product portfolio claim (Aequitas / Bharat Alpha use FAISS). Do not imply Devernance uses FAISS.
 
 ---
 
-## C. Proposed EU AI Assurance OS slide copy
+## C. Proposed Devernance slide copy
 
 ### Title block
 
 ```text
-EU AI Assurance OS
+Devernance
 The governance control plane for EU AI Act release governance
 Public product 2026
 Live: euassuranceai.souravamseekar.com
@@ -121,10 +121,10 @@ Hash-chained audit · HMAC eval callbacks · Evidence Pack JSON+PDF
 
 ## E. Manual apply steps
 
-1. Prefer editing source PPTX if you locate it; else rebuild EU AI Assurance slide in PptxGenJS / PowerPoint and re-export full deck.
+1. Prefer editing source PPTX if you locate it; else rebuild Devernance slide in PptxGenJS / PowerPoint and re-export full deck.
 2. Save dated copy: `MSV_AI_Labs_Pitch_Deck_2026-07-20.pdf` (keep old file).
 3. Optionally refresh MaSoVa docs copy only after review.
-4. Spot-check all 9 pages for leftover “Live since 2024” **on the EU AI Assurance slide only**.
+4. Spot-check all 9 pages for leftover “Live since 2024” **on the Devernance slide only**.
 
 ---
 

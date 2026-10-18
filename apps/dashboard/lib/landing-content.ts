@@ -71,7 +71,7 @@ export const faqItems: FaqItem[] = [
   {
     question: "Does this certify my AI system or replace a notified body?",
     answer:
-      "No. Assurance OS is software for your own release governance. It is not a notified body, not a CE-mark issuer, and not a legal certificate. Counsel still owns the determination of obligations.",
+      "No. Devernance is software for your own release governance. It is not a notified body, not a CE-mark issuer, and not a legal certificate. Counsel still owns the determination of obligations.",
   },
   {
     question: "How is this different from a GRC platform?",
@@ -101,6 +101,6 @@ export const faqItems: FaqItem[] = [
   {
     question: "How do you start?",
     answer:
-      "Sign up for the free plan and register one AI system, or open the read-only demo workspace first. Team and Business plans are self-serve; Enterprise starts with a demo. Assurance OS is evidence and readiness tooling, not a legal certificate.",
+      "Sign up for the free plan and register one AI system, or open the read-only demo workspace first. Team and Business plans are self-serve; Enterprise starts with a demo. Devernance is evidence and readiness tooling, not a legal certificate.",
   },
 ];

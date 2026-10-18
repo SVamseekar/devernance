@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 
 const title = "EU AI Act";
 const description =
-  "From obligations to operational controls. Assurance OS helps you put the EU AI Act into practice with evidence, not paperwork — risk classification, obligation mapping, human oversight and Article 50 transparency.";
+  "From obligations to operational controls. Devernance helps you put the EU AI Act into practice with evidence, not paperwork — risk classification, obligation mapping, human oversight and Article 50 transparency.";
 const path = "/eu-ai-act";
 
 // Deadline status ("applies now" / "in N days") is computed at build time; rebuild daily.
@@ -86,7 +86,7 @@ export default function EuAiActPage() {
             tone="light"
             eyebrow="EU AI Act"
             title="Built for the EU AI Act."
-            description="From obligations to operational controls. Assurance OS helps you put the EU AI Act into practice with evidence, not paperwork."
+            description="From obligations to operational controls. Devernance helps you put the EU AI Act into practice with evidence, not paperwork."
           />
           <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:gap-14">
             <div className="space-y-6">
@@ -144,7 +144,7 @@ export default function EuAiActPage() {
                 <div className="text-sm">
                   <p className="font-semibold text-ink">We do not provide legal advice or certification.</p>
                   <p className="mt-1 text-ink-muted">
-                    Assurance OS helps you put obligations into practice through evidence, workflows and release gates.
+                    Devernance helps you put obligations into practice through evidence, workflows and release gates.
                     Your counsel makes the legal determination.
                   </p>
                 </div>

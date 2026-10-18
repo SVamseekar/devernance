@@ -115,7 +115,8 @@ public class TenantContextFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         boolean legacy = apiKeyHeader.matches("^[0-9a-fA-F-]{36}$");
-        boolean modern = apiKeyHeader.matches("^aos_[A-Za-z0-9_-]{43}$");
+        // dvn_ since the Devernance rename; aos_ keys issued before it stay valid.
+        boolean modern = apiKeyHeader.matches("^(dvn|aos)_[A-Za-z0-9_-]{43}$");
         if (!legacy && !modern) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + API_KEY_HEADER);
             return;

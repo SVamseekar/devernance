@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 
-import { AssuranceMark } from "@/components/marketing/brand-icons";
+import { DevernanceMark } from "@/components/marketing/brand-icons";
 import { DemoButton } from "@/components/marketing/demo-button";
 import { IconTile, type Tone } from "@/components/marketing/primitives";
 import { iconToneClass, mainNav, type MegaItem, type MegaMenu } from "@/lib/marketing-nav";
@@ -189,7 +189,7 @@ export function SiteHeader({ tone }: { tone: Tone }) {
       <div ref={navRef} className="relative" onMouseLeave={closeWithDelay}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 text-[17px] font-bold tracking-tight" onClick={closeAll}>
-            <AssuranceMark className="h-8 w-8" />
+            <DevernanceMark className="h-8 w-8" />
             {siteConfig.shortName}
           </Link>
 
@@ -296,7 +296,7 @@ export function SiteHeader({ tone }: { tone: Tone }) {
         >
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10">
             <Link href="/" className="flex items-center gap-2.5 text-[17px] font-bold tracking-tight" onClick={closeAll}>
-              <AssuranceMark className="h-8 w-8" />
+              <DevernanceMark className="h-8 w-8" />
               {siteConfig.shortName}
             </Link>
             <button

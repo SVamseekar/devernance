@@ -30,7 +30,7 @@ export function firstDutyDates(provisions: CorpusProvision[]): {
 /** GitHub Actions step that fails the build unless the release gate passes. The key stays in a secret. */
 export function releaseGateWorkflow(systemId?: string): string {
   return `# .github/workflows/ai-release-gate.yml
-- name: Assurance OS release gate
+- name: Devernance release gate
   run: |
     decision=$(curl -fsS -H "X-Api-Key: \${{ secrets.ASSURANCE_API_KEY }}" \\
       "https://<your-app-domain>/api/v1/ci/release-gate?systemId=${systemId ?? "<SYSTEM_ID>"}")

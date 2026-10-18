@@ -2,9 +2,9 @@
 
 > **For agentic workers:** Part 1 creates basic CI; this part adds **productized** release-gate-for-CI and observability.
 
-**Goal:**  
-1) Every PR runs full quality gates.  
-2) External CI/CD can call Assurance OS for a machine-readable release decision (EvalForge / PRD §10).  
+**Goal:**
+1) Every PR runs full quality gates.
+2) External CI/CD can call Devernance for a machine-readable release decision (EvalForge / PRD §10).
 3) Operators have metrics + a minimal observability surface (Phase 6).
 
 **Depends on:** Part 1 (CI skeleton), Part 5 (stable gate + controls).
@@ -57,8 +57,8 @@ Enable pipelines to block deploys on BLOCKED systems.
 
 ### Done when
 
-- [x] CI jobs hardened (acceptance + artifacts)  
-- [x] `scripts/ci-release-gate.sh` blocks on BLOCKED  
-- [x] Prometheus/Actuator metrics for gate + RAG + auth  
-- [x] Operator-visible summary in dashboard  
+- [x] CI jobs hardened (acceptance + artifacts)
+- [x] `scripts/ci-release-gate.sh` blocks on BLOCKED
+- [x] Prometheus/Actuator metrics for gate + RAG + auth
+- [x] Operator-visible summary in dashboard
 - [x] Merged to main (PR #24); branch protection configured for required CI checks

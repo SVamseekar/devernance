@@ -34,7 +34,7 @@ class EvidencePackPdfRendererTest {
         Map.of("howto", "evgraph scan-promotion --gate"),
         "1.1",
         "a".repeat(64),
-        "eu-ai-assurance-api/0.1.0",
+        "devernance-api/0.1.0",
         "chain-head-example",
         "",
         List.of(),

@@ -48,7 +48,7 @@ describe("releaseGateWorkflow", () => {
     const yaml = releaseGateWorkflow("sys-123");
     assert.match(yaml, /systemId=sys-123/);
     assert.match(yaml, /secrets\.ASSURANCE_API_KEY/);
-    assert.doesNotMatch(yaml, /aos_/);
+    assert.doesNotMatch(yaml, /(dvn|aos)_/);
   });
   it("leaves a placeholder when there is no system yet", () => {
     assert.match(releaseGateWorkflow(), /<SYSTEM_ID>/);

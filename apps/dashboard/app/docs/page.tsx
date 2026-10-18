@@ -10,14 +10,14 @@ import { siteConfig } from "@/lib/site-config";
 
 const title = "Docs: gate your first AI release";
 const description =
-  "Quickstart for Assurance OS: sign up, register an AI system, create an API key, add the release gate to CI, read the decision, and verify a signed evidence pack.";
+  "Quickstart for Devernance: sign up, register an AI system, create an API key, add the release gate to CI, read the decision, and verify a signed evidence pack.";
 const path = "/docs";
 
 export const metadata = marketingMetadata({
   title,
   description,
   path,
-  keywords: ["Assurance OS docs", "AI release gate quickstart", "evidence pack verification", "evgraph CLI"],
+  keywords: ["Devernance docs", "AI release gate quickstart", "evidence pack verification", "evgraph CLI"],
 });
 
 const verifyScript = `import json, sys, urllib.request
@@ -132,8 +132,8 @@ export default function DocsPage() {
               <Step n={4} id="ci" title="Add the gate to CI">
                 <p>
                   On GitHub, add the{" "}
-                  <a href="https://github.com/SVamseekar/assurance-os-release-gate" className="font-medium text-brand hover:underline">
-                    Assurance OS release gate action
+                  <a href="https://github.com/SVamseekar/devernance-release-gate" className="font-medium text-brand hover:underline">
+                    Devernance release gate action
                   </a>
                   : one step, no scripts. It fails the job on <code className={code}>BLOCKED</code> and writes the
                   blockers to the job summary. Any other CI can call the endpoint with curl.
@@ -171,7 +171,7 @@ export default function DocsPage() {
                 <p>Anyone holding the pack can check it, with no account:</p>
                 <CodeTabs tabs={[{ label: "verify_pack.py", code: verifyScript }]} compact />
                 <p className="text-sm text-ink-muted">
-                  A valid signature proves Assurance OS produced the pack and it was not edited after export. It is not a
+                  A valid signature proves Devernance produced the pack and it was not edited after export. It is not a
                   legal certification.
                 </p>
               </Step>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Query Assurance OS release gate for CI/CD deploy decisions.
+# Query Devernance release gate for CI/CD deploy decisions.
 #
 # Exit codes (stable contract for bots):
 #   0  PASS

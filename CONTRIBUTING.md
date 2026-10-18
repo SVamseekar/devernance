@@ -1,4 +1,4 @@
-# Contributing to EU AI Assurance OS
+# Contributing to Devernance
 
 Thanks for helping improve the governance control plane for EU AI Act–oriented release assurance.
 

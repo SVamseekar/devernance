@@ -1,6 +1,6 @@
 # Terraform skeleton (Part 9)
 
-Non-destructive **layout** for a future production deploy of EU AI Assurance OS. Modules are placeholders (`null` provider) so CI and local developers can run:
+Non-destructive **layout** for a future production deploy of Devernance. Modules are placeholders (`null` provider) so CI and local developers can run:
 
 ```bash
 cd infra/terraform

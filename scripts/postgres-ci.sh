@@ -2,7 +2,7 @@
 # Starts a Postgres+pgvector container, runs @Tag("postgres") integration tests, tears down.
 set -euo pipefail
 
-CONTAINER=eu-ai-assurance-ci-postgres
+CONTAINER=devernance-ci-postgres
 
 docker run -d --name "$CONTAINER" \
   -e POSTGRES_DB=eu_ai_assurance \

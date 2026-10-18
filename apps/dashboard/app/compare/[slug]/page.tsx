@@ -111,7 +111,7 @@ export default async function ComparePage({ params }: Params) {
               <a href={`mailto:${siteConfig.supportEmail}`} className="text-brand hover:underline">
                 {siteConfig.supportEmail}
               </a>{" "}
-              if something is out of date. Assurance OS provides evidence and readiness tooling, not legal advice.
+              if something is out of date. Devernance provides evidence and readiness tooling, not legal advice.
             </p>
           </div>
         </Container>

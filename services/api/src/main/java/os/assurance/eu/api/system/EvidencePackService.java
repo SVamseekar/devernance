@@ -65,7 +65,7 @@ public class EvidencePackService {
       JwtService jwtService,
       CrosswalkService crosswalks,
       EntitlementService entitlements,
-      @Value("${assurance.evidence-pack.generator:eu-ai-assurance-api/0.1.0}") String generator) {
+      @Value("${assurance.evidence-pack.generator:devernance-api/0.1.0}") String generator) {
     this.repository = repository;
     this.releaseGateService = releaseGateService;
     this.auditService = auditService;

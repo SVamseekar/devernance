@@ -1,5 +1,5 @@
 /**
- * Third parties that process personal data for Assurance OS. Used by /subprocessors and the DPA cover page.
+ * Third parties that process personal data for Devernance. Used by /subprocessors and the DPA cover page.
  * lib/subprocessors.test.ts fails when the app configures a provider that is missing here.
  */
 export interface Subprocessor {

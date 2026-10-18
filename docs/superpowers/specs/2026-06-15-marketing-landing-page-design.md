@@ -2,7 +2,7 @@
 
 ## Goal
 
-Replace the current root route (`apps/dashboard/app/page.tsx`, which redirects to `/command`) with a real marketing landing page for EU AI Assurance OS, and make the dashboard app SEO-compliant site-wide.
+Replace the current root route (`apps/dashboard/app/page.tsx`, which redirects to `/command`) with a real marketing landing page for Devernance, and make the dashboard app SEO-compliant site-wide.
 
 ## Background research
 
@@ -19,7 +19,7 @@ Section backgrounds alternate between `bg-background` and `bg-muted`/`bg-seconda
 ## Page structure (`apps/dashboard/app/page.tsx`)
 
 1. **Header/nav** (sticky, transparent→solid on scroll)
-   - Wordmark "EU AI Assurance OS"
+   - Wordmark "Devernance"
    - Anchor links: Product, How it works, Who it's for, FAQ
    - "Open Dashboard" button → `/command`
 
@@ -63,7 +63,7 @@ Section backgrounds alternate between `bg-background` and `bg-muted`/`bg-seconda
 
 ## SEO implementation (site-wide)
 
-- **`app/layout.tsx`**: expand `metadata` export — `title` with template (`%s | EU AI Assurance OS`), richer `description`, `metadataBase` from `NEXT_PUBLIC_SITE_URL`, Open Graph (`og:title`, `og:description`, `og:type`, `og:url`, `og:image`), Twitter card (`summary_large_image`), `robots: { index: true, follow: true }`
+- **`app/layout.tsx`**: expand `metadata` export — `title` with template (`%s | Devernance`), richer `description`, `metadataBase` from `NEXT_PUBLIC_SITE_URL`, Open Graph (`og:title`, `og:description`, `og:type`, `og:url`, `og:image`), Twitter card (`summary_large_image`), `robots: { index: true, follow: true }`
 - **`app/page.tsx`**: page-specific `metadata` override (title/description tuned for landing page), plus JSON-LD via inline `<script type="application/ld+json">`:
   - `Organization` schema (name, url, description)
   - `SoftwareApplication` schema (name, applicationCategory, description)

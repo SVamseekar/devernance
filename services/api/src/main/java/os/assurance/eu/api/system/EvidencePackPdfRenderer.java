@@ -43,7 +43,7 @@ public final class EvidencePackPdfRenderer {
       Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
       Font monoFont = FontFactory.getFont(FontFactory.COURIER, 8);
 
-      document.add(new Paragraph("EU AI Assurance OS — Evidence Pack", titleFont));
+      document.add(new Paragraph("Devernance — Evidence Pack", titleFont));
       document.add(new Paragraph(" ", bodyFont));
       document.add(new Paragraph(
           "JSON is the primary sealed export. This PDF is a human-readable Phase 6 export.",

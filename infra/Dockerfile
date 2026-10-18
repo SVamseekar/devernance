@@ -1,6 +1,6 @@
 # Multi-stage production image for the Spring Boot API (Part 9).
 # Build context: repository root
-#   docker build -f infra/Dockerfile -t eu-ai-assurance-api .
+#   docker build -f infra/Dockerfile -t devernance-api .
 
 # -----------------------------------------------------------------------------
 # Stage 1: Maven package (skip tests — run CI / mvn test separately)

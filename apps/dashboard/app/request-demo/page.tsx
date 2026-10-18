@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/site-config";
 
 const title = "Request a demo";
 const description =
-  "Walk through a release decision on one of your own AI systems with the team that builds Assurance OS. For Enterprise plans, order forms and security reviews.";
+  "Walk through a release decision on one of your own AI systems with the team that builds Devernance. For Enterprise plans, order forms and security reviews.";
 const path = "/request-demo";
 
 export const metadata = marketingMetadata({

@@ -9,7 +9,7 @@
         "type": "ModelCard",
         "observed_at": "2026-09-14T19:03:03.286687Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/eu-ai-assurance-os/services/api/src/main/resources/public-claims/auxmoney/model_card.json"
+          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/auxmoney/model_card.json"
         },
         "evidence_level": "STRUCTURAL",
         "attributes": {
@@ -22,7 +22,7 @@
         "type": "HumanApproval",
         "observed_at": "2026-09-14T19:03:03.286687Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/eu-ai-assurance-os/services/api/src/main/resources/public-claims/auxmoney/approval.json"
+          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/auxmoney/approval.json"
         },
         "evidence_level": "STRUCTURAL",
         "attributes": {
@@ -34,7 +34,7 @@
         "type": "DeploymentRecord",
         "observed_at": "2026-09-14T19:03:03.286687Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/eu-ai-assurance-os/services/api/src/main/resources/public-claims/auxmoney/deployment.json"
+          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/auxmoney/deployment.json"
         },
         "evidence_level": "STRUCTURAL",
         "attributes": {

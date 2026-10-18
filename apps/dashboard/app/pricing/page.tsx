@@ -20,7 +20,7 @@ export const metadata = marketingMetadata({
 });
 
 const faqs = [
-  { q: "Is this legal advice?", a: "No. Assurance OS provides evidence and readiness tooling. Your counsel decides how the law applies." },
+  { q: "Is this legal advice?", a: "No. Devernance provides evidence and readiness tooling. Your counsel decides how the law applies." },
   { q: "Do you certify compliance?", a: "No. We report evidence and readiness; notified bodies and your counsel make those determinations." },
   {
     q: "Where is my data stored?",
@@ -34,7 +34,7 @@ const faqs = [
   },
   { q: "Can I cancel?", a: "Any time in the customer portal. Access continues to the end of the paid period." },
   { q: "Refunds?", a: "Within 14 days of your first payment on any plan. See the refund policy." },
-  { q: "What counts as a gated system?", a: "An AI system registered in Assurance OS that you gate in CI. Viewers are free." },
+  { q: "What counts as a gated system?", a: "An AI system registered in Devernance that you gate in CI. Viewers are free." },
   { q: "What happens if I downgrade?", a: "Nothing is deleted. Systems beyond your plan become read-only." },
 ];
 

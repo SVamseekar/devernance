@@ -59,7 +59,7 @@ POST   /api/v1/api-keys          # {name} -> 201 {id, name, prefix, key}  (raw k
 DELETE /api/v1/api-keys/{id}     # 204; revoked keys get 401 immediately
 ```
 
-- Roles: ADMIN and AI_ENGINEERING_LEAD. Keys look like `aos_` + 43 characters; only a SHA-256 hash is stored.
+- Roles: ADMIN and AI_ENGINEERING_LEAD. Keys look like `dvn_` + 43 characters (keys issued before the Devernance rename start `aos_` and still work); only a SHA-256 hash is stored.
 - Keys are created and revoked from a signed-in session only. A request authenticated by a key cannot
   create or revoke keys (403), so a leaked key cannot mint replacements.
 - A key acts with the permissions of the user who created it. Legacy UUID keys keep working.
@@ -755,7 +755,7 @@ Response:
   "auditEvents": [],
   "evidencePackVersion": "1.0",
   "contentSha256": "hex-sha256-of-canonical-json",
-  "generator": "eu-ai-assurance-api/0.1.0",
+  "generator": "devernance-api/0.1.0",
   "auditChainHead": "hex-hmac-sha256-of-latest-audit-event-or-null"
 }
 ```
@@ -797,7 +797,7 @@ GET /systems/{systemId}/frameworks/{framework}
 | `framework` | Type | Feature | Plans |
 |---|---|---|---|
 | `nist-ai-rmf` | crosswalk (NIST AI RMF 1.0 categories) | `NIST_CROSSWALK` | Team and above |
-| `iso-42001` | crosswalk (ISO/IEC 42001:2023 Annex A identifiers; titles are Assurance OS paraphrases, no ISO text) | `ISO_CROSSWALK` | Business and above |
+| `iso-42001` | crosswalk (ISO/IEC 42001:2023 Annex A identifiers; titles are Devernance paraphrases, no ISO text) | `ISO_CROSSWALK` | Business and above |
 | `colorado-sb26-189` | checklist (Colorado SB 26-189 deployer duties; each item has `sourceUrl`) | `US_STATE_PACKS` | Business and above |
 
 Unknown framework or system → `404`; a plan without the feature → `402` with `code: feature_<feature lowercase>`.
@@ -867,7 +867,7 @@ Feature `QUESTIONNAIRE_EXPORT` (Business and above); `402` with `code: feature_q
 Drafts answers to 25 common AI-vendor due-diligence questions (`ai-vendor-core`) for one system. An answer is
 written only when every fact its template names is recorded for the system (system fields, a control with status
 `PASS`, an indexed document of the named type, approvals, completed evaluations, data contracts, audit events).
-If any fact is missing the answer is exactly `Not recorded in Assurance OS — answer manually.`, `status` is
+If any fact is missing the answer is exactly `Not recorded in Devernance — answer manually.`, `status` is
 `manual`, and `missing` names the facts. Nothing is inferred.
 
 ```json
@@ -877,7 +877,7 @@ If any fact is missing the answer is exactly `Not recorded in Assurance OS — a
   "systemId": "…",
   "systemName": "Claims triage",
   "generatedAt": "2026-10-11T09:00:00Z",
-  "disclaimer": "Draft answers filled only from what is recorded in Assurance OS for this system. Review every answer before you send it. This is not legal advice.",
+  "disclaimer": "Draft answers filled only from what is recorded in Devernance for this system. Review every answer before you send it. This is not legal advice.",
   "answered": 9,
   "manual": 16,
   "answers": [

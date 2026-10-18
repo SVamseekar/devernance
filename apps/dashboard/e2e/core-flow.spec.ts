@@ -67,7 +67,7 @@ test("sign up, confirm the email, and finish onboarding", async ({ page }) => {
   await expect(page.getByText(/release decision/i)).toBeVisible();
   await page.getByRole("button", { name: /next: gate your pipeline/i }).click();
   await page.getByRole("button", { name: /create ci key/i }).click();
-  await expect(page.getByLabel(/new ci key/i)).toHaveValue(/^aos_/);
+  await expect(page.getByLabel(/new ci key/i)).toHaveValue(/^dvn_/);
   await page.getByRole("button", { name: /^done$/i }).click();
   await page.waitForURL(/\/command/);
 });

@@ -1,11 +1,11 @@
 # Part 16 — Portfolio proposed changes (do not auto-apply)
 
-**Repo:** `/Users/souravamseekarmarti/Projects/Portfolio/martisouravamseekar-portfolio`  
-**Primary file:** `src/data/projects.ts` (EU AI Assurance OS entry only)  
-**Related (check only):** `src/lib/seo.ts`, `src/lib/highlight.tsx`, `src/components/Hero.tsx`  
-**Canon:** `docs/METRICS_CANONICAL.md`  
-**Live product:** https://euassuranceai.souravamseekar.com  
-**GitHub:** https://github.com/SVamseekar/eu-ai-assurance-os
+**Repo:** `/Users/souravamseekarmarti/Projects/Portfolio/martisouravamseekar-portfolio`
+**Primary file:** `src/data/projects.ts` (Devernance entry only)
+**Related (check only):** `src/lib/seo.ts`, `src/lib/highlight.tsx`, `src/components/Hero.tsx`
+**Canon:** `docs/METRICS_CANONICAL.md`
+**Live product:** https://euassuranceai.souravamseekar.com
+**GitHub:** https://github.com/SVamseekar/devernance
 
 Working-tree edits to `projects.ts` were **reverted**; apply only when you approve.
 
@@ -15,7 +15,7 @@ Working-tree edits to `projects.ts` were **reverted**; apply only when you appro
 
 ```ts
 {
-  name: "EU AI Assurance OS",
+  name: "Devernance",
   tagline:
     "Governance control plane for EU AI Act compliance — risk classification, cited-evidence RAG, eval gates, and audit-ready evidence packs.",
   regulation: "EU AI Act · technical documentation & conformity assessment",
@@ -41,7 +41,7 @@ Working-tree edits to `projects.ts` were **reverted**; apply only when you appro
   ],
   period: "2024 – Present",
   liveUrl: "https://euassuranceai.souravamseekar.com",
-  githubUrl: "https://github.com/SVamseekar/eu-ai-assurance-os",
+  githubUrl: "https://github.com/SVamseekar/devernance",
   priority: "primary",
 },
 ```
@@ -64,7 +64,7 @@ Working-tree edits to `projects.ts` were **reverted**; apply only when you appro
 
 ```ts
 {
-  name: "EU AI Assurance OS",
+  name: "Devernance",
   tagline:
     "Multi-tenant governance control plane for EU AI Act release governance — guided risk classification, cited-evidence RAG, eval and contract gates, assisted obligation maps, certification readiness, and audit-ready evidence packs.",
   regulation: "EU AI Act · release governance (not legal certification / notified-body)",
@@ -91,7 +91,7 @@ Working-tree edits to `projects.ts` were **reverted**; apply only when you appro
   ],
   period: "2026 – Present",
   liveUrl: "https://euassuranceai.souravamseekar.com",
-  githubUrl: "https://github.com/SVamseekar/eu-ai-assurance-os",
+  githubUrl: "https://github.com/SVamseekar/devernance",
   priority: "primary",
 },
 ```
@@ -102,7 +102,7 @@ Working-tree edits to `projects.ts` were **reverted**; apply only when you appro
 
 | File | Current | Action |
 |------|---------|--------|
-| `src/lib/seo.ts` | Mentions EU AI Assurance OS generically; no FAISS / Next 14 for this product | OK as-is; optional keyword “EU AI Act release governance” |
+| `src/lib/seo.ts` | Mentions Devernance generically; no FAISS / Next 14 for this product | OK as-is; optional keyword “EU AI Act release governance” |
 | `src/lib/highlight.tsx` | Includes FAISS + Next.js 16 | FAISS highlight is fine for other projects; no change required |
 | `src/components/Hero.tsx` | “EU AI Act governance tooling” | OK; no false stack claims |
 
@@ -112,10 +112,10 @@ Working-tree edits to `projects.ts` were **reverted**; apply only when you appro
 
 ```bash
 cd /Users/souravamseekarmarti/Projects/Portfolio/martisouravamseekar-portfolio
-# Edit src/data/projects.ts EU AI Assurance OS entry using section B
+# Edit src/data/projects.ts Devernance entry using section B
 npm run build   # or project’s usual check
 git add src/data/projects.ts
-git commit -m "docs(portfolio): align EU AI Assurance OS entry with metrics freeze"
+git commit -m "docs(portfolio): align Devernance entry with metrics freeze"
 # Deploy on Vercel as usual; verify live card text
 ```
 

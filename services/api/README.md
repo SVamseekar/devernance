@@ -1,6 +1,6 @@
 # API Service
 
-Spring Boot backend MVP for the EU AI Assurance OS control plane.
+Spring Boot backend MVP for the Devernance control plane.
 
 The service uses Spring Data JPA repositories with Flyway-managed schema
 migrations. The default profile runs against an in-memory H2 database for local

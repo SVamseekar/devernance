@@ -1,4 +1,4 @@
-# Verifying an Assurance OS evidence pack
+# Verifying a Devernance evidence pack
 
 Every JSON pack carries `contentSha256` (SHA-256 of the canonical pack content) and `signature`, a JWS (RS256)
 whose payload binds `contentSha256`, `systemId`, `generatedAt`, `evidencePackVersion`, and `auditChainHead`.
@@ -28,5 +28,5 @@ canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii
 assert hashlib.sha256(canonical.encode("utf-8")).hexdigest() == pack["contentSha256"], "pack edited"
 ```
 
-Recomputing `contentSha256` yourself proves the pack was not edited after export; the signature proves Assurance OS
+Recomputing `contentSha256` yourself proves the pack was not edited after export; the signature proves Devernance
 produced it. Neither is a legal certification.

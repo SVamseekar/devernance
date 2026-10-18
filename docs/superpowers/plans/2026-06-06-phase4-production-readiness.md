@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Harden the EU AI Assurance OS backend for production deployment by adding Docker/Postgres stack, API key authentication, PDF/S3 evidence ingestion, real vector embeddings, and operational observability — completing every gap explicitly called out in the Phase 4 roadmap.
+**Goal:** Harden the Devernance backend for production deployment by adding Docker/Postgres stack, API key authentication, PDF/S3 evidence ingestion, real vector embeddings, and operational observability — completing every gap explicitly called out in the Phase 4 roadmap.
 
 **Architecture:** Each gap is addressed as a self-contained layer: (1) Docker Compose brings up the full Postgres+pgvector stack so all subsequent work runs against real infrastructure; (2) API key auth replaces the bare-header tenant model with a secret-bearing token that is validated on every request; (3) Tika-based PDF extraction and an S3-compatible `FileStorageService` wire into the existing `TextExtractionService` seam; (4) a real sentence-embedding provider (using Hugging Face's `all-MiniLM-L6-v2` via the Djl/ONNX runtime) slots into the `EvidenceEmbeddingProvider` interface already used everywhere; (5) structured JSON logging, request-correlation IDs, and `management.endpoint.health` liveness/readiness probes complete the operational surface.
 

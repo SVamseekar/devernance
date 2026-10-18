@@ -27,7 +27,7 @@ public class AuAdmPackService {
   /** OAIC issues paper reproducing APP 1.7-1.9 (Attachment A). */
   public static final String GUIDANCE = "https://www.oaic.gov.au/__data/assets/pdf_file/0027/263925/ADM-Issues-Paper.pdf";
   public static final String DISCLAIMER = "Draft inputs for your privacy policy, built only from what is recorded in "
-      + "Assurance OS. This is not legal advice; have your privacy counsel review every statement.";
+      + "Devernance. This is not legal advice; have your privacy counsel review every statement.";
   public static final String DRAFT_PREFIX = "Draft for review by your privacy counsel:";
 
   /** APP 1.8: the information the privacy policy must contain (official text). */

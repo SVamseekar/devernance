@@ -9,7 +9,7 @@
         "type": "ModelCard",
         "observed_at": "2026-09-14T19:03:05.436756Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/eu-ai-assurance-os/services/api/src/main/resources/public-claims/retorio/model_card.json"
+          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/retorio/model_card.json"
         },
         "evidence_level": "STRUCTURAL",
         "attributes": {
@@ -22,7 +22,7 @@
         "type": "HumanApproval",
         "observed_at": "2026-09-14T19:03:05.436756Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/eu-ai-assurance-os/services/api/src/main/resources/public-claims/retorio/approval.json"
+          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/retorio/approval.json"
         },
         "evidence_level": "STRUCTURAL",
         "attributes": {
@@ -34,7 +34,7 @@
         "type": "DeploymentRecord",
         "observed_at": "2026-09-14T19:03:05.436756Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/eu-ai-assurance-os/services/api/src/main/resources/public-claims/retorio/deployment.json"
+          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/retorio/deployment.json"
         },
         "evidence_level": "STRUCTURAL",
         "attributes": {}

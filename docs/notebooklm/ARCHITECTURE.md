@@ -2,7 +2,7 @@
 
 ## High-Level System Design
 
-EU AI Assurance OS is architected as a **multi-tenant modular monolith**, deliberately avoiding microservice complexity. The system consists of two primary applications:
+Devernance is architected as a **multi-tenant modular monolith**, deliberately avoiding microservice complexity. The system consists of two primary applications:
 1. **`services/api`**: A Java 17 / Spring Boot 3.3.7 backend owning all domain logic, persistence, security, eval queue execution, and audit verification.
 2. **`apps/dashboard`**: A Next.js 16 (16.2.9) / React 19 / TypeScript / Tailwind CSS v4 frontend serving as both the UI and a Backend-for-Frontend (BFF) security proxy.
 

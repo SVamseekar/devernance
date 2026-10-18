@@ -21,7 +21,7 @@ export async function fetchUpstream(
 
 export function serviceUnavailable(): NextResponse {
   return NextResponse.json(
-    { error: "service_unavailable", message: "Assurance OS is temporarily unavailable. Try again shortly." },
+    { error: "service_unavailable", message: "Devernance is temporarily unavailable. Try again shortly." },
     { status: 503 },
   );
 }

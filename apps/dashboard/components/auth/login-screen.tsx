@@ -82,7 +82,7 @@ export function LoginScreen({
     setSubmitting(false);
     if (!response.ok) {
       if (response.status === 503) {
-        setError("Assurance OS is temporarily unavailable. Try again shortly.");
+        setError("Devernance is temporarily unavailable. Try again shortly.");
         return;
       }
       if (response.status === 403) {
@@ -134,7 +134,7 @@ export function LoginScreen({
     setDemoStarting(false);
     setError(
       res.status === 503
-        ? "Assurance OS is temporarily unavailable. Try again shortly."
+        ? "Devernance is temporarily unavailable. Try again shortly."
         : "The live demo is not available right now.",
     );
   }
