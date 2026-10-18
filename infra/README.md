@@ -86,6 +86,23 @@ docker compose -f docker-compose.prod.yml --env-file .env up -d
 - All services restart `unless-stopped`; Docker logs rotate at 10 MB × 5 per service.
 - Contract test (no daemon needed): `infra/test/compose_contract_test.sh`.
 
+### Images and deploys
+
+- `.github/workflows/images.yml` builds `aos-api`, `aos-dashboard` and `aos-backup` for `linux/arm64` after CI passes on
+  `main`, and pushes `:<sha>` and `:main` to GHCR. Public build values (`NEXT_PUBLIC_*`) come from repository variables.
+- `deploy/aos-update.sh` runs every 5 minutes (`deploy/aos-update.timer`). For a new API image it takes a `pre-deploy`
+  backup, starts the new API, and keeps it only when the container turns healthy within 5 minutes. Otherwise it restores
+  the previous image, writes the rejected id to `/opt/aos/.rejected-api-image` (so it is not retried), and posts to the
+  Discord webhook in `DEPLOY_ALERT_URL` (`/opt/aos/deploy.env`). Dashboard and backup images roll forward without a backup.
+- Pin a build: set `AOS_TAG=<sha>` in `/opt/aos/.env`; the updater then only follows that tag.
+
+### Tests
+
+```bash
+infra/test/run.sh                      # shellcheck, compose contract, backup and updater behaviour (no Docker daemon)
+RUN_DOCKER_TESTS=1 infra/test/run.sh   # adds the real Postgres → S3 → restore round trip (CI runs this)
+```
+
 ## Terraform skeleton
 
 ```bash

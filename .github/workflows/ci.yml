@@ -63,6 +63,7 @@ jobs:
       api: ${{ steps.filter.outputs.api }}
       dashboard: ${{ steps.filter.outputs.dashboard }}
       terraform: ${{ steps.filter.outputs.terraform }}
+      infra: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v7
 
@@ -80,6 +81,12 @@ jobs:
               - 'infra/terraform/**'
               - 'scripts/terraform-validate.sh'
               - '.github/workflows/ci.yml'
+            infra:
+              - 'infra/**'
+              - '.dockerignore'
+              - 'services/api/src/main/resources/application*.properties'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/images.yml'
 
   secret-scan:
     name: Secret scan
@@ -252,6 +259,24 @@ jobs:
         run: npm run build
 
   # Part 9: validate Terraform skeleton without cloud credentials (null provider only).
+  infra-test:
+    name: Infra tests (compose, backups, updater)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Skip — no infra changes
+        if: needs.changes.outputs.infra != 'true' && github.event_name == 'pull_request'
+        run: echo "No infra changes; job is a no-op for path filter."
+
+      - name: Shellcheck, compose contract, backup and updater tests, backup round trip
+        if: needs.changes.outputs.infra == 'true' || github.event_name != 'pull_request'
+        env:
+          RUN_DOCKER_TESTS: "1"
+        run: infra/test/run.sh
+
   terraform-validate:
     name: Terraform validate
     needs: changes

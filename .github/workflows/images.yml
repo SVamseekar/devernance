@@ -1,0 +1,73 @@
+name: Images
+
+# Build the production images after CI passes on main, so a red commit is never published.
+# The VMs pull :main every 5 minutes (infra/deploy/aos-update.sh); :<sha> pins one build.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: images-main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }} (linux/arm64)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            dockerfile: infra/Dockerfile
+          - name: dashboard
+            dockerfile: infra/Dockerfile.dashboard
+          - name: backup
+            dockerfile: infra/backup/Dockerfile
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/arm64
+          push: true
+          provenance: false
+          # Repository variables (Settings → Secrets and variables → Actions → Variables). Public values only.
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+            NEXT_PUBLIC_CF_BEACON_TOKEN=${{ vars.NEXT_PUBLIC_CF_BEACON_TOKEN }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            NEXT_PUBLIC_STATUS_URL=${{ vars.NEXT_PUBLIC_STATUS_URL }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha || github.sha }}
+          tags: |
+            ghcr.io/svamseekar/aos-${{ matrix.name }}:${{ github.event.workflow_run.head_sha || github.sha }}
+            ghcr.io/svamseekar/aos-${{ matrix.name }}:main
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

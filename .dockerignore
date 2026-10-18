@@ -1,0 +1,17 @@
+# Build context for infra/Dockerfile, infra/Dockerfile.dashboard and infra/backup/Dockerfile (repository root).
+# Keep local secrets and build output out of images: `COPY apps/dashboard/ ./` would otherwise copy .env.local.
+.git
+.github
+.local
+.superpowers
+.worktrees
+.claude
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+**/.next
+**/target
+**/test-results
+**/playwright-report
+docs

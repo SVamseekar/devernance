@@ -11,7 +11,7 @@ pg_image="pgvector/pgvector:0.8.6-pg16"
 work="$(mktemp -d)"
 
 cleanup() {
-  docker rm -f "$run_id-pg" "$run_id-s3" > /dev/null 2>&1 || true
+  docker rm -fv "$run_id-pg" "$run_id-s3" > /dev/null 2>&1 || true
   docker network rm "$net" > /dev/null 2>&1 || true
   docker image rm "$image" > /dev/null 2>&1 || true
   rm -rf "$work"
