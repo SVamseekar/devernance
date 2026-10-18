@@ -1,0 +1,12 @@
+flowchart LR
+  api["<b>api</b><br/>ghcr.io/svamseekar/aos-api:main<br/>default stack"]
+  backup["<b>backup</b><br/>ghcr.io/svamseekar/aos-backup:main<br/>default stack"]
+  cloudflared["<b>cloudflared</b><br/>cloudflare/cloudflared:2026.9.3<br/>default stack"]
+  dashboard["<b>dashboard</b><br/>ghcr.io/svamseekar/aos-dashboard:main<br/>default stack"]
+  postgres["<b>postgres</b><br/>pgvector/pgvector:0.8.6-pg16<br/>default stack"]
+  vol_pgdata[("volume: pgdata")]
+  api -->|"depends on (healthy)"| postgres
+  backup -->|"depends on (healthy)"| postgres
+  cloudflared -->|"depends on (started)"| dashboard
+  dashboard -->|"depends on (started)"| api
+  postgres -.->|"mounts /var/lib/postgresql/data"| vol_pgdata

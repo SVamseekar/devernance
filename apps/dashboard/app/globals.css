@@ -63,7 +63,7 @@
   }
 }
 
-/* Public site palette (docs/ref_images/product_website). Fixed colours: marketing pages do not follow the app theme. */
+/* Public site palette. Fixed colours: marketing pages do not follow the app theme. */
 @theme {
   --color-navy-950: #050a1c;
   --color-navy-900: #0a1230;

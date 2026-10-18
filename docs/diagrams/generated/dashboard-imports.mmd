@@ -1,0 +1,62 @@
+flowchart LR
+  app__public_pages_["app (public pages)<br/>37 files"]
+  app__root_layout_["app (root layout)<br/>8 files"]
+  app__dashboard_["app/(dashboard)<br/>15 files"]
+  app_api["app/api<br/>27 files"]
+  components["components<br/>29 files"]
+  components_auth["components/auth<br/>8 files"]
+  components_landing["components/landing<br/>5 files"]
+  components_marketing["components/marketing<br/>20 files"]
+  components_onboarding["components/onboarding<br/>1 files"]
+  components_settings["components/settings<br/>3 files"]
+  components_ui["components/ui<br/>8 files"]
+  content["content<br/>2 files"]
+  context["context<br/>1 files"]
+  hooks["hooks<br/>13 files"]
+  lib["lib<br/>80 files"]
+  middleware["middleware<br/>1 files"]
+  app__public_pages_ -->|1| components
+  app__public_pages_ -->|5| components_auth
+  app__public_pages_ -->|28| components_landing
+  app__public_pages_ -->|47| components_marketing
+  app__public_pages_ -->|1| components_ui
+  app__public_pages_ -->|1| content
+  app__public_pages_ -->|76| lib
+  app__root_layout_ -->|2| components
+  app__root_layout_ -->|2| components_landing
+  app__root_layout_ -->|11| components_marketing
+  app__root_layout_ -->|1| content
+  app__root_layout_ -->|12| lib
+  app__dashboard_ -->|19| components
+  app__dashboard_ -->|1| components_onboarding
+  app__dashboard_ -->|3| components_settings
+  app__dashboard_ -->|31| components_ui
+  app__dashboard_ -->|11| context
+  app__dashboard_ -->|13| hooks
+  app__dashboard_ -->|37| lib
+  app_api -->|35| lib
+  components -->|18| components_ui
+  components -->|6| context
+  components -->|4| hooks
+  components -->|64| lib
+  components_auth -->|1| components_marketing
+  components_auth -->|6| components_ui
+  components_auth -->|9| lib
+  components_landing -->|5| components_marketing
+  components_landing -->|6| lib
+  components_marketing -->|1| components_landing
+  components_marketing -->|38| lib
+  components_onboarding -->|1| components
+  components_onboarding -->|2| components_ui
+  components_onboarding -->|1| hooks
+  components_onboarding -->|9| lib
+  components_settings -->|6| components_ui
+  components_settings -->|6| lib
+  components_ui -->|6| lib
+  content -->|1| lib
+  context -->|3| hooks
+  context -->|5| lib
+  hooks -->|37| lib
+  lib -->|2| app__root_layout_
+  lib -->|2| components_marketing
+  lib -->|1| content
