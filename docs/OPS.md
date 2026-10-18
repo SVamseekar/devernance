@@ -110,6 +110,54 @@ docker compose -f infra/docker-compose.yml --env-file .env.example up --build
 - Deploy / rollback / Vercel matrix: `docs/DEPLOYMENT.md`
 - Terraform skeleton validate (no cloud creds): `./scripts/terraform-validate.sh`
 
+## Production backups (RPO 24 h, RTO 4 h target)
+
+The `backup` service in `infra/docker-compose.prod.yml` runs `pg_dump` → gzip → [age](https://age-encryption.org)
+→ rclone into the EU-jurisdiction R2 bucket `aos-backups`:
+
+| Kind | When | R2 prefix | Retention (R2 lifecycle rule) | Heartbeat |
+|---|---|---|---|---|
+| `daily` | 02:15 UTC | `daily/` | 15 days | yes |
+| `weekly` | Sundays 02:45 UTC | `weekly/` | 60 days | yes |
+| `pre-deploy` | before the updater starts a new API image | `pre-deploy/` | 15 days | no |
+
+- Backups are encrypted to the public key in `BACKUP_AGE_RECIPIENT`. The private key (`aos-backup.key`) lives in
+  the password manager and offline. It is never on the VM.
+- Every successful daily or weekly backup pings `BACKUP_HEARTBEAT_URL`. The UptimeRobot heartbeat monitor alerts when no
+  ping arrives for 26 hours (expired R2 credentials, full disk, stopped container).
+- A dump under 1 KB is refused and not uploaded.
+- Run one by hand: `docker compose -f docker-compose.prod.yml --env-file .env exec backup backup.sh daily`.
+- Tests: `infra/test/backup_test.sh` (behaviour, stubbed tools) and `infra/test/backup_integration_test.sh` (real
+  Postgres → S3 → restore round trip).
+
+### Restore from backup
+
+Run from `/opt/aos`. `C` stands for `docker compose -f docker-compose.prod.yml --env-file .env`.
+
+1. Stop writers: `C stop api dashboard`
+2. Recreate the database from the maintenance database (you cannot drop the database you are connected to):
+   `C exec postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -c "drop database \"$POSTGRES_DB\"" -c "create database \"$POSTGRES_DB\""'`
+3. Pick the object: `C exec backup sh -c 'RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare RCLONE_CONFIG_R2_ENDPOINT=$BACKUP_R2_ENDPOINT RCLONE_CONFIG_R2_ACCESS_KEY_ID=$BACKUP_R2_ACCESS_KEY_ID RCLONE_CONFIG_R2_SECRET_ACCESS_KEY=$BACKUP_R2_SECRET_ACCESS_KEY rclone lsf -R r2:$BACKUP_R2_BUCKET'`
+4. Copy the private key in, restore, and remove the key:
+   `docker cp aos-backup.key "$(C ps -q backup)":/tmp/k`
+   `C exec backup restore.sh daily/<file> /tmp/k`
+   `C exec backup rm -f /tmp/k`
+5. Start the app: `C up -d api dashboard`. Wait for `C ps` to show `api` healthy.
+6. Verify: sign in on the site, open an evidence pack, and check the audit chain with
+   `GET /api/v1/audit-events/verify-chain` while signed in → `"valid": true`.
+
+If the restore follows a failed deploy, set `AOS_TAG` in `.env` to the last good image SHA before step 5, because the
+newer image's Flyway migrations may not run against the older schema.
+
+### Restore drill log
+
+Drill on staging before launch, then monthly. Take a backup, destroy the volume (`C down && docker volume rm aos_pgdata`),
+restore with the runbook above, and time it.
+
+| Date | Environment | Backup used | Duration | Result |
+|---|---|---|---|---|
+| | | | | |
+
 ## Regulatory change monitoring (Part 14)
 
 Near-real-time **poll** every `assurance.reg-monitor.poll-interval-ms` (default 60s

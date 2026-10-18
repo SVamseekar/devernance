@@ -108,22 +108,56 @@ Smoke (API up, password login):
 
 ---
 
-## 2. Production topology (recommended)
+## 2. Production topology (Oracle A1 + Cloudflare)
+
+Target topology from the launch plan. Until the cutover (section 4.E) the live site still runs on Vercel (section 4.C).
 
 ```text
-[ Browser ]
+[ Browser / CI bots ]
     │ HTTPS
     ▼
-[ Vercel — apps/dashboard ]  ←── primary UI / landing / BFF proxy
-    │ server-side ASSURANCE_API_BASE_URL
+[ Cloudflare — DNS, WAF rate limit, Turnstile, Web Analytics ]
+    │ Cloudflare Tunnel (outbound from the VM; no inbound ports)
     ▼
-[ API host — Spring Boot container ]  ←── Cloud Run / ECS / VM
-    │
-    ├── Postgres (managed, encryption at rest)
-    └── Optional S3/GCS bucket (evidence binaries)
+[ Oracle Cloud Always Free A1 VM, EU home region — Docker Compose, /opt/aos ]
+    ├── cloudflared ──► dashboard:3000   (Next.js: marketing, app, BFF, CI and webhook passthrough)
+    │                       │ http://api:8080 (internal network only)
+    │                       ▼
+    ├── api (Spring Boot, evgraph CLI baked in) ──► postgres (pgvector, volume aos_pgdata)
+    │                                          └──► R2 bucket aos-evidence (EU)
+    └── backup (pg_dump → age → R2 bucket aos-backups, EU)
+
+[ GitHub Actions ] ── CI green on main ──► images.yml ──► GHCR aos-{api,dashboard,backup}:{sha,main}
+[ VM aos-update.timer ] ── every 5 min ──► pull, pre-deploy backup, health-gated roll-forward
 ```
 
-Terraform under `infra/terraform/` is a **skeleton** (validate/fmt only). Fill provider modules before any cloud apply — see `infra/terraform/README.md`.
+| Piece | File | Notes |
+|---|---|---|
+| Stack | `infra/docker-compose.prod.yml` | No host ports; each service gets only its own variables |
+| Environment | `infra/.env.prod.example` → `/opt/aos/.env` (`chmod 600`) | Every variable the stack reads |
+| Images | `.github/workflows/images.yml` | `linux/arm64`; `NEXT_PUBLIC_*` from repository variables |
+| Deploys | `infra/deploy/aos-update.{sh,service,timer}` | Rejected images are remembered, not retried |
+| Backups | `infra/backup/` | Runbook and drill log: [OPS.md](./OPS.md#production-backups-rpo-24-h-rto-4-h-target) |
+| Uptime | `GET /api/health` on the dashboard | 200 when the API is UP, 503 otherwise; no details |
+| Errors | Sentry (`SENTRY_DSN`) | Off when blank; personal data and traces always off |
+
+Staging uses the same stack on a GCP `t2a-standard-2` Spot VM until 22 Nov 2026, then runs locally.
+
+Terraform under `infra/terraform/` is a **skeleton** (validate/fmt only) and is not used by this topology.
+
+### First install on a VM (owner)
+
+1. Ubuntu 24.04 aarch64, SSH key only, `ufw` allowing only 22, Docker Engine + Compose v2, `/opt/aos` owned by `ubuntu`.
+2. GHCR access: make the three `aos-*` packages public, or `docker login ghcr.io` with a read-only token.
+3. Copy files:
+   `scp infra/docker-compose.prod.yml infra/deploy/aos-update.sh ubuntu@<vm>:/opt/aos/` and
+   `scp infra/deploy/aos-update.service infra/deploy/aos-update.timer ubuntu@<vm>:/tmp/`
+4. Create `/opt/aos/.env` from `infra/.env.prod.example` (`chmod 600`). Optional `/opt/aos/deploy.env` with
+   `DEPLOY_ALERT_URL=<Discord webhook>`.
+5. `cd /opt/aos && docker compose -f docker-compose.prod.yml --env-file .env up -d`, then wait for `docker compose ps`
+   to show `api` healthy (first boot downloads the embedding model; allow 3 minutes).
+6. `sudo mv /tmp/aos-update.* /etc/systemd/system/ && chmod +x /opt/aos/aos-update.sh && sudo systemctl daemon-reload && sudo systemctl enable --now aos-update.timer`
+7. Verify: `https://app.<domain>/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
 
 ---
 
@@ -166,7 +200,7 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 5. **Migrations:** Flyway runs automatically on application startup. Do not run ad-hoc SQL that races the API.
 6. Confirm `GET /actuator/health` is UP before pointing the dashboard at the API.
 
-### C. Dashboard (Vercel)
+### C. Dashboard (Vercel — current, until the cutover in E)
 
 **Production project (canonical):** `eu-ai-assurance`
 
@@ -218,6 +252,16 @@ ASSURANCE_API_BASE=https://api.example.com \
 API_KEY=... SYSTEM_ID=... ./scripts/ci-release-gate.sh
 ```
 
+### E. Cutover from Vercel and the Dell lab (owner)
+
+1. With production healthy on Oracle, add OAuth redirect URIs
+   `https://app.<domain>/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
+2. Redirect `euassuranceai.souravamseekar.com/*` → `https://<domain>/$1` (301, path and query kept).
+3. Start production with a fresh database unless a real customer used the old system (the Dell database holds demo
+   data). To migrate: `pg_dump` the Dell Postgres and restore with the [OPS.md](./OPS.md#restore-from-backup) runbook.
+4. After 7 days of clean redirects, remove both Vercel projects and stop the Dell lab tunnel.
+5. Update the README "Live product" link.
+
 ---
 
 ## 5. Migration order & rollback
@@ -232,8 +276,8 @@ API_KEY=... SYSTEM_ID=... ./scripts/ci-release-gate.sh
 
 | Layer | Strategy |
 |---|---|
-| Dashboard (Vercel) | Instant rollback to previous deployment in Vercel UI / CLI |
-| API container | Redeploy previous image tag |
+| Dashboard (VM) | Set `AOS_TAG=<previous sha>` in `/opt/aos/.env`, then `docker compose ... up -d dashboard` |
+| API container | Automatic when the new image is unhealthy (`aos-update.sh`); by hand: `AOS_TAG=<previous sha>` |
 | Database | **Prefer expand/contract.** Flyway undo is not wired. Destructive down-migrations are not provided — restore from snapshot/PITR if a migration corrupts data |
 | Secrets | Rotate in secret manager; rolling restart API so all tasks see the new value |
 
@@ -253,7 +297,7 @@ docker run -p 3000:3000 \
   eu-ai-assurance-dashboard
 ```
 
-Requires `DOCKER_BUILD=1` standalone output (set in the Dockerfile). Prefer Vercel for TLS, previews, and edge caching.
+Requires `DOCKER_BUILD=1` standalone output (set in the Dockerfile). In production this image runs behind Cloudflare Tunnel (section 2).
 
 ---
 

@@ -65,6 +65,44 @@ Evidence upload → query smoke (API must be healthy):
 
 Full runbook: [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
 
+## Production and staging stack
+
+`docker-compose.prod.yml` runs one environment (Oracle A1 production or the GCP staging VM) from `/opt/aos`:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env up -d
+```
+
+| Service | Image | Memory | Notes |
+|---|---|---|---|
+| `postgres` | `pgvector/pgvector:0.8.6-pg16` | 1.5 GB | volume `aos_pgdata` |
+| `api` | `ghcr.io/svamseekar/aos-api:${AOS_TAG}` | 3 GB | `postgres` profile; reachable only from the dashboard |
+| `dashboard` | `ghcr.io/svamseekar/aos-dashboard:${AOS_TAG}` | 768 MB | BFF proxies to `http://api:8080` |
+| `cloudflared` | `cloudflare/cloudflared:2026.9.3` | 128 MB | outbound tunnel; public hostnames point at `dashboard:3000` only |
+| `backup` | `ghcr.io/svamseekar/aos-backup:${AOS_TAG}` | 256 MB | nightly/weekly encrypted dumps to R2 (`docs/OPS.md`) |
+
+- No service publishes a host port. Open only TCP 22 on the VM.
+- Each service gets only the variables it uses. Fill `/opt/aos/.env` from `.env.prod.example` (`chmod 600`).
+- All services restart `unless-stopped`; Docker logs rotate at 10 MB × 5 per service.
+- Contract test (no daemon needed): `infra/test/compose_contract_test.sh`.
+
+### Images and deploys
+
+- `.github/workflows/images.yml` builds `aos-api`, `aos-dashboard` and `aos-backup` for `linux/arm64` after CI passes on
+  `main`, and pushes `:<sha>` and `:main` to GHCR. Public build values (`NEXT_PUBLIC_*`) come from repository variables.
+- `deploy/aos-update.sh` runs every 5 minutes (`deploy/aos-update.timer`). For a new API image it takes a `pre-deploy`
+  backup, starts the new API, and keeps it only when the container turns healthy within 5 minutes. Otherwise it restores
+  the previous image, writes the rejected id to `/opt/aos/.rejected-api-image` (so it is not retried), and posts to the
+  Discord webhook in `DEPLOY_ALERT_URL` (`/opt/aos/deploy.env`). Dashboard and backup images roll forward without a backup.
+- Pin a build: set `AOS_TAG=<sha>` in `/opt/aos/.env`; the updater then only follows that tag.
+
+### Tests
+
+```bash
+infra/test/run.sh                      # shellcheck, compose contract, backup and updater behaviour (no Docker daemon)
+RUN_DOCKER_TESTS=1 infra/test/run.sh   # adds the real Postgres → S3 → restore round trip (CI runs this)
+```
+
 ## Terraform skeleton
 
 ```bash
@@ -89,8 +127,12 @@ docker run --rm -v "$PWD":/work -w /work/infra/terraform hashicorp/terraform:1.9
 infra/
   docker-compose.yml
   docker-compose.override.yml
+  docker-compose.prod.yml   # production / staging stack
+  .env.prod.example
   Dockerfile
   Dockerfile.dashboard
+  backup/             # backup sidecar image (pg_dump → age → R2)
+  test/               # infra tests
   terraform/          # network, database, secrets, compute stubs
   README.md
 ```

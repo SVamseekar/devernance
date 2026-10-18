@@ -1,0 +1,13 @@
+[Unit]
+Description=Assurance OS image updater
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Optional: DEPLOY_ALERT_URL=<Discord webhook> for failed-deploy alerts.
+EnvironmentFile=-/opt/aos/deploy.env
+ExecStart=/opt/aos/aos-update.sh
+# Pulls plus a 5-minute health wait; never let a hung run block the timer forever.
+TimeoutStartSec=20min
