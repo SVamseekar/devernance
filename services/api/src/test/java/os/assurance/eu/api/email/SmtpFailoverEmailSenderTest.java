@@ -19,7 +19,7 @@ class SmtpFailoverEmailSenderTest {
   void usesPrimaryWhenItWorks() {
     JavaMailSender primary = mock(JavaMailSender.class);
     JavaMailSender fallback = mock(JavaMailSender.class);
-    new SmtpFailoverEmailSender(primary, fallback, "Assurance OS <no-reply@example.com>").send(msg);
+    new SmtpFailoverEmailSender(primary, fallback, "Devernance <no-reply@example.com>").send(msg);
     verify(primary).send(any(SimpleMailMessage.class));
     verify(fallback, never()).send(any(SimpleMailMessage.class));
   }

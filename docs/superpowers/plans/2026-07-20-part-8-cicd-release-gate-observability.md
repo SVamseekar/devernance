@@ -4,7 +4,7 @@
 
 **Goal:**  
 1) Every PR runs full quality gates.  
-2) External CI/CD can call Assurance OS for a machine-readable release decision (EvalForge / PRD §10).  
+2) External CI/CD can call Devernance for a machine-readable release decision (EvalForge / PRD §10).  
 3) Operators have metrics + a minimal observability surface (Phase 6).
 
 **Depends on:** Part 1 (CI skeleton), Part 5 (stable gate + controls).

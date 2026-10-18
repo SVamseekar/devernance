@@ -60,7 +60,7 @@ if ($Status) {
     exit 0
 }
 
-Write-Host "==> EU AI Assurance OS — Docker backend only (Dell)" -ForegroundColor Cyan
+Write-Host "==> Devernance — Docker backend only (Dell)" -ForegroundColor Cyan
 Write-Host "    Project: eu-ai-assurance-dell"
 Write-Host "    API host port: 9080  Postgres host port: 5433"
 Write-Host ""

@@ -8,8 +8,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @org.springframework.boot.context.properties.EnableConfigurationProperties(
     os.assurance.eu.api.evidence.FileStorageProperties.class)
-public class EuAiAssuranceApiApplication {
+public class DevernanceApiApplication {
   public static void main(String[] args) {
-    SpringApplication.run(EuAiAssuranceApiApplication.class, args);
+    SpringApplication.run(DevernanceApiApplication.class, args);
   }
 }

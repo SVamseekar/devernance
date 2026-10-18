@@ -37,7 +37,7 @@ public final class CertificationReadinessPdfRenderer {
       Font headingFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
       Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
 
-      document.add(new Paragraph("EU AI Assurance OS — Certification Readiness Report", titleFont));
+      document.add(new Paragraph("Devernance — Certification Readiness Report", titleFont));
       document.add(new Paragraph(" ", bodyFont));
       document.add(new Paragraph(report.disclaimer(), bodyFont));
       document.add(new Paragraph(" ", bodyFont));

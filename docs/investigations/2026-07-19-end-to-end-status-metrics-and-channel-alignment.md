@@ -1,4 +1,4 @@
-# Investigation Report — EU AI Assurance OS
+# Investigation Report — Devernance
 
 **Date:** 2026-07-19 (UTC)  
 **Investigator:** Grok Code session (repo `eu-ai-assurance-os`)  
@@ -46,7 +46,7 @@ Do **not** publish metrics that claim “Phase 5 complete / notifications / V10�
 
 ## 1. GitHub / Git setup — current vs industry-grade
 
-**Repo:** https://github.com/SVamseekar/eu-ai-assurance-os  
+**Repo:** https://github.com/SVamseekar/devernance  
 **Default branch:** `main`  
 **Visibility:** public  
 **Homepage URL:** empty (should be `https://euassuranceai.souravamseekar.com`)  
@@ -159,7 +159,7 @@ Risk classification API **accepts** a class + basis from the caller; it is **not
 | Dashboard Next middleware hard-gate | **No** | Pages return 200; client redirects on API 401 |
 | Live API without auth | 401 on proxy | Good |
 
-**OAuth finding for user point 15:** OAuth is **not** end-to-end. Sister product WorkforceGuard has Google + Microsoft OAuth with production smoke tests and `OAUTH_REDIRECT_BASE_URL`. EU AI Assurance only has first-party credentials. SSO/OIDC remains Phase 6 roadmap.
+**OAuth finding for user point 15:** OAuth is **not** end-to-end. Sister product WorkforceGuard has Google + Microsoft OAuth with production smoke tests and `OAUTH_REDIRECT_BASE_URL`. Devernance only has first-party credentials. SSO/OIDC remains Phase 6 roadmap.
 
 ### 2.5 Live marketing surface (2026-07-19)
 
@@ -221,7 +221,7 @@ Landing **missing vs sister products / industry:**
 | Landing | Live + `apps/dashboard/lib/landing-content.ts` | Code |
 | Codebase | This repo | Source of truth for claims |
 
-### 3.2 Claim matrix for **EU AI Assurance OS only**
+### 3.2 Claim matrix for **Devernance only**
 
 Legend: **OK** accurate · **STALE** once true / partial · **WRONG** false or overstated · **MISSING** should exist · **N/A**
 
@@ -274,9 +274,9 @@ Use a single file (planned): `docs/METRICS_CANONICAL.md` — same pattern as Wor
 **Suggested freeze fields (re-measure on freeze day):**
 
 ```text
-Product: EU AI Assurance OS
+Product: Devernance
 Domain: https://euassuranceai.souravamseekar.com
-Repo: https://github.com/SVamseekar/eu-ai-assurance-os
+Repo: https://github.com/SVamseekar/devernance
 Backend: Java 17 · Spring Boot 3.3.7
 Frontend: Next.js 16.x · React 19 · TypeScript
 Embeddings: DJL + ONNX Runtime · sentence-transformers/all-MiniLM-L6-v2 (postgres profile);
@@ -339,7 +339,7 @@ Phases complete (after WIP): 0–5; Phase 6 partial (password auth only)
 
 Comparable positioning: Vanta / Drata / OneTrust / Credo AI style — **enterprise demo sales**, not consumer monthly SaaS.
 
-**Recommended refunds stance for EU AI Assurance OS** (align to WorkforceGuard, not Aequitas):
+**Recommended refunds stance for Devernance** (align to WorkforceGuard, not Aequitas):
 
 > Sold to organisations after a tailored demo and scoping conversation. Cancellation and refund terms are set out in the organisation’s order form or statement of work. Contact `euassuranceai@souravamseekar.com` (or chosen alias) for billing questions. Not a consumer app; no self-serve instant refunds page promising 30-day money-back unless you productise self-serve billing later.
 
@@ -374,7 +374,7 @@ CTA hierarchy:
 | Who it’s for | GitHub | Refunds | Portfolio (souravamseekar.com) |
 | Open dashboard / Sign in | Docs (when public) | Disclaimer | LinkedIn (optional) |
 
-Copyright: `© {year} EU AI Assurance OS · Marti Soura Vamseekar` (or MSV AI Labs if brand requires).
+Copyright: `© {year} Devernance · Marti Soura Vamseekar` (or MSV AI Labs if brand requires).
 
 ### 5.2 SEO current score
 
@@ -430,10 +430,10 @@ Copyright: `© {year} EU AI Assurance OS · Marti Soura Vamseekar` (or MSV AI La
 
 ### 8.1 CV (`Marti_Soura_Vamseekar_CV.docx` / `.pdf`)
 
-Replace EU AI Assurance OS bullets with (after Phase 5 merge, re-count numbers):
+Replace Devernance bullets with (after Phase 5 merge, re-count numbers):
 
 ```text
-EU AI Assurance OS — Governance Control Plane for EU AI Act  ·  GitHub
+Devernance — Governance Control Plane for EU AI Act  ·  GitHub
 Spring Boot 3.3 · Java 17 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings · Multi-tenant
 
 • Governance: AI system registry with guided EU AI Act risk classification
@@ -454,7 +454,7 @@ Update metrics array to match canon; drop any overclaim; ensure stack list match
 
 ### 8.3 Pitch deck (`MSV_AI_Labs_Pitch_Deck.pdf`)
 
-EU AI Assurance slide:
+Devernance slide:
 
 - Key metrics: prefer **PASS/REVIEW/BLOCKED**, **Flyway V1–V9**, **40 API endpoints**, **JWT + API keys**, **DJL/ONNX RAG**, **HMAC eval callbacks** — not “HMAC audit streams”.  
 - “Live since 2024” → verify or change to 2026.  

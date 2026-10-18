@@ -13,7 +13,7 @@ export interface ProvisionPage {
 }
 
 export interface ProvisionGuide {
-  /** Control codes from the Assurance OS catalog that this provision maps to. */
+  /** Control codes from the Devernance catalog that this provision maps to. */
   controls: string[];
   evidence: string[];
   gate: string;

@@ -51,7 +51,7 @@ Produce a short `docs/investigations/2026-07-19-channel-update-instructions.md` 
 
 1. **CV DOCX/PDF** — path `Documents/Marti_Soura_Vamseekar_CV.docx`  
 2. **Portfolio** — `Portfolio/martisouravamseekar-portfolio/src/data/projects.ts` EU AI entry  
-3. **Pitch deck** — EU AI Assurance slide only; keep NVIDIA framing  
+3. **Pitch deck** — Devernance slide only; keep NVIDIA framing  
 
 Include before/after for each bullet.
 

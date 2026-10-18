@@ -19,7 +19,7 @@
 | Pitch deck | `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck.pdf` |
 | Landing (code) | `apps/dashboard` — metrics strip via `lib/metrics-canon.ts` (Part 2) |
 | Live product | https://euassuranceai.souravamseekar.com |
-| GitHub | https://github.com/SVamseekar/eu-ai-assurance-os |
+| GitHub | https://github.com/SVamseekar/devernance |
 
 ---
 
@@ -59,7 +59,7 @@
 
 ---
 
-## A. CV — replace EU AI Assurance OS block
+## A. CV — replace Devernance block
 
 ### Remove / fix these claims
 
@@ -74,7 +74,7 @@
 ### Paste-ready replacement (English)
 
 ```text
-EU AI Assurance OS — Governance Control Plane for EU AI Act  ·  GitHub
+Devernance — Governance Control Plane for EU AI Act  ·  GitHub
 Spring Boot 3.3 · Java 17 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings · Multi-tenant
 
 • Governance: AI system registry with guided EU AI Act risk classification
@@ -97,7 +97,7 @@ Also fix **summary line** if it over-indexes wrong tech (FAISS / Next 14) for th
 
 ---
 
-## B. Portfolio — `projects.ts` EU AI Assurance OS entry
+## B. Portfolio — `projects.ts` Devernance entry
 
 ### Before (stale patterns to kill)
 
@@ -134,11 +134,11 @@ Prefer `"2026 – Present"` unless you have independent proof of 2024 production
 ### Links
 
 - Live: `https://euassuranceai.souravamseekar.com`  
-- GitHub: `https://github.com/SVamseekar/eu-ai-assurance-os`  
+- GitHub: `https://github.com/SVamseekar/devernance`  
 
 ---
 
-## C. Pitch deck — EU AI Assurance OS slide
+## C. Pitch deck — Devernance slide
 
 ### Keep
 

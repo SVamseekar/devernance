@@ -1,12 +1,12 @@
-# EU AI Assurance OS
+# Devernance
 
-[![CI](https://github.com/SVamseekar/eu-ai-assurance-os/actions/workflows/ci.yml/badge.svg)](https://github.com/SVamseekar/eu-ai-assurance-os/actions/workflows/ci.yml)
+[![CI](https://github.com/SVamseekar/devernance/actions/workflows/ci.yml/badge.svg)](https://github.com/SVamseekar/devernance/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 **Live product:** [https://euassuranceai.souravamseekar.com](https://euassuranceai.souravamseekar.com)
-**Repo:** [github.com/SVamseekar/eu-ai-assurance-os](https://github.com/SVamseekar/eu-ai-assurance-os)
+**Repo:** [github.com/SVamseekar/devernance](https://github.com/SVamseekar/devernance)
 
-EU AI Assurance OS is a multi-tenant **governance control plane** for teams shipping AI systems into the EU market. Production surface:
+Devernance (formerly EU AI Assurance OS) is a multi-tenant **governance control plane** for teams shipping AI systems into the EU market. Development and governance, hand in hand. Production surface:
 
 | Surface | What it is |
 |---|---|
@@ -143,6 +143,7 @@ See [`docs/ROADMAP.md`](./docs/ROADMAP.md) and [`docs/superpowers/plans/2026-07-
 ## Documentation
 
 - [`docs/METRICS_CANONICAL.md`](./docs/METRICS_CANONICAL.md) — **authoritative** measured platform numbers
+- [`docs/BRAND.md`](./docs/BRAND.md) — name rules, identifiers that keep the old name, domain-day checklist
 - [`docs/PRD.md`](./docs/PRD.md) — product requirements
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) — phased delivery and honesty matrix
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — system design

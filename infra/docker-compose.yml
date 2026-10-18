@@ -1,4 +1,4 @@
-# Full local stack for EU AI Assurance OS (Part 9).
+# Full local stack for Devernance (Part 9).
 #
 # One-command (from repo root or this directory):
 #   docker compose -f infra/docker-compose.yml --env-file .env.example up --build
@@ -15,6 +15,7 @@
 #   minio     ~256MB RAM
 #   dashboard ~512MB–1GB RAM
 
+# Project name predates the Devernance rename. Volumes are prefixed with it, so renaming it orphans existing data.
 name: eu-ai-assurance
 
 services:

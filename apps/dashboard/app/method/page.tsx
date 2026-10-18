@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/site-config";
 
 const title = "Methodology";
 const description =
-  "How Assurance OS maps AI systems to the EU AI Act: a pinned legal corpus, mappings a person accepts, control modes for provisions in force, and checks that fail closed when evidence is missing.";
+  "How Devernance maps AI systems to the EU AI Act: a pinned legal corpus, mappings a person accepts, control modes for provisions in force, and checks that fail closed when evidence is missing.";
 const path = "/method";
 
 export const metadata = marketingMetadata({

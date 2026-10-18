@@ -729,7 +729,7 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EU AI Assurance OS",
+  title: "Devernance",
   description: "Governance control plane for AI systems in the European market",
 };
 
@@ -805,7 +805,7 @@ export function Sidebar({ blockedCount }: SidebarProps) {
           EA
         </div>
         <div>
-          <p className="font-bold text-sm leading-tight">EU AI Assurance</p>
+          <p className="font-bold text-sm leading-tight">Devernance</p>
           <p className="text-xs text-muted-foreground mt-0.5">Governance control plane</p>
         </div>
       </div>
@@ -932,7 +932,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   function handleExportPack() {
     const pack = {
-      product: "EU AI Assurance OS",
+      product: "Devernance",
       generatedAt: new Date().toISOString(),
       systems: systems ?? MOCK_SYSTEMS,
     };

@@ -1,5 +1,5 @@
 [Unit]
-Description=Assurance OS image updater
+Description=Devernance image updater
 After=docker.service network-online.target
 Requires=docker.service
 Wants=network-online.target

@@ -62,7 +62,7 @@ public class AccountController {
     UUID tenantId = tenantContext.tenantId();
     export.recordExport(tenantId);
     return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"assurance-os-export.zip\"")
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"devernance-export.zip\"")
         .contentType(MediaType.parseMediaType("application/zip"))
         .body(out -> export.writeTo(tenantId, out));
   }

@@ -28,7 +28,7 @@ Create App Router pages:
 **Refunds copy (use this shape):**
 
 ```text
-EU AI Assurance OS is sold to organisations on an enterprise basis following a
+Devernance is sold to organisations on an enterprise basis following a
 tailored demo and scoping conversation.
 
 Cancellation and refund terms are set out in your organisation's order form or

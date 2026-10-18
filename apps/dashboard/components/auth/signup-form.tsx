@@ -44,7 +44,7 @@ export function SignupForm({ planIntent = null }: { planIntent?: PlanIntent | nu
     const body = await res.json().catch(() => null);
     setError(
       res.status === 503
-        ? "Assurance OS is temporarily unavailable. Try again shortly."
+        ? "Devernance is temporarily unavailable. Try again shortly."
         : typeof body?.error === "string"
           ? body.error
           : "Could not create the workspace. Please try again.",

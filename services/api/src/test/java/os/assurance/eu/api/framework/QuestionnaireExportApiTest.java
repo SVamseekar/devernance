@@ -40,7 +40,7 @@ import os.assurance.eu.api.tenant.UserJpaRepository;
 })
 @AutoConfigureMockMvc
 class QuestionnaireExportApiTest {
-  static final String MANUAL = "Not recorded in Assurance OS — answer manually.";
+  static final String MANUAL = "Not recorded in Devernance — answer manually.";
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper json;
@@ -187,7 +187,7 @@ class QuestionnaireExportApiTest {
         .andReturn().getResponse().getContentAsByteArray();
     String csv = new String(body, StandardCharsets.UTF_8);
     assertThat(csv).startsWith("﻿id,topic,question,answer,status,evidence\r\n");
-    assertThat(csv).contains("Not recorded in Assurance OS — answer manually.");
+    assertThat(csv).contains("Not recorded in Devernance — answer manually.");
     // The system name carries a comma and quotes; the overview answer must stay one quoted cell.
     assertThat(csv).contains("\"Claims, \"\"triage\"\" is owned by Ops.");
     assertThat(csv.split("\r\n")).hasSize(26);

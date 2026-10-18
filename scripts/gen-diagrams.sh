@@ -62,7 +62,7 @@ fi
 
 if $WITH_DB; then
   echo "==> ER diagram (throwaway Postgres, Flyway migrations, SchemaSpy)"
-  NET="eu-ai-assurance-diagrams"
+  NET="devernance-diagrams"
   PG="$NET-pg"
   SCHEMA_TMP="$(mktemp -d)"
   chmod 777 "$SCHEMA_TMP"

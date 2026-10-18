@@ -84,11 +84,11 @@ public class DemoWorkspaceSeeder implements ApplicationRunner {
     }
     Instant now = Instant.now();
     tenants.findById(DemoProperties.DEMO_TENANT_ID).orElseGet(() ->
-        tenants.save(new TenantEntity(DemoProperties.DEMO_TENANT_ID, "Assurance OS demo", "demo", "EU", now)));
+        tenants.save(new TenantEntity(DemoProperties.DEMO_TENANT_ID, "Devernance demo", "demo", "EU", now)));
     chainHeads.attachToNewTenant(DemoProperties.DEMO_TENANT_ID);
     users.findById(DemoProperties.DEMO_USER_ID).orElseGet(() -> {
       UserEntity viewer = new UserEntity(DemoProperties.DEMO_USER_ID, DemoProperties.DEMO_TENANT_ID,
-          "demo@assurance-os.invalid", UserRole.AUDITOR, null, now);
+          "demo@devernance.invalid", UserRole.AUDITOR, null, now);
       viewer.markEmailVerified(now);
       return users.save(viewer);
     });

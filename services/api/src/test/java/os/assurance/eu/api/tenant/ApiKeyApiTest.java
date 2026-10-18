@@ -8,7 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,7 @@ class ApiKeyApiTest {
   @Autowired JwtService jwt;
   @Autowired UserJpaRepository users;
   @Autowired TenantJpaRepository tenants;
+  @Autowired ApiKeyJpaRepository apiKeys;
 
   @BeforeEach
   void seed() {
@@ -76,11 +79,24 @@ class ApiKeyApiTest {
   void createdKeyHasTheDocumentedShapeAndAuthenticatesTheCiGate() throws Exception {
     JsonNode created = createKey("GitHub Actions");
     String key = created.get("key").asText();
-    assertThat(key).startsWith("aos_").hasSize(47);
+    assertThat(key).startsWith("dvn_").hasSize(47);
     assertThat(created.get("prefix").asText()).isEqualTo(key.substring(0, 12));
 
     String systemId = createSystem();
     mockMvc.perform(get("/api/v1/ci/release-gate").param("systemId", systemId).header("X-Api-Key", key))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void keysIssuedBeforeTheRenameStillAuthenticate() throws Exception {
+    byte[] bytes = new byte[32];
+    new SecureRandom().nextBytes(bytes);
+    String legacy = "aos_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    apiKeys.save(new ApiKeyEntity(UUID.randomUUID(), ApiKeyHasher.sha256Hex(legacy), TenantContext.DEFAULT_TENANT_ID,
+        ADMIN_ID, Instant.now(), "Pre-rename key", legacy.substring(0, 12)));
+
+    String systemId = createSystem();
+    mockMvc.perform(get("/api/v1/ci/release-gate").param("systemId", systemId).header("X-Api-Key", legacy))
         .andExpect(status().isOk());
   }
 
@@ -165,7 +181,7 @@ class ApiKeyApiTest {
 
   @Test
   void malformedKeysAreBadRequests() throws Exception {
-    mockMvc.perform(get("/api/v1/systems").header("X-Api-Key", "aos_too-short"))
+    mockMvc.perform(get("/api/v1/systems").header("X-Api-Key", "dvn_too-short"))
         .andExpect(status().isBadRequest());
   }
 

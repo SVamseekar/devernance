@@ -46,7 +46,7 @@ export function VerifyEmailForm() {
     const body = await res.json().catch(() => null);
     setError(
       res.status === 503
-        ? "Assurance OS is temporarily unavailable. Try again shortly."
+        ? "Devernance is temporarily unavailable. Try again shortly."
         : typeof body?.error === "string"
           ? body.error
           : "Could not confirm your email. Please try again.",

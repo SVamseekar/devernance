@@ -1,6 +1,6 @@
 # NARRATIVE BRIEF
 
-I built EU AI Assurance OS to solve a specific problem I kept encountering in production engineering: how do you convert the regulatory requirement of "can we legally ship this AI system into the EU" into an executable, machine-computable decision rather than a manual spreadsheet process and a folder of static PDFs?
+I built Devernance to solve a specific problem I kept encountering in production engineering: how do you convert the regulatory requirement of "can we legally ship this AI system into the EU" into an executable, machine-computable decision rather than a manual spreadsheet process and a folder of static PDFs?
 
 The EU AI Act establishes a risk-tiered compliance model. The higher an AI system's risk tier—from Minimal and Limited up to High and Prohibited—the more statutory evidence, model testing, data governance, and human sign-off an organization must produce prior to deployment. Conceptually, this framework is straightforward. In engineering reality, compliance evidence is fragmented across isolated teams using incompatible tools:
 - ML engineers measure benchmark evaluation scores and prompt versions in MLOps platforms.

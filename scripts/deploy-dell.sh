@@ -100,7 +100,7 @@ sync_tree() {
     return 0
   fi
 
-  local git_url="${DELL_GIT_URL:-https://github.com/SVamseekar/eu-ai-assurance-os.git}"
+  local git_url="${DELL_GIT_URL:-https://github.com/SVamseekar/devernance.git}"
   local git_ref="${DELL_GIT_REF:-main}"
 
   echo "==> Ensuring remote directory ${DELL_DIR}"

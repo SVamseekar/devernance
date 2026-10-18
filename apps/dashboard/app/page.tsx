@@ -33,7 +33,7 @@ const mappedTo =
     ? "Mapped to the EU AI Act, NIST AI RMF, and ISO/IEC 42001."
     : `Mapped to the EU AI Act${nistLive ? " and NIST AI RMF" : ""}; ${[!nistLive && "NIST AI RMF", !isoLive && "ISO/IEC 42001"].filter(Boolean).join(" and ")} crosswalks coming soon.`;
 
-const description = `Assurance OS reads the evidence your pipeline already produces — model cards, eval runs, data contracts, approvals — fails the release in CI when something is missing, and exports a signed evidence pack for your buyers and auditors. ${mappedTo}`;
+const description = `Devernance reads the evidence your pipeline already produces — model cards, eval runs, data contracts, approvals — fails the release in CI when something is missing, and exports a signed evidence pack for your buyers and auditors. ${mappedTo}`;
 
 /** Buyer stories from the launch spec, in order; unshipped parts are labelled. */
 const buyerStories = [
@@ -81,12 +81,14 @@ function jsonLd() {
       {
         "@type": "Organization",
         name: siteConfig.shortName,
+        alternateName: siteConfig.formerName,
         url: siteConfig.url,
         email: siteConfig.supportEmail,
       },
       {
         "@type": "SoftwareApplication",
         name: siteConfig.shortName,
+        alternateName: siteConfig.formerName,
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description,

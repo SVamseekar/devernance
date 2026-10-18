@@ -178,10 +178,10 @@ public class BootstrapData implements CommandLineRunner {
           List.of("Update chatbot disclosure copy"));
     }
     boolean dogfoodPresent = systems.findAll().stream()
-        .anyMatch(system -> "EU AI Assurance OS".equals(system.name()));
+        .anyMatch(system -> "Devernance".equals(system.name()));
     if (!dogfoodPresent) {
       seed(
-          "EU AI Assurance OS",
+          "Devernance",
           "MSV AI Labs",
           "Governance control plane with cited evidence RAG and assisted obligation mapping for operators of AI systems",
           RiskClass.LIMITED,

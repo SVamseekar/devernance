@@ -6,7 +6,7 @@ import { dashboardRoutes, landingNavLinks, publicRoutes, siteConfig } from "./si
 
 describe("siteConfig", () => {
   it("uses the product brand and a security contact", () => {
-    assert.equal(siteConfig.shortName, "Assurance OS");
+    assert.equal(siteConfig.shortName, "Devernance");
     assert.match(siteConfig.supportEmail, /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
     assert.match(siteConfig.securityEmail, /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
   });

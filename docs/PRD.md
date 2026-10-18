@@ -2,7 +2,7 @@
 
 ## 1. Vision
 
-EU AI Assurance OS helps organizations release AI systems in Europe with evidence, controls, and auditability. It acts as a release control plane that validates each AI system against EU AI Act-style risk obligations, GDPR privacy expectations, data governance checks, model evaluation gates, and human oversight workflows.
+Devernance helps organizations release AI systems in Europe with evidence, controls, and auditability. It acts as a release control plane that validates each AI system against EU AI Act-style risk obligations, GDPR privacy expectations, data governance checks, model evaluation gates, and human oversight workflows.
 
 ## 2. Target Users
 

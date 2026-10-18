@@ -1,6 +1,6 @@
 # Infrastructure (Part 9)
 
-Local Docker stack and Terraform skeleton for EU AI Assurance OS.
+Local Docker stack and Terraform skeleton for Devernance.
 
 ## One-command local stack
 

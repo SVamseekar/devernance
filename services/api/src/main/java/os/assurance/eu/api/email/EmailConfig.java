@@ -14,7 +14,7 @@ public class EmailConfig {
   EmailSender emailSender(
       Environment environment,
       @Value("${assurance.email.mode:log}") String mode,
-      @Value("${assurance.email.from:Assurance OS <no-reply@localhost>}") String from,
+      @Value("${assurance.email.from:Devernance <no-reply@localhost>}") String from,
       @Value("${assurance.email.primary.host:}") String primaryHost,
       @Value("${assurance.email.primary.port:587}") int primaryPort,
       @Value("${assurance.email.primary.username:}") String primaryUser,

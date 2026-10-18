@@ -1,4 +1,4 @@
-# Example: call Assurance OS release gate from a deploy pipeline.
+# Example: call Devernance release gate from a deploy pipeline.
 # This workflow is documentation / workflow_call sample — it does not run on every PR.
 #
 # Secrets (repository or environment):
@@ -41,7 +41,7 @@ on:
 
 jobs:
   release-gate:
-    name: Assurance OS release gate
+    name: Devernance release gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

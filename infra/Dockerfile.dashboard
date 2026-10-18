@@ -1,6 +1,6 @@
 # Production image for the Next.js dashboard (marketing site, app, and BFF), run by infra/docker-compose.prod.yml.
 # Build context: repository root
-#   docker build -f infra/Dockerfile.dashboard -t eu-ai-assurance-dashboard .
+#   docker build -f infra/Dockerfile.dashboard -t devernance-dashboard .
 # NEXT_PUBLIC_* values are inlined at build time; .github/workflows/images.yml passes them from repository variables.
 
 FROM node:22-alpine AS deps

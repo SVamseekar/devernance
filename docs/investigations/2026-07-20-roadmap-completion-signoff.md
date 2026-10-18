@@ -12,7 +12,7 @@
 | URL | Expectation | Status |
 |---|---|---|
 | https://euassuranceai.souravamseekar.com | Landing + dashboard shell | Live (Part 3 verified in metrics freeze) |
-| https://github.com/SVamseekar/eu-ai-assurance-os | Public repo | Live |
+| https://github.com/SVamseekar/devernance | Public repo | Live |
 
 API production host may be separate from the Vercel dashboard origin; treat Compose/local H2 as the reproducible CI path.
 

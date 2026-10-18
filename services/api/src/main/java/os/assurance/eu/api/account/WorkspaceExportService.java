@@ -57,7 +57,7 @@ public class WorkspaceExportService {
    */
   public void writeTo(UUID tenantId, OutputStream out) {
     try (ZipOutputStream zip = new ZipOutputStream(out)) {
-      write(zip, "README.txt", ("Assurance OS workspace export. One JSON file per table. Generated "
+      write(zip, "README.txt", ("Devernance workspace export. One JSON file per table. Generated "
           + clock.instant() + ".\n").getBytes(StandardCharsets.UTF_8));
       for (String delete : WorkspacePurgeJob.PURGE_SQL) {
         String select = delete.replaceFirst("^delete from", "select * from");

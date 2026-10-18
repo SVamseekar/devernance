@@ -28,7 +28,7 @@ import {
 
 import type { ReactNode } from "react";
 
-import { AssuranceMark } from "@/components/marketing/brand-icons";
+import { DevernanceMark } from "@/components/marketing/brand-icons";
 import { CheckDot } from "@/components/marketing/primitives";
 import { cn } from "@/lib/utils";
 
@@ -194,8 +194,8 @@ export function DashboardMock() {
       <div className="grid md:grid-cols-[12rem_minmax(0,1fr)]">
         <aside className="hidden border-r border-line bg-mist/60 p-3 md:block">
           <div className="mb-4 flex items-center gap-2 px-2 pt-1 text-xs font-bold text-ink">
-            <AssuranceMark className="h-5 w-5" />
-            Assurance OS
+            <DevernanceMark className="h-5 w-5" />
+            Devernance
           </div>
           <ul className="space-y-0.5">
             {sidebarItems.map((item) => (
@@ -291,7 +291,7 @@ export function EvidenceTableMock() {
       <div className="grid md:grid-cols-[11rem_minmax(0,1fr)]">
         <aside className="hidden border-r border-line bg-mist/60 p-4 md:block">
           <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <AssuranceMark className="h-5 w-5" /> Evidence
+            <DevernanceMark className="h-5 w-5" /> Evidence
           </p>
           <ul className="mt-4 space-y-1 text-xs text-ink-muted">
             {["All documents", "Model cards", "DPIAs", "Data contracts", "Policies", "Vendor documentation"].map((item, i) => (

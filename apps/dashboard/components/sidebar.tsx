@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/lib/site-config";
 import { useDashboard } from "@/context/dashboard-context";
 import { useOpenWorkflows } from "@/hooks/use-open-workflows";
 import {
@@ -57,7 +58,7 @@ export function Sidebar({ blockedCount }: SidebarProps) {
         <div className="w-7 h-7 rounded-lg bg-primary grid place-items-center flex-shrink-0">
           <ShieldCheck className="w-3.5 h-3.5 text-primary-foreground" />
         </div>
-        <span className="font-semibold text-sm">EU AI Assurance</span>
+        <span className="font-semibold text-sm">{siteConfig.shortName}</span>
       </div>
 
       {/* Navigation */}

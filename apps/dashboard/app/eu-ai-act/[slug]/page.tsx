@@ -129,13 +129,13 @@ export default async function ProvisionPage({ params }: Params) {
                         <code className="rounded bg-mist px-1.5 py-0.5 font-mono text-xs text-ink">{code}</code>
                       </span>
                     ))}{" "}
-                    {guide.controls.length > 1 ? "controls" : "control"} in the Assurance OS catalog.
+                    {guide.controls.length > 1 ? "controls" : "control"} in the Devernance catalog.
                   </p>
                 ) : null}
               </section>
 
               <section>
-                <h2 className="text-2xl font-bold tracking-tight text-ink">How Assurance OS gates it</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-ink">How Devernance gates it</h2>
                 <p className="mt-4 text-ink/85">{guide.gate}</p>
               </section>
 

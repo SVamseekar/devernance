@@ -20,7 +20,7 @@ export const COMMON_PAPER = {
 } as const;
 
 export const LEGAL = {
-  provider: `${siteConfig.ownerName}, trading as ${siteConfig.shortName}`,
+  provider: `${siteConfig.ownerName}, trading as ${siteConfig.shortName} (formerly ${siteConfig.formerName})`,
   service: `${siteConfig.shortName} hosted software (release gates, evidence records, evidence packs)`,
   /** Plan 08 default for an EU-facing product; the owner confirms with counsel. */
   governingLaw: "The laws of Ireland",

@@ -9,8 +9,8 @@ export function GithubIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Assurance OS mark: hexagonal ring. Solid fill: a gradient id breaks when another copy of the mark is hidden. */
-export function AssuranceMark(props: SVGProps<SVGSVGElement>) {
+/** Devernance mark: hexagonal ring. Solid fill: a gradient id breaks when another copy of the mark is hidden. */
+export function DevernanceMark(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" {...props}>
       <path d="M16 2 28.1 9v14L16 30 3.9 23V9Z" fill="#4f63ff" />

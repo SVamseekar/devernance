@@ -2,6 +2,12 @@
 
 Newest first. One entry per release of the hosted product.
 
+## 2026-10-18 — EU AI Assurance OS is now Devernance
+
+- New name, same product: development and governance, hand in hand. Workspaces, data and release gates are unchanged.
+- New API keys start with dvn_. Keys that start with aos_ keep working, so there is nothing to rotate.
+- Evidence packs and PDFs carry the new name. Packs you exported earlier still verify against the same public JWKS.
+
 ## 2026-10-04 — Self-serve plans and billing
 
 - Free, Team and Business plans with public prices, trials and checkout through Dodo Payments (Merchant of Record).

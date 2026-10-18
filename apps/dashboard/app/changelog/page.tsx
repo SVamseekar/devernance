@@ -7,7 +7,7 @@ import { marketingMetadata, webPageJsonLd } from "@/lib/seo";
 import { siteConfig } from "@/lib/site-config";
 
 const title = "Changelog";
-const description = "What changed in Assurance OS, newest first. One entry per release of the hosted product.";
+const description = "What changed in Devernance, newest first. One entry per release of the hosted product.";
 const path = "/changelog";
 
 export const metadata = marketingMetadata({ title, description, path });

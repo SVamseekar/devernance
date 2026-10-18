@@ -111,10 +111,10 @@ export const COMPARE_PAGES: ComparePage[] = [
     themLabel: "Credo AI",
     themChoice: "Credo AI",
     summary:
-      "How Assurance OS compares with Credo AI, using only facts from Credo AI's own site. Credo AI is an enterprise AI governance platform; Assurance OS is a self-serve release gate.",
+      "How Devernance compares with Credo AI, using only facts from Credo AI's own site. Credo AI is an enterprise AI governance platform; Devernance is a self-serve release gate.",
     intro: [
       "Credo AI describes itself as an AI governance platform that helps enterprises adopt, scale and govern AI, with customers in insurance, financial services, federal and healthcare.",
-      "Assurance OS is narrower: it gates AI releases in CI on real engineering evidence and hands out a signed evidence pack. If you need organisation-wide AI governance across many teams, Credo AI is built for that. If you need a release check you can start today, Assurance OS is.",
+      "Devernance is narrower: it gates AI releases in CI on real engineering evidence and hands out a signed evidence pack. If you need organisation-wide AI governance across many teams, Credo AI is built for that. If you need a release check you can start today, Devernance is.",
     ],
     rows: [
       {
@@ -172,10 +172,10 @@ export const COMPARE_PAGES: ComparePage[] = [
     themLabel: "Holistic AI",
     themChoice: "Holistic AI",
     summary:
-      "How Assurance OS compares with Holistic AI, using only facts from Holistic AI's own pages. Holistic AI is an enterprise AI governance platform; Assurance OS is a self-serve release gate.",
+      "How Devernance compares with Holistic AI, using only facts from Holistic AI's own pages. Holistic AI is an enterprise AI governance platform; Devernance is a self-serve release gate.",
     intro: [
       "Holistic AI describes itself as the enterprise AI governance platform, covering AI discovery and inventory, AI testing and risk management, and AI policy and compliance. It also publishes an Apache-2.0 library for assessing AI trustworthiness.",
-      "Assurance OS is narrower: it gates AI releases in CI on real engineering evidence and hands out a signed evidence pack. If you need discovery and governance across the whole organisation, Holistic AI is built for that. If you need a release check you can start today, Assurance OS is.",
+      "Devernance is narrower: it gates AI releases in CI on real engineering evidence and hands out a signed evidence pack. If you need discovery and governance across the whole organisation, Holistic AI is built for that. If you need a release check you can start today, Devernance is.",
     ],
     rows: [
       {
