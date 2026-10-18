@@ -26,7 +26,7 @@
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>bom</artifactId>
-        <version>2.55.10</version>
+        <version>2.55.13</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -58,7 +58,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.6.4</version>
+      <version>5.6.5</version>
     </dependency>
     <!-- Spring Boot's parent BOM manages httpcore5 down to 5.2.5, which is incompatible
          with httpclient5 5.4.1 (requires httpcore5 >= 5.3.1). Pin explicitly to override. -->
@@ -166,7 +166,7 @@
     <dependency>
       <groupId>com.microsoft.onnxruntime</groupId>
       <artifactId>onnxruntime</artifactId>
-      <version>1.30.0</version>
+      <version>1.31.0</version>
     </dependency>
     <dependency>
       <groupId>net.logstash.logback</groupId>
