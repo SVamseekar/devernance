@@ -156,7 +156,7 @@ test_cron_jobs_run_with_an_empty_environment() {
   local envfile="$sandbox/aos-backup.env"
   AOS_BACKUP_ENV_FILE="$envfile" sh "$BACKUP_DIR/entrypoint.sh" > /dev/null 2>&1 || { bad "$name" "entrypoint failed"; return; }
   grep -q "^crond -f" "$STUB_CURL_LOG" || { bad "$name" "entrypoint did not exec crond: $(cat "$STUB_CURL_LOG")"; return; }
-  [[ "$(stat -f %Lp "$envfile" 2>/dev/null || stat -c %a "$envfile")" == "600" ]] || { bad "$name" "env file mode not 600"; return; }
+  [[ "$(stat -c %a "$envfile" 2>/dev/null || stat -f %Lp "$envfile")" == "600" ]] || { bad "$name" "env file mode not 600"; return; }
   if grep -qE "PATH=|HOME=|STUB_" "$envfile"; then bad "$name" "env file holds unrelated variables"; return; fi
   : > "$STUB_CURL_LOG"
   local count=0 cmd
