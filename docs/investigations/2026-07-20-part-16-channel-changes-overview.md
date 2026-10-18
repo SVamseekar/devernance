@@ -1,8 +1,8 @@
 # Part 16 — Channel changes overview (documentation only)
 
-**Date:** 2026-07-20  
-**Canon:** `docs/METRICS_CANONICAL.md` (measured tip `c0d5cd4`, freeze 2026-07-20)  
-**Product tip context:** `origin/main` @ `85ac589` (Part 11 complete)  
+**Date:** 2026-07-20
+**Canon:** `docs/METRICS_CANONICAL.md` (measured tip `c0d5cd4`, freeze 2026-07-20)
+**Product tip context:** `origin/main` @ `85ac589` (Part 11 complete)
 **Rule:** This packet **documents** proposed channel updates. It does **not** edit live CV binaries. Apply manually only when approved.
 
 ## Asset status

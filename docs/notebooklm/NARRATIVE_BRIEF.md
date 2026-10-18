@@ -8,7 +8,7 @@ The EU AI Act establishes a risk-tiered compliance model. The higher an AI syste
 - Data platform engineers track schema changes and upstream drift in data catalogs.
 - Legal teams require explicit statutory risk rationales and formal sign-off records.
 
-None of the standard MLOps platforms treat legal compliance and release gate validation as first-class software concerns, and standard GRC software lacks awareness of model evaluation thresholds or real-time data contract drift. 
+None of the standard MLOps platforms treat legal compliance and release gate validation as first-class software concerns, and standard GRC software lacks awareness of model evaluation thresholds or real-time data contract drift.
 
 To bridge this gap, I designed and built a multi-tenant governance control plane that bridges engineering and compliance: an AI system registry with guided risk classification, an EU AI Act control catalog, cited-evidence RAG scoped per tenant, an asynchronous evaluation queue worker, data contract drift monitoring, multi-stage human approval workflows, and an append-only audit ledger. Crucially, all of these signals feed into a single computed release decision (`PASS`, `REVIEW`, or `BLOCKED`) exposed both to an interactive web dashboard and to CI/CD deployment pipelines via a machine-readable endpoint returning process exit codes.
 

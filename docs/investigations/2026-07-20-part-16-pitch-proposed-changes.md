@@ -1,12 +1,12 @@
 # Part 16 — Pitch deck proposed changes (do not auto-apply)
 
-**Current asset:** `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck.pdf`  
-**Also seen:** `Projects/MaSoVa-restaurant-management-system/docs/MSV_AI_Labs_Pitch_Deck.pdf`  
-**Editable source:** PPTX not found in common paths (PDF produced via PptxGenJS / LibreOffice).  
-**Suggested dated output (when you apply):**  
+**Current asset:** `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck.pdf`
+**Also seen:** `Projects/MaSoVa-restaurant-management-system/docs/MSV_AI_Labs_Pitch_Deck.pdf`
+**Editable source:** PPTX not found in common paths (PDF produced via PptxGenJS / LibreOffice).
+**Suggested dated output (when you apply):**
 `/Users/souravamseekarmarti/Downloads/MSV_AI_Labs_Pitch_Deck_2026-07-20.pdf`
 
-**Canon:** `docs/METRICS_CANONICAL.md`  
+**Canon:** `docs/METRICS_CANONICAL.md`
 **Scope:** Fix **Devernance** slide (and any deck-wide line that falsely attributes FAISS / Next 14 / live-since-2024 to *this* product). Keep NVIDIA Inception framing; keep other products’ own metrics honest.
 
 ---
@@ -15,8 +15,8 @@
 
 **Title / badge**
 
-- Product: Devernance  
-- Subtitle: The compliance control plane for the EU AI Act  
+- Product: Devernance
+- Subtitle: The compliance control plane for the EU AI Act
 - Badge: **Live since 2024** ← wrong for public product year freeze
 
 **Body**

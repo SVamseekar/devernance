@@ -1,8 +1,8 @@
 # Channel Update Instructions (Non-Code Assets)
 
-**Date:** 2026-07-20 (final freeze after Parts 0–1, 3–15; metrics Part 2)  
-**Audience:** Claude Chat / separate sessions editing CV, Portfolio, Pitch (Part 16)  
-**Canon:** `docs/METRICS_CANONICAL.md` (measured tip `c0d5cd4`)  
+**Date:** 2026-07-20 (final freeze after Parts 0–1, 3–15; metrics Part 2)
+**Audience:** Claude Chat / separate sessions editing CV, Portfolio, Pitch (Part 16)
+**Canon:** `docs/METRICS_CANONICAL.md` (measured tip `c0d5cd4`)
 **Rule:** Apply numbers and wording **only** from the canon. Do **not** invent customers, ARR, or production SSO verification.
 
 **This packet does not edit binaries** — Part 16 applies CV DOCX/PDF, portfolio `projects.ts`, and pitch PDF.
@@ -63,13 +63,13 @@
 
 ### Remove / fix these claims
 
-- FAISS  
-- Next.js 14  
-- Flyway V1–V6 only  
-- “HMAC-SHA-256 signed audit event stream” (without hash-chain + eval callback split)  
-- “automated … risk classification” (as ML automation)  
-- Risk tiers “Unacceptable, High, Limited, Minimal” without Prohibited mapping  
-- “You are certified” / legal determination without “assisted”  
+- FAISS
+- Next.js 14
+- Flyway V1–V6 only
+- “HMAC-SHA-256 signed audit event stream” (without hash-chain + eval callback split)
+- “automated … risk classification” (as ML automation)
+- Risk tiers “Unacceptable, High, Limited, Minimal” without Prohibited mapping
+- “You are certified” / legal determination without “assisted”
 
 ### Paste-ready replacement (English)
 
@@ -101,12 +101,12 @@ Also fix **summary line** if it over-indexes wrong tech (FAISS / Next 14) for th
 
 ### Before (stale patterns to kill)
 
-- “automated EU AI Act risk classification”  
-- Flyway **V1–V6**  
-- “HMAC-SHA-256 signed audit event stream” as sole audit claim  
-- FAISS  
-- Period “2024 – Present” without proof  
-- Next.js 14  
+- “automated EU AI Act risk classification”
+- Flyway **V1–V6**
+- “HMAC-SHA-256 signed audit event stream” as sole audit claim
+- FAISS
+- Period “2024 – Present” without proof
+- Next.js 14
 
 ### After — suggested `metrics` array
 
@@ -123,9 +123,9 @@ metrics: [
 
 ### Stack hygiene
 
-**Keep:** Java 17, Spring Boot 3.3, PostgreSQL, pgvector, Next.js 16, DJL, ONNX Runtime, HuggingFace tokenizers, AWS S3, Apache Tika, @xyflow/react  
+**Keep:** Java 17, Spring Boot 3.3, PostgreSQL, pgvector, Next.js 16, DJL, ONNX Runtime, HuggingFace tokenizers, AWS S3, Apache Tika, @xyflow/react
 
-**Avoid:** FAISS  
+**Avoid:** FAISS
 
 ### Period
 
@@ -133,8 +133,8 @@ Prefer `"2026 – Present"` unless you have independent proof of 2024 production
 
 ### Links
 
-- Live: `https://euassuranceai.souravamseekar.com`  
-- GitHub: `https://github.com/SVamseekar/devernance`  
+- Live: `https://euassuranceai.souravamseekar.com`
+- GitHub: `https://github.com/SVamseekar/devernance`
 
 ---
 
@@ -142,9 +142,9 @@ Prefer `"2026 – Present"` unless you have independent proof of 2024 production
 
 ### Keep
 
-- Control plane narrative  
-- Aug 2026 enforcement market timing  
-- Spring Boot 3.3 · Next.js 16 · pgvector HNSW · ONNX/DJL  
+- Control plane narrative
+- Aug 2026 enforcement market timing
+- Spring Boot 3.3 · Next.js 16 · pgvector HNSW · ONNX/DJL
 
 ### Change (before → after)
 
@@ -175,11 +175,11 @@ Revenue, customer counts, “X enterprises in production,” notified-body statu
 
 ## D. Landing (code) — already wired (Parts 2–3)
 
-- Metrics strip: `apps/dashboard/lib/metrics-canon.ts` + `components/landing/metrics-strip.tsx`  
-- Legal: `/privacy`, `/terms`, `/refunds`, `/disclaimer`  
-- Demo: `/request-demo` (enterprise order-form / SOW refunds tone — not consumer SaaS)  
-- Primary CTA: Request demo  
-- Disclaimer: not legal certification  
+- Metrics strip: `apps/dashboard/lib/metrics-canon.ts` + `components/landing/metrics-strip.tsx`
+- Legal: `/privacy`, `/terms`, `/refunds`, `/disclaimer`
+- Demo: `/request-demo` (enterprise order-form / SOW refunds tone — not consumer SaaS)
+- Primary CTA: Request demo
+- Disclaimer: not legal certification
 
 Re-measure strip if canon numbers change; do not invent marketing headcount metrics.
 
@@ -187,18 +187,18 @@ Re-measure strip if canon numbers change; do not invent marketing headcount metr
 
 ## E. Consistency checklist (all four channels)
 
-- [ ] Same product one-liner (control plane / EU AI Act release governance)  
-- [ ] Same risk class names: Minimal / Limited / High / Prohibited  
-- [ ] Same release decision names: PASS / REVIEW / BLOCKED  
-- [ ] Same embedding stack (DJL/ONNX, **not** FAISS)  
-- [ ] Same audit story (hash-chained ledger + HMAC eval callbacks)  
-- [ ] Same auth story (JWT/API keys; OAuth implemented, **prod smoke pending** until signed off)  
-- [ ] Same Flyway range (through **V16**)  
-- [ ] Same Next.js major (**16**)  
-- [ ] Same live URL `https://euassuranceai.souravamseekar.com`  
-- [ ] Same GitHub URL  
-- [ ] Assisted obligations / certification readiness — never “certified” / unqualified “legal determination”  
-- [ ] 3 sector packs only (no fake live Workday/Guidewire connectors)  
+- [ ] Same product one-liner (control plane / EU AI Act release governance)
+- [ ] Same risk class names: Minimal / Limited / High / Prohibited
+- [ ] Same release decision names: PASS / REVIEW / BLOCKED
+- [ ] Same embedding stack (DJL/ONNX, **not** FAISS)
+- [ ] Same audit story (hash-chained ledger + HMAC eval callbacks)
+- [ ] Same auth story (JWT/API keys; OAuth implemented, **prod smoke pending** until signed off)
+- [ ] Same Flyway range (through **V16**)
+- [ ] Same Next.js major (**16**)
+- [ ] Same live URL `https://euassuranceai.souravamseekar.com`
+- [ ] Same GitHub URL
+- [ ] Assisted obligations / certification readiness — never “certified” / unqualified “legal determination”
+- [ ] 3 sector packs only (no fake live Workday/Guidewire connectors)
 
 ---
 
@@ -206,10 +206,10 @@ Re-measure strip if canon numbers change; do not invent marketing headcount metr
 
 When editing binaries:
 
-1. Open `docs/METRICS_CANONICAL.md`  
-2. Apply sections A–C above  
-3. Run checklist E  
-4. Do not re-measure inventively — if code changed after `c0d5cd4`, re-run measurement commands in the canon and update both canon + this packet  
+1. Open `docs/METRICS_CANONICAL.md`
+2. Apply sections A–C above
+3. Run checklist E
+4. Do not re-measure inventively — if code changed after `c0d5cd4`, re-run measurement commands in the canon and update both canon + this packet
 
 ---
 

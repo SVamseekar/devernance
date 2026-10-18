@@ -1,8 +1,8 @@
 # Roadmap completion signoff (Parts 0–15; Part 11 docs)
 
-**Date:** 2026-07-20  
-**Branch context:** Part 11 docs alignment on tip of `origin/main` (metrics freeze Part 2 / tip at freeze `c0d5cd4`; later main includes Part 2 index).  
-**Metrics authority:** `docs/METRICS_CANONICAL.md` — do not re-measure unless obvious drift.  
+**Date:** 2026-07-20
+**Branch context:** Part 11 docs alignment on tip of `origin/main` (metrics freeze Part 2 / tip at freeze `c0d5cd4`; later main includes Part 2 index).
+**Metrics authority:** `docs/METRICS_CANONICAL.md` — do not re-measure unless obvious drift.
 **Rule:** No fake certifications, legal finality, customer counts, or “production SSO verified” without smoke signoff.
 
 ---

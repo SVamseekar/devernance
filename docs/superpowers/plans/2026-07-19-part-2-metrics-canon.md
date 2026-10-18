@@ -49,21 +49,21 @@ ls services/api/src/main/resources/db/migration/
 
 Produce a short `docs/investigations/2026-07-19-channel-update-instructions.md` (or section in canon) with **paste-ready** bullets for:
 
-1. **CV DOCX/PDF** — path `Documents/Marti_Soura_Vamseekar_CV.docx`  
-2. **Portfolio** — `Portfolio/martisouravamseekar-portfolio/src/data/projects.ts` EU AI entry  
-3. **Pitch deck** — Devernance slide only; keep NVIDIA framing  
+1. **CV DOCX/PDF** — path `Documents/Marti_Soura_Vamseekar_CV.docx`
+2. **Portfolio** — `Portfolio/martisouravamseekar-portfolio/src/data/projects.ts` EU AI entry
+3. **Pitch deck** — Devernance slide only; keep NVIDIA framing
 
 Include before/after for each bullet.
 
 ### Task 2.4: Landing consumption
 
-- [ ] **Step 1:** Part 3 will import `metrics-canon.ts` into a metrics strip component.  
+- [ ] **Step 1:** Part 3 will import `metrics-canon.ts` into a metrics strip component.
 - [ ] **Step 2:** Do not invent marketing numbers (users, ARR, “X enterprises”) unless true.
 
 ### Done when
 
-- [x] Canon file committed with measured date (`docs/METRICS_CANONICAL.md`, 2026-07-20 @ c0d5cd4)  
-- [x] Instruction packet ready for Claude Chat / other agents (`docs/investigations/2026-07-19-channel-update-instructions.md`)  
-- [x] Landing strip wired to `apps/dashboard/lib/metrics-canon.ts`  
-- [x] Forbidden phrases documented (FAISS, HMAC audit-stream-only, Next 14, V1–V6-only, “certified”, unqualified legal determination)  
-- [x] PR merged; INDEX Part 2 → Complete (channel **binaries** remain Part 16)  
+- [x] Canon file committed with measured date (`docs/METRICS_CANONICAL.md`, 2026-07-20 @ c0d5cd4)
+- [x] Instruction packet ready for Claude Chat / other agents (`docs/investigations/2026-07-19-channel-update-instructions.md`)
+- [x] Landing strip wired to `apps/dashboard/lib/metrics-canon.ts`
+- [x] Forbidden phrases documented (FAISS, HMAC audit-stream-only, Next 14, V1–V6-only, “certified”, unqualified legal determination)
+- [x] PR merged; INDEX Part 2 → Complete (channel **binaries** remain Part 16)

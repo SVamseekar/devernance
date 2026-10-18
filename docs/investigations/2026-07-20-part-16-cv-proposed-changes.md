@@ -1,14 +1,14 @@
 # Part 16 — CV proposed changes (do not auto-apply)
 
-**Target (live — leave alone until you approve):**  
-`/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.docx`  
+**Target (live — leave alone until you approve):**
+`/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.docx`
 `/Users/souravamseekarmarti/Documents/Marti_Soura_Vamseekar_CV.pdf`
 
-**Optional later copies (if you want a parallel file, not overwrite):**  
-`Marti_Soura_Vamseekar_CV_Part16_metrics.docx`  
+**Optional later copies (if you want a parallel file, not overwrite):**
+`Marti_Soura_Vamseekar_CV_Part16_metrics.docx`
 `Marti_Soura_Vamseekar_CV_Part16_metrics.pdf`
 
-**Canon:** `docs/METRICS_CANONICAL.md`  
+**Canon:** `docs/METRICS_CANONICAL.md`
 **Scope:** Only the **Devernance** project block (and any summary lines that over-claim this product’s stack). Do **not** invent numbers. Leave WorkforceGuard / Aequitas / Masova / Bharat Alpha claims alone unless their own canons exist.
 
 ---

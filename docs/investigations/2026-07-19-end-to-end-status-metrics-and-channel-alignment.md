@@ -1,7 +1,7 @@
 # Investigation Report — Devernance
 
-**Date:** 2026-07-19 (UTC)  
-**Investigator:** Grok Code session (repo `eu-ai-assurance-os`)  
+**Date:** 2026-07-19 (UTC)
+**Investigator:** Grok Code session (repo `eu-ai-assurance-os`)
 **Scope:** GitHub hygiene, local WIP, codebase + live site deep review, metrics consistency across CV / Portfolio / Pitch Deck / Landing, sister-product patterns (demo form, legal footer, OAuth), SEO, and delivery plans.
 
 **Non-goals of this session:** Editing CV / DOCX / PDF / pitch deck / Portfolio content (instructions only). Full product implementation is deferred to the phased plans below — **WIP must be finished first** (see §1).
@@ -46,19 +46,19 @@ Do **not** publish metrics that claim “Phase 5 complete / notifications / V10�
 
 ## 1. GitHub / Git setup — current vs industry-grade
 
-**Repo:** https://github.com/SVamseekar/devernance  
-**Default branch:** `main`  
-**Visibility:** public  
-**Homepage URL:** empty (should be `https://euassuranceai.souravamseekar.com`)  
-**Topics:** good (ai-safety, eu-ai-act, spring-boot, nextjs, …)  
-**License:** **none**  
-**Stars / forks / open issues:** 1 / 0 / 0  
-**Created:** 2026-06-05 · **Last push on remote:** 2026-06-26  
-**Commits on main:** 92, all dated 2026-06  
-**Branch protection:** **not configured**  
-**CI:** **no `.github/` directory at all**  
-**PR / issue templates:** none  
-**CODEOWNERS / Dependabot / security policy:** none  
+**Repo:** https://github.com/SVamseekar/devernance
+**Default branch:** `main`
+**Visibility:** public
+**Homepage URL:** empty (should be `https://euassuranceai.souravamseekar.com`)
+**Topics:** good (ai-safety, eu-ai-act, spring-boot, nextjs, …)
+**License:** **none**
+**Stars / forks / open issues:** 1 / 0 / 0
+**Created:** 2026-06-05 · **Last push on remote:** 2026-06-26
+**Commits on main:** 92, all dated 2026-06
+**Branch protection:** **not configured**
+**CI:** **no `.github/` directory at all**
+**PR / issue templates:** none
+**CODEOWNERS / Dependabot / security policy:** none
 
 ### Compared to sister product (WorkforceGuard AI)
 
@@ -132,12 +132,12 @@ The product code quality is ahead of the **repository operations**. History is l
 
 `ReleaseGateService` computes **PASS / REVIEW / BLOCKED** from:
 
-1. Risk class **PROHIBITED** → BLOCKED  
-2. HIGH risk + oversight gap → BLOCKED  
-3. Eval score hard block &lt; 78 → BLOCKED  
-4. Data contract **BREACH** → BLOCKED  
-5. Else REVIEW if evidence coverage &lt; 82, eval &lt; 85, WARNING contract, or open gaps  
-6. Else PASS  
+1. Risk class **PROHIBITED** → BLOCKED
+2. HIGH risk + oversight gap → BLOCKED
+3. Eval score hard block &lt; 78 → BLOCKED
+4. Data contract **BREACH** → BLOCKED
+5. Else REVIEW if evidence coverage &lt; 82, eval &lt; 85, WARNING contract, or open gaps
+6. Else PASS
 
 **RiskClass enum (code):** `MINIMAL`, `LIMITED`, `HIGH`, `PROHIBITED` — **not** “Unacceptable”.
 
@@ -179,15 +179,15 @@ Landing sections present: Header, Hero, Problem, Capabilities (6), How it works 
 
 Landing **missing vs sister products / industry:**
 
-- Quantitative metrics strip  
-- Request demo CTA + form  
-- Legal pages (Privacy, Terms, Refunds)  
-- Contact / support email in footer  
-- Accessibility statement  
-- Methodology / security overview public page (optional)  
-- Disclaimer (“not legal certification”) beyond FAQ  
-- Portfolio / GitHub / company links in footer  
-- Cookie / analytics notice  
+- Quantitative metrics strip
+- Request demo CTA + form
+- Legal pages (Privacy, Terms, Refunds)
+- Contact / support email in footer
+- Accessibility statement
+- Methodology / security overview public page (optional)
+- Disclaimer (“not legal certification”) beyond FAQ
+- Portfolio / GitHub / company links in footer
+- Cookie / analytics notice
 - Multi-column footer (Product / Resources / Legal / Contact)
 
 ### 2.6 Feature playthrough notes (local + live)
@@ -255,16 +255,16 @@ Legend: **OK** accurate · **STALE** once true / partial · **WRONG** false or o
 
 ### 3.3 Cross-channel inconsistencies that must be fixed (other sessions for non-code)
 
-1. **Drop FAISS** for this product everywhere (CV especially).  
-2. **Replace** “HMAC-SHA-256 signed audit event stream” with precise wording:  
-   - “Append-only audit ledger” and/or  
-   - “HMAC-SHA-256 signed eval-result callbacks”  
-   - Optional future: hash-chained audit (not built).  
-3. **Risk tier names** align to code: Minimal / Limited / High / Prohibited (map EU “unacceptable” → Prohibited carefully).  
-4. **Next.js 16**, not 14.  
-5. **Flyway V1–V9** (and V10 only after merge).  
-6. Soften **“automated risk classification”** → “guided / recorded EU AI Act risk classification with oversight gap tracking”.  
-7. **“Live since 2024”** → prefer “Live 2026” or “Public beta 2026” unless there is external proof of 2024 production.  
+1. **Drop FAISS** for this product everywhere (CV especially).
+2. **Replace** “HMAC-SHA-256 signed audit event stream” with precise wording:
+   - “Append-only audit ledger” and/or
+   - “HMAC-SHA-256 signed eval-result callbacks”
+   - Optional future: hash-chained audit (not built).
+3. **Risk tier names** align to code: Minimal / Limited / High / Prohibited (map EU “unacceptable” → Prohibited carefully).
+4. **Next.js 16**, not 14.
+5. **Flyway V1–V9** (and V10 only after merge).
+6. Soften **“automated risk classification”** → “guided / recorded EU AI Act risk classification with oversight gap tracking”.
+7. **“Live since 2024”** → prefer “Live 2026” or “Public beta 2026” unless there is external proof of 2024 production.
 8. Landing needs the **same numbers** as Portfolio once canon freezes — currently landing has almost **zero** numeric metrics.
 
 ### 3.4 Proposed metrics canon (freeze only after Phase 5 WIP merges)
@@ -349,16 +349,16 @@ Also include a **regulatory disclaimer**: the product organises evidence and con
 
 Mirror WorkforceGuard structure with **EU AI Act–specific** fields, e.g.:
 
-- Identity: first, last, work email, job title  
-- Org: company, website, size, industry, country, HQ city  
-- Context: number of AI systems in production / planned, risk exposure (high-risk yes/no), current tooling (spreadsheets / GRC / none), timeline, primary interests (registry, evidence RAG, eval gates, contracts, approvals), referral  
-- Consent: privacy required; marketing optional  
-- Honeypot + timing + rate limit  
+- Identity: first, last, work email, job title
+- Org: company, website, size, industry, country, HQ city
+- Context: number of AI systems in production / planned, risk exposure (high-risk yes/no), current tooling (spreadsheets / GRC / none), timeline, primary interests (registry, evidence RAG, eval gates, contracts, approvals), referral
+- Consent: privacy required; marketing optional
+- Honeypot + timing + rate limit
 - Notify via Discord webhook (same ops pattern)
 
 CTA hierarchy:
 
-1. Primary: **Request a demo**  
+1. Primary: **Request a demo**
 2. Secondary: **Open dashboard** / Sign in (for evaluators with accounts)
 
 ---
@@ -379,23 +379,23 @@ Copyright: `© {year} Devernance · Marti Soura Vamseekar` (or MSV AI Labs if br
 ### 5.2 SEO current score
 
 **Strong already:**
-- `metadataBase`, title template, keywords  
-- Canonical, robots index/follow, googleBot previews  
-- OG + Twitter large image via `opengraph-image`  
-- JSON-LD: Organization, SoftwareApplication, FAQPage  
-- `robots.ts` disallows app routes  
-- `lang="en-GB"`  
-- GA4 production hook  
+- `metadataBase`, title template, keywords
+- Canonical, robots index/follow, googleBot previews
+- OG + Twitter large image via `opengraph-image`
+- JSON-LD: Organization, SoftwareApplication, FAQPage
+- `robots.ts` disallows app routes
+- `lang="en-GB"`
+- GA4 production hook
 
 **Gaps:**
-- Sitemap only indexes `/` — add legal + demo pages once built; keep dashboard disallowed  
-- No `WebSite` schema with `SearchAction` (optional)  
-- No public security / methodology page for long-tail  
-- No hreflang (OK if single locale)  
-- Dashboard routes still HTTP 200 without auth (robots disallow ≠ auth)  
-- Metrics strip / social proof absent (hurts conversion + rich content SEO)  
-- Footer internal links weak (legal 404s waste crawl equity when added without content)  
-- README / GitHub homepage not reinforcing canonical URL  
+- Sitemap only indexes `/` — add legal + demo pages once built; keep dashboard disallowed
+- No `WebSite` schema with `SearchAction` (optional)
+- No public security / methodology page for long-tail
+- No hreflang (OK if single locale)
+- Dashboard routes still HTTP 200 without auth (robots disallow ≠ auth)
+- Metrics strip / social proof absent (hurts conversion + rich content SEO)
+- Footer internal links weak (legal 404s waste crawl equity when added without content)
+- README / GitHub homepage not reinforcing canonical URL
 
 ---
 
@@ -419,10 +419,10 @@ Copyright: `© {year} Devernance · Marti Soura Vamseekar` (or MSV AI Labs if br
 
 `docs/SECURITY_AUDIT_2026-06-22.md` critical tenant impersonation and several highs were addressed in subsequent commits (JWT required, SSRF pin via HttpClient5, postcss/next bumps, prompt-injection hardening). Residual:
 
-- Prompt-injection guard still defense-in-depth only  
-- No OAuth/OIDC  
-- Audit not immutable/hash-chained  
-- Phase 6 enterprise items open  
+- Prompt-injection guard still defense-in-depth only
+- No OAuth/OIDC
+- Audit not immutable/hash-chained
+- Phase 6 enterprise items open
 
 ---
 
@@ -456,9 +456,9 @@ Update metrics array to match canon; drop any overclaim; ensure stack list match
 
 Devernance slide:
 
-- Key metrics: prefer **PASS/REVIEW/BLOCKED**, **Flyway V1–V9**, **40 API endpoints**, **JWT + API keys**, **DJL/ONNX RAG**, **HMAC eval callbacks** — not “HMAC audit streams”.  
-- “Live since 2024” → verify or change to 2026.  
-- Keep Aug 2026 enforcement timing narrative (market).  
+- Key metrics: prefer **PASS/REVIEW/BLOCKED**, **Flyway V1–V9**, **40 API endpoints**, **JWT + API keys**, **DJL/ONNX RAG**, **HMAC eval callbacks** — not “HMAC audit streams”.
+- “Live since 2024” → verify or change to 2026.
+- Keep Aug 2026 enforcement timing narrative (market).
 
 ### 8.4 Landing (code — this repo, later plan)
 
@@ -470,13 +470,13 @@ Add metrics strip from canon; Request demo; legal footer; keep trust language dr
 
 **Authoritative full program (2026-07-20 — includes PRD + Phase 6 + GTM):**
 
-1. `docs/superpowers/specs/2026-07-20-full-roadmap-completion.md`  
+1. `docs/superpowers/specs/2026-07-20-full-roadmap-completion.md`
 2. `docs/superpowers/plans/2026-07-20-INDEX.md` — Parts **0–11**
 
 **Original channel pack (Parts 0–4) still valid; extended by Parts 5–11:**
 
-- Parts 0–4: Phase 5 WIP, GitHub, metrics, landing, OAuth  
-- Parts 5–11: PRD MVP (controls/E2E), immutable audit, PDF pack, CI release-gate + observability, Docker/Terraform, isolation/NFR, docs signoff  
+- Parts 0–4: Phase 5 WIP, GitHub, metrics, landing, OAuth
+- Parts 5–11: PRD MVP (controls/E2E), immutable audit, PDF pack, CI release-gate + observability, Docker/Terraform, isolation/NFR, docs signoff
 
 ---
 

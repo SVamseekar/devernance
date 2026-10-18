@@ -53,14 +53,14 @@ Also update EU/DE markdown CV variants under `Projects/SouraVamseekarMarti_CV_*.
 
 ### Task 16.5: Cross-channel checklist
 
-- [ ] Same product one-liner  
-- [ ] Same risk class names  
-- [ ] Same release decisions  
-- [ ] Same embedding stack  
-- [ ] Same auth story  
-- [ ] Same Flyway range / phase status  
-- [ ] Same live URL + GitHub URL  
-- [ ] New features: assisted determination / readiness / reg feed / sector packs only if live  
+- [ ] Same product one-liner
+- [ ] Same risk class names
+- [ ] Same release decisions
+- [ ] Same embedding stack
+- [ ] Same auth story
+- [ ] Same Flyway range / phase status
+- [ ] Same live URL + GitHub URL
+- [ ] New features: assisted determination / readiness / reg feed / sector packs only if live
 
 ### Task 16.6: Signoff
 
@@ -69,7 +69,7 @@ Also update EU/DE markdown CV variants under `Projects/SouraVamseekarMarti_CV_*.
 
 ### Done when
 
-- [ ] Portfolio live matches canon  
-- [ ] CV DOCX+PDF match canon  
-- [ ] Pitch deck match canon  
-- [ ] Signoff doc filed  
+- [ ] Portfolio live matches canon
+- [ ] CV DOCX+PDF match canon
+- [ ] Pitch deck match canon
+- [ ] Signoff doc filed

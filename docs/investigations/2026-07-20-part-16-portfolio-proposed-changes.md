@@ -1,10 +1,10 @@
 # Part 16 — Portfolio proposed changes (do not auto-apply)
 
-**Repo:** `/Users/souravamseekarmarti/Projects/Portfolio/martisouravamseekar-portfolio`  
-**Primary file:** `src/data/projects.ts` (Devernance entry only)  
-**Related (check only):** `src/lib/seo.ts`, `src/lib/highlight.tsx`, `src/components/Hero.tsx`  
-**Canon:** `docs/METRICS_CANONICAL.md`  
-**Live product:** https://euassuranceai.souravamseekar.com  
+**Repo:** `/Users/souravamseekarmarti/Projects/Portfolio/martisouravamseekar-portfolio`
+**Primary file:** `src/data/projects.ts` (Devernance entry only)
+**Related (check only):** `src/lib/seo.ts`, `src/lib/highlight.tsx`, `src/components/Hero.tsx`
+**Canon:** `docs/METRICS_CANONICAL.md`
+**Live product:** https://euassuranceai.souravamseekar.com
 **GitHub:** https://github.com/SVamseekar/devernance
 
 Working-tree edits to `projects.ts` were **reverted**; apply only when you approve.

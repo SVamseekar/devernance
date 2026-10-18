@@ -1,7 +1,7 @@
 # Part 16 — Cross-channel checklist (proposed alignment)
 
-**Date:** 2026-07-20  
-**Canon:** `docs/METRICS_CANONICAL.md`  
+**Date:** 2026-07-20
+**Canon:** `docs/METRICS_CANONICAL.md`
 **Use when:** applying CV / pitch / portfolio updates from companion MD files.
 
 Legend: `[ ]` = not applied yet · `[x]` = verified after you apply
@@ -53,9 +53,9 @@ Legend: `[ ]` = not applied yet · `[x]` = verified after you apply
 
 ## Recommended apply order
 
-1. Portfolio `projects.ts` (code, easy review / PR)  
-2. Pitch dated PDF (keep old file)  
-3. CV via **Save As** dated copy first, then optional replace of live DOCX  
+1. Portfolio `projects.ts` (code, easy review / PR)
+2. Pitch dated PDF (keep old file)
+3. CV via **Save As** dated copy first, then optional replace of live DOCX
 4. Re-check this checklist and file a short signoff when live surfaces match
 
 ---
