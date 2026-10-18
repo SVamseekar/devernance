@@ -1,0 +1,157 @@
+# Production / staging stack (Oracle A1 production, GCP Spot staging).
+# Run from /opt/aos with:
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+#
+# No service publishes a host port. Cloudflare Tunnel (outbound only) reaches the dashboard; the API is reachable
+# only from the dashboard BFF on the internal network. Each service receives only the variables it uses.
+# Variables are documented in .env.prod.example; infra/test/compose_contract_test.sh keeps the two in step.
+name: aos
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=60"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 1536m
+    logging: *logging
+    networks: [internal]
+
+  api:
+    image: ghcr.io/svamseekar/aos-api:${AOS_TAG}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Safe only because the dashboard BFF is the API's sole client.
+      ASSURANCE_SECURITY_TRUST_CLIENT_IP_HEADER: "true"
+      AUDIT_CHAIN_SECRET: ${AUDIT_CHAIN_SECRET}
+      OAUTH_STATE_SECRET: ${OAUTH_STATE_SECRET}
+      EVAL_CALLBACK_SECRET: ${EVAL_CALLBACK_SECRET}
+      JWT_KEY_ENCRYPTION_SECRET: ${JWT_KEY_ENCRYPTION_SECRET}
+      ASSURANCE_APP_BASE_URL: ${ASSURANCE_APP_BASE_URL}
+      OAUTH_REDIRECT_BASE_URL: ${ASSURANCE_APP_BASE_URL}
+      OAUTH_AUTO_PROVISION: ${OAUTH_AUTO_PROVISION}
+      OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET}
+      OAUTH_MICROSOFT_CLIENT_ID: ${OAUTH_MICROSOFT_CLIENT_ID}
+      OAUTH_MICROSOFT_CLIENT_SECRET: ${OAUTH_MICROSOFT_CLIENT_SECRET}
+      EVIDENCE_EMBEDDING_PROVIDER: ${EVIDENCE_EMBEDDING_PROVIDER}
+      ASSURANCE_DEMO_ENABLED: ${ASSURANCE_DEMO_ENABLED}
+      ASSURANCE_PUBLIC_CLAIMS: "false"
+      ASSURANCE_GATE_MANUAL_INPUTS: "false"
+      ASSURANCE_EMAIL_MODE: smtp
+      ASSURANCE_EMAIL_FROM: ${ASSURANCE_EMAIL_FROM}
+      ASSURANCE_SMTP_PRIMARY_HOST: ${ASSURANCE_SMTP_PRIMARY_HOST}
+      ASSURANCE_SMTP_PRIMARY_PORT: ${ASSURANCE_SMTP_PRIMARY_PORT}
+      ASSURANCE_SMTP_PRIMARY_USERNAME: ${ASSURANCE_SMTP_PRIMARY_USERNAME}
+      ASSURANCE_SMTP_PRIMARY_PASSWORD: ${ASSURANCE_SMTP_PRIMARY_PASSWORD}
+      ASSURANCE_SMTP_FALLBACK_HOST: ${ASSURANCE_SMTP_FALLBACK_HOST}
+      ASSURANCE_SMTP_FALLBACK_PORT: ${ASSURANCE_SMTP_FALLBACK_PORT}
+      ASSURANCE_SMTP_FALLBACK_USERNAME: ${ASSURANCE_SMTP_FALLBACK_USERNAME}
+      ASSURANCE_SMTP_FALLBACK_PASSWORD: ${ASSURANCE_SMTP_FALLBACK_PASSWORD}
+      DODO_BASE_URL: ${DODO_BASE_URL}
+      DODO_API_KEY: ${DODO_API_KEY}
+      DODO_WEBHOOK_SECRET: ${DODO_WEBHOOK_SECRET}
+      DODO_BUSINESS_ID: ${DODO_BUSINESS_ID}
+      DODO_PRODUCT_TEAM_MONTHLY: ${DODO_PRODUCT_TEAM_MONTHLY}
+      DODO_PRODUCT_TEAM_YEARLY: ${DODO_PRODUCT_TEAM_YEARLY}
+      DODO_PRODUCT_BUSINESS_MONTHLY: ${DODO_PRODUCT_BUSINESS_MONTHLY}
+      DODO_PRODUCT_BUSINESS_YEARLY: ${DODO_PRODUCT_BUSINESS_YEARLY}
+      ASSURANCE_STORAGE_ENABLED: ${ASSURANCE_STORAGE_ENABLED}
+      ASSURANCE_STORAGE_BUCKET: ${ASSURANCE_STORAGE_BUCKET}
+      ASSURANCE_STORAGE_REGION: ${ASSURANCE_STORAGE_REGION}
+      ASSURANCE_STORAGE_ENDPOINT: ${ASSURANCE_STORAGE_ENDPOINT}
+      ASSURANCE_STORAGE_ACCESS_KEY_ID: ${ASSURANCE_STORAGE_ACCESS_KEY_ID}
+      ASSURANCE_STORAGE_SECRET_ACCESS_KEY: ${ASSURANCE_STORAGE_SECRET_ACCESS_KEY}
+      ASSURANCE_STORAGE_PATH_STYLE: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 150s
+    mem_limit: 3g
+    logging: *logging
+    networks: [internal]
+
+  dashboard:
+    image: ghcr.io/svamseekar/aos-dashboard:${AOS_TAG}
+    restart: unless-stopped
+    depends_on:
+      # Started, not healthy: marketing pages stay up while the API boots; the BFF answers 503 meanwhile.
+      api:
+        condition: service_started
+    environment:
+      ASSURANCE_API_BASE_URL: http://api:8080
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      DISCORD_DEMO_WEBHOOK_URL: ${DISCORD_DEMO_WEBHOOK_URL}
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    mem_limit: 768m
+    logging: *logging
+    networks: [internal]
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.9.3
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - dashboard
+    mem_limit: 128m
+    logging: *logging
+    networks: [internal]
+
+  backup:
+    image: ghcr.io/svamseekar/aos-backup:${AOS_TAG}
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT}
+      BACKUP_R2_ENDPOINT: ${BACKUP_R2_ENDPOINT}
+      BACKUP_R2_BUCKET: ${BACKUP_R2_BUCKET}
+      BACKUP_R2_ACCESS_KEY_ID: ${BACKUP_R2_ACCESS_KEY_ID}
+      BACKUP_R2_SECRET_ACCESS_KEY: ${BACKUP_R2_SECRET_ACCESS_KEY}
+      BACKUP_HEARTBEAT_URL: ${BACKUP_HEARTBEAT_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 256m
+    logging: *logging
+    networks: [internal]
+
+volumes:
+  pgdata:
+
+networks:
+  internal:

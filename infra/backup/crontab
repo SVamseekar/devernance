@@ -1,0 +1,3 @@
+# 02:15 UTC daily; weekly copy on Sundays at 02:45 UTC. Jobs source the environment the entrypoint saved.
+15 2 * * * . /run/aos-backup.env; /usr/local/bin/backup.sh daily >> /proc/1/fd/1 2>&1
+45 2 * * 0 . /run/aos-backup.env; /usr/local/bin/backup.sh weekly >> /proc/1/fd/1 2>&1
