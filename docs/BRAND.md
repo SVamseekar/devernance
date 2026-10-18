@@ -29,10 +29,9 @@ would break something.
 | Evidence buckets `eu-ai-assurance-evidence` (local default) and `aos-evidence` (production R2) | API default, compose, `.env.prod.example` | Stored `sourceUri` values point at these buckets. |
 | JWT issuer `eu-ai-assurance-os` and evidence JWS type `aos-evidence+jws` | `JwtService` | A new issuer signs out every live session. The JWS type is part of the signed evidence-pack format, so changing it is a format change. |
 | API keys that start with `aos_` | `TenantContextFilter` | Keys issued before the rename keep working. New keys start with `dvn_`. |
-| GitHub Action `SVamseekar/assurance-os-release-gate@v1` | `apps/dashboard/lib/gate-snippets.ts`, docs page | GitHub does not redirect `uses:` references to a renamed repo, so renaming it breaks every workflow that uses it. To rebrand it, publish the action from a new repo, switch the snippet, and archive the old repo instead of renaming it. |
 | Calendar UIDs `…@assurance-os` | `apps/dashboard/lib/ics.ts` | Calendar apps match re-imported events by UID, so a new UID duplicates every event. |
 | Browser storage key `eu-ai-theme` | `apps/dashboard/app/layout.tsx` | A new key resets every visitor's theme choice. |
-| Checkout paths ending in `eu-ai-assurance-os`, including the paths inside `public-claims/*/evgraph-*.json` | scripts, resources | These are real folders on the Mac and the Dell. Regenerate the Evgraph files after moving a checkout. |
+| The Dell checkout `D:/Projects/eu-ai-assurance-os`, and checkout paths in the plans under `docs/superpowers/` | Dell scripts, plans | The Dell's services run from that folder. The plans record where commands ran at the time. The Mac checkout is `~/Projects/devernance`, and the Evgraph files in `public-claims/` point there. |
 | Live addresses: `euassuranceai.souravamseekar.com`, `euassuranceai@souravamseekar.com`, Vercel projects `eu-ai-assurance` and `eu-ai-assurance-os` | site config, CI, docs | They are still the live addresses. They change on domain day (below). |
 
 ## GitHub repo
@@ -43,8 +42,12 @@ its numeric ID, which a rename does not change.
 
 - Never create a new repo named `eu-ai-assurance-os` under this account. GitHub drops the redirect once the old name
   is reused.
-- Checkouts made before the rename, such as the one on the Dell, still use the old URL through the redirect. Update
-  each one with `git remote set-url origin https://github.com/SVamseekar/devernance.git`.
+- Checkouts made before the rename still use the old URL through the redirect. Update each one with
+  `git remote set-url origin https://github.com/SVamseekar/devernance.git`. `scripts/deploy-dell.sh` does this for
+  the Dell on every git sync.
+- The release gate action lives in its own repo, `SVamseekar/devernance-release-gate`, and users reference it as
+  `uses: SVamseekar/devernance-release-gate@v1`. Never rename that repo: GitHub does not redirect `uses:` references
+  to a renamed repo, so every workflow that uses the old name would fail.
 
 ## Domain day checklist
 

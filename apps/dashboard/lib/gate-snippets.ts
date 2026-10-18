@@ -3,8 +3,8 @@ import type { CodeTab } from "@/components/marketing/code-tabs";
 /** Host-neutral: ASSURANCE_URL is your workspace URL (hosted or self-hosted), set as a CI variable. */
 const gatePath = "/api/v1/ci/release-gate";
 
-/** Published GitHub Action (github.com/SVamseekar/assurance-os-release-gate); it calls the same endpoint. */
-export const releaseGateAction = "SVamseekar/assurance-os-release-gate@v1";
+/** Published GitHub Action (github.com/SVamseekar/devernance-release-gate); it calls the same endpoint. */
+export const releaseGateAction = "SVamseekar/devernance-release-gate@v1";
 
 /** Real integration samples for the documented CI endpoint (docs/API.md, "CI release gate"). */
 export const gateSnippets: CodeTab[] = [

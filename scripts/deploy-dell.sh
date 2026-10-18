@@ -107,11 +107,13 @@ sync_tree() {
   remote_ps "New-Item -ItemType Directory -Force -Path '${DELL_DIR}' | Out-Null"
 
   # 1) Prefer git pull/clone on Dell (best on Windows when Git is installed)
+  #    set-url moves a checkout cloned before the repo rename onto the current URL.
   if remote_ps "if (Get-Command git -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"; then
     echo "==> Sync via git (${git_ref}) → ${DELL_DIR}"
     remote_ps "
       Set-Location '${DELL_DIR}'
       if (Test-Path '.git') {
+        git remote set-url origin '${git_url}'
         git fetch origin
         git checkout ${git_ref}
         git pull --ff-only origin ${git_ref}
