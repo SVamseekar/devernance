@@ -63,6 +63,8 @@ services:
       ASSURANCE_DEMO_ENABLED: ${ASSURANCE_DEMO_ENABLED}
       ASSURANCE_PUBLIC_CLAIMS: "false"
       ASSURANCE_GATE_MANUAL_INPUTS: "false"
+      # A crosswalk with an empty reviewedBy is never served, sealed into packs, or cited in production.
+      ASSURANCE_FRAMEWORKS_SERVE_UNREVIEWED: "false"
       ASSURANCE_EMAIL_MODE: smtp
       ASSURANCE_EMAIL_FROM: ${ASSURANCE_EMAIL_FROM}
       ASSURANCE_SMTP_PRIMARY_HOST: ${ASSURANCE_SMTP_PRIMARY_HOST}
