@@ -39,6 +39,10 @@ for name, svc in services.items():
     image = svc.get("image", "")
     check(":" in image and not image.endswith(":latest"), f"{name} image {image!r} is not pinned")
 
+# Docker's default /dev/shm (64 MB) breaks parallel pgvector HNSW index builds.
+shm = services["postgres"].get("shm_size")
+check(shm is not None and int(shm) >= 256 * 1024 * 1024, f"postgres shm_size is {shm!r}, needs >= 256m")
+
 def env(name):
     return set((services.get(name, {}).get("environment") or {}).keys())
 

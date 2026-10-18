@@ -22,6 +22,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=60"]
+    # Docker's 64 MB default breaks parallel pgvector HNSW index builds ("could not resize shared memory segment").
+    shm_size: 256m
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
