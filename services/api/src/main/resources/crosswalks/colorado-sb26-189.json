@@ -1,0 +1,19 @@
+{
+  "framework": "colorado-sb26-189",
+  "type": "checklist",
+  "version": "2026 (Chapter 131, signed 2026-05-14; applies to consequential decisions on or after 2027-01-01)",
+  "source": "https://leg.colorado.gov/bills/sb26-189",
+  "retrieved": "2026-10-05",
+  "reviewedBy": "",
+  "items": [
+    { "id": "SB26-189 §6-1-1703", "title": "Keep records showing compliance (for example ADMT version identifiers, changelogs, mitigation changes) for at least three years after each consequential decision", "controlCodes": ["RECORD_KEEPING", "TECHNICAL_DOCUMENTATION"], "evidenceTypes": ["CONTROL_MAP", "MODEL_CARD"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1704(1)-(2)", "title": "Before a covered ADMT materially influences a consequential decision, give consumers clear notice, for example a prominent public notice at the point of interaction", "controlCodes": ["TRANSPARENCY"], "evidenceTypes": ["POLICY"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1704(3)(a)", "title": "Within thirty days of an adverse outcome, describe the decision and the role the ADMT played in plain language", "controlCodes": ["TRANSPARENCY", "HUMAN_OVERSIGHT"], "evidenceTypes": ["POLICY", "MODEL_CARD"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1704(3)(b)", "title": "Explain how to request more information: ADMT name, version, developer, and the types, categories, and sources of personal data used", "controlCodes": ["TECHNICAL_DOCUMENTATION", "DATA_GOVERNANCE"], "evidenceTypes": ["MODEL_CARD", "VENDOR_DOC"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1704(3)(c)", "title": "Explain the consumer rights under section 6-1-1705 and how to exercise them", "controlCodes": ["TRANSPARENCY"], "evidenceTypes": ["POLICY"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1704(5)", "title": "Tell the consumer when information is withheld as a trade secret or as legally protected", "controlCodes": ["TRANSPARENCY"], "evidenceTypes": ["POLICY"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1704(8)", "title": "Make notices and disclosures accessible to people with disabilities and people with limited English proficiency", "controlCodes": ["TRANSPARENCY"], "evidenceTypes": ["POLICY"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1705(1)(a)(I)", "title": "After an adverse outcome, on request, explain how to obtain and correct inaccurate personal data used in the decision", "controlCodes": ["DATA_GOVERNANCE"], "evidenceTypes": ["POLICY", "DPIA"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" },
+    { "id": "SB26-189 §6-1-1705(1)(a)(II)", "title": "After an adverse outcome, on request, offer meaningful human review and reconsideration where commercially reasonable", "controlCodes": ["HUMAN_OVERSIGHT"], "evidenceTypes": ["POLICY"], "sourceUrl": "https://leg.colorado.gov/bill_files/116489/download" }
+  ]
+}

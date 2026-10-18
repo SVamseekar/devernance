@@ -334,6 +334,11 @@ public class ControlService {
         });
   }
 
+  /** Codes of the baseline controls every catalog is seeded with. */
+  public static List<String> baselineCodes() {
+    return baselineControls().stream().map(Control::code).toList();
+  }
+
   static List<Control> baselineControls() {
     List<Control> list = new ArrayList<>();
     list.add(control("RISK_MANAGEMENT", "Risk management system",

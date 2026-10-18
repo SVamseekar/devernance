@@ -763,8 +763,11 @@ Response:
 Seal notes:
 
 - `evidencePackVersion` is currently `"1.0"`.
-- `contentSha256` is SHA-256 over canonical JSON (sorted map keys, ISO-8601 instants)
-  of the pack fields **excluding** `contentSha256` itself.
+- `contentSha256` is SHA-256 over canonical JSON (every object's keys sorted, ISO-8601 instants)
+  of the pack fields **excluding** `contentSha256` and `signature`, with `"conformity": {}` added. Parsing the
+  exported JSON and re-serialising it this way reproduces the hash (see `docs/VERIFY_EVIDENCE_PACK.md`).
+- `frameworks` holds the view of every framework the plan includes, keyed by framework (for example
+  `frameworks["nist-ai-rmf"]`), inside the seal. The key is absent when the plan includes none.
 - `generator` identifies the service build (`assurance.evidence-pack.generator`).
 - `auditChainHead` is the tenant audit hash-chain tip **before** this export event (Part 6).
 - Export writes audit event `evidence_pack.exported` with payload
@@ -784,6 +787,147 @@ Same roles as JSON. Returns `Content-Type: application/pdf` with:
 
 PDF sections: system identity, risk summary, evidence/evals/contracts/approvals, audit
 excerpt, seal footer. Prefer the JSON pack for cryptographic verification of the seal.
+
+## Framework crosswalks
+
+```http
+GET /systems/{systemId}/frameworks/{framework}
+```
+
+| `framework` | Type | Feature | Plans |
+|---|---|---|---|
+| `nist-ai-rmf` | crosswalk (NIST AI RMF 1.0 categories) | `NIST_CROSSWALK` | Team and above |
+| `iso-42001` | crosswalk (ISO/IEC 42001:2023 Annex A identifiers; titles are Assurance OS paraphrases, no ISO text) | `ISO_CROSSWALK` | Business and above |
+| `colorado-sb26-189` | checklist (Colorado SB 26-189 deployer duties; each item has `sourceUrl`) | `US_STATE_PACKS` | Business and above |
+
+Unknown framework or system → `404`; a plan without the feature → `402` with `code: feature_<feature lowercase>`.
+
+A crosswalk is live only once it has been reviewed against its source (`reviewedBy` set in its JSON file). With
+`assurance.frameworks.serve-unreviewed=false` (the default in the `postgres` profile; env
+`ASSURANCE_FRAMEWORKS_SERVE_UNREVIEWED`) an unreviewed crosswalk returns `404`, is left out of the evidence pack,
+and is not cited by the questionnaire export. Local and test runs serve unreviewed crosswalks for preview, marked
+`"reviewed": false`.
+
+```json
+{
+  "framework": "nist-ai-rmf",
+  "type": "crosswalk",
+  "version": "1.0",
+  "source": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+  "reviewed": false,
+  "disclaimer": "Mapping shows which evidence is relevant to each framework item. It is not an assessment of whether the system meets the framework.",
+  "items": [
+    {
+      "id": "GOVERN 2",
+      "title": "Accountability structures are in place ...",
+      "status": "covered",
+      "controls": ["HUMAN_OVERSIGHT"],
+      "evidence": ["POLICY"],
+      "requiredControls": ["HUMAN_OVERSIGHT"],
+      "requiredEvidence": ["POLICY"],
+      "sourceUrl": null
+    }
+  ]
+}
+```
+
+`status` per item: `covered` when at least one mapped control is `PASS` and at least one mapped evidence type is
+indexed; `partial` when only one holds; `no_evidence` otherwise. Every item is always listed. `reviewed` is false
+until the owner has checked the mapping against the source. Crosswalk files live in
+`services/api/src/main/resources/crosswalks/` and are validated at startup (unknown control codes or evidence types
+stop the application).
+
+## AU automated-decision disclosure pack
+
+```http
+GET /packs/au-adm
+```
+
+Feature `AU_ADM_PACK` (Business and above); `402` with `code: feature_au_adm_pack` otherwise. For the Australian
+Privacy Act APP 1.7–1.9 privacy-policy duty that applies from 10 December 2026, lists every registered system:
+
+- `include` — purpose, decision impact, affected people, and data sources are recorded. `draftStatement` is built
+  only from those fields and starts with "Draft for review by your privacy counsel:". It says a person reviews the
+  decisions only when the system's `HUMAN_OVERSIGHT` control is `PASS`; otherwise "to be confirmed".
+- `needs_input` — `missing` names the empty fields; no draft is produced.
+- `not_applicable` — a minimal-risk system with no affected people recorded.
+
+The response also carries `obligationStart` (`2026-12-10`), `elements` (APP 1.8(a)–(c), official text), `source`
+(OAIC), `legislation`, and `disclaimer`.
+
+## Questionnaire answer export
+
+```http
+GET /systems/{systemId}/questionnaire-export?format=json|csv
+```
+
+Feature `QUESTIONNAIRE_EXPORT` (Business and above); `402` with `code: feature_questionnaire_export` otherwise.
+`format` defaults to `json`; any other value than `json` or `csv` → `400`. Unknown system → `404`.
+
+Drafts answers to 25 common AI-vendor due-diligence questions (`ai-vendor-core`) for one system. An answer is
+written only when every fact its template names is recorded for the system (system fields, a control with status
+`PASS`, an indexed document of the named type, approvals, completed evaluations, data contracts, audit events).
+If any fact is missing the answer is exactly `Not recorded in Assurance OS — answer manually.`, `status` is
+`manual`, and `missing` names the facts. Nothing is inferred.
+
+```json
+{
+  "questionnaire": "ai-vendor-core",
+  "version": "1.0",
+  "systemId": "…",
+  "systemName": "Claims triage",
+  "generatedAt": "2026-10-11T09:00:00Z",
+  "disclaimer": "Draft answers filled only from what is recorded in Assurance OS for this system. Review every answer before you send it. This is not legal advice.",
+  "answered": 9,
+  "manual": 16,
+  "answers": [
+    {
+      "id": "AV-12",
+      "topic": "human-oversight",
+      "question": "How do people oversee the system's outputs and decisions?",
+      "answer": "The human oversight control was marked passing on 2026-10-09. Policy on file: Human oversight policy v3.",
+      "status": "answered",
+      "evidence": [
+        { "kind": "control", "ref": "HUMAN_OVERSIGHT", "status": "PASS", "updatedAt": "2026-10-09T08:12:44Z" },
+        { "kind": "document", "ref": "POLICY", "status": "indexed", "id": "…", "title": "Human oversight policy v3", "sha256": "…", "createdAt": "…" }
+      ],
+      "missing": []
+    }
+  ]
+}
+```
+
+`evidence` entries point at what backs the answer: `control` (the system's control and its real status, or
+`NOT_ATTACHED`), `document` (each indexed document of that type with its checksum, or `none_indexed`), and `pack`
+(`ref` is a path into the signed evidence pack JSON, for example `riskClassification.modelName`).
+
+The CSV has the columns `id,topic,question,answer,status,evidence`, is UTF-8 with a byte-order mark, uses CRLF line
+endings, and quotes cells as RFC 4180 requires. A cell that starts with `=`, `+`, `-` or `@` is prefixed with `'` so
+a spreadsheet does not run it as a formula. The question bank lives in
+`services/api/src/main/resources/questionnaires/ai-vendor-core.json` and is validated at startup.
+
+## GRC export
+
+```http
+GET /systems/{systemId}/grc-export
+```
+
+Feature `INTEGRATIONS` (Business and above); `402` with `code: feature_integrations` otherwise. Same roles as the
+evidence pack. Unknown system → `404`. Returns `application/zip` named `grc-export-<systemId>-<timestamp>.zip`,
+with the pack hash in the `X-Content-Sha256` header, for upload as custom evidence to a GRC tool such as Vanta or
+Drata:
+
+| File | Content |
+|---|---|
+| `evidence-index.csv` | One row per indexed document: `document_id`, `document_title`, `type`, `created_date`, `sha256`, `pack_content_sha256`, `pack_signature_key_id` |
+| `evidence-pack.json` | A freshly built signed evidence pack (the same content as `GET /systems/{systemId}/evidence-pack`) |
+| `VERIFY_EVIDENCE_PACK.md` | How to check the pack's signature and recompute its hash |
+
+`sha256` is the checksum recorded when the document was ingested: SHA-256 of the extracted text, unless the uploader
+supplied a checksum of their own. `pack_content_sha256` and `pack_signature_key_id` tie each row to the pack in the
+same ZIP. The pack is signed; the CSV is an index of it and is not itself signed. Each export is recorded in the
+audit ledger as `evidence_pack.exported` with `format: grc-zip`. The CSV follows the same rules as the
+questionnaire CSV (UTF-8 with byte-order mark, CRLF, RFC 4180 quoting, formula cells neutralised).
 
 ## Audit
 

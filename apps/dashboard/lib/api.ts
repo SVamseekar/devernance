@@ -18,6 +18,8 @@ import type {
   EvalRunOperationsView,
   EvidenceDocument,
   EvidencePack,
+  FrameworkView,
+  AuAdmPack,
   Assessment,
   CorpusView,
   EvidenceQueryResponse,
@@ -42,6 +44,7 @@ import type {
 } from "./public-claims";
 
 import { loginRedirectHref } from "./auth-redirect";
+import { SYSTEM_EXPORTS, downloadFilename, exportPath, type SystemExportKind } from "./export-view";
 
 const BASE = "/api/proxy";
 
@@ -64,7 +67,12 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+interface RequestOptions {
+  /** The caller shows its own inline upgrade note, so a 402 does not open the shell's upgrade prompt. */
+  quietPlanLimit?: boolean;
+}
+
+async function request<T>(path: string, init?: RequestInit, options?: RequestOptions): Promise<T> {
   const headers = new Headers(init?.headers);
   const isForm = typeof FormData !== "undefined" && init?.body instanceof FormData;
   if (init?.body !== undefined && !isForm && !headers.has("Content-Type")) {
@@ -82,7 +90,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // keep status text
     }
-    if (res.status === 402) {
+    if (res.status === 402 && !options?.quietPlanLimit) {
       // Plan limit: the shell shows an upgrade prompt for any screen that hits one.
       dispatchPlanLimit(message);
     }
@@ -125,6 +133,10 @@ export interface ClassifyPayload {
 export type DpaAcceptance = { version: string | null; acceptedAt: string | null };
 
 export const api = {
+  packs: {
+    /** AU automated-decision disclosure pack (Business and above). Inline upgrade note on 402. */
+    auAdm: () => request<AuAdmPack>("/packs/au-adm", undefined, { quietPlanLimit: true }),
+  },
   systems: {
     list: () => request<AiSystem[]>("/systems"),
     get: (id: string) => request<AiSystem>(`/systems/${id}`),
@@ -148,6 +160,9 @@ export const api = {
     /** Primary sealed JSON evidence pack (authenticated proxy). */
     evidencePack: (id: string) => request<EvidencePack>(`/systems/${id}/evidence-pack`),
     assessment: (id: string) => request<Assessment>(`/systems/${id}/assessment`),
+    /** Framework crosswalk coverage (relevance, not conformity). 402 when the plan lacks it. */
+    framework: (id: string, framework: string) =>
+      request<FrameworkView>(`/systems/${id}/frameworks/${framework}`, undefined, { quietPlanLimit: true }),
     evgraphArtifacts: (id: string) =>
       request<Record<string, unknown>>(`/systems/${id}/evgraph-artifacts`),
     conformity: (id: string) => request<Record<string, unknown>>(`/systems/${id}/conformity`),
@@ -170,6 +185,20 @@ export const api = {
       const blob = await res.blob();
       triggerBrowserDownload(blob, filename);
       return { contentSha256, filename };
+    },
+    /** Questionnaire CSV or GRC ZIP for one system. 402 opens the upgrade prompt and throws ApiError. */
+    downloadExport: async (id: string, kind: SystemExportKind): Promise<{ filename: string }> => {
+      const descriptor = SYSTEM_EXPORTS.find((e) => e.kind === kind)!;
+      const res = await fetch(`${BASE}${exportPath(id, kind)}`);
+      if (res.status === 401) {
+        redirectToLoginOnUnauthorized();
+      }
+      const limit = await reportPlanLimit(res);
+      if (limit) throw new ApiError(402, limit);
+      if (!res.ok) throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+      const filename = downloadFilename(res.headers.get("Content-Disposition"), descriptor.fallbackFilename(id));
+      triggerBrowserDownload(await res.blob(), filename);
+      return { filename };
     },
     /** Certification readiness score + gaps (not legal certification). */
     certificationReadiness: (id: string) =>

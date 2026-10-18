@@ -89,6 +89,11 @@ public class EntitlementService {
         sub == null ? null : sub.planCode(), sub == null ? null : sub.status(), graceOrEnd, clock.instant());
   }
 
+  /** True when the current tenant's effective plan includes the feature. */
+  public boolean hasFeature(Feature feature) {
+    return effectivePlan(tenantContext.tenantId()).features().contains(feature);
+  }
+
   public void requireFeature(Feature feature) {
     PlanCatalog plan = effectivePlan(tenantContext.tenantId());
     if (!plan.features().contains(feature)) {

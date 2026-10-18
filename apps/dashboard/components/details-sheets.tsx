@@ -13,6 +13,8 @@ import { isPublicClaimsSystem, publicClaimsSlug } from "@/lib/public-claims";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { ObligationMapWizard } from "./obligation-map-wizard";
+import { FrameworksPanel } from "./frameworks-panel";
+import { SystemExportsPanel } from "./system-exports-panel";
 import { Button } from "./ui/button";
 import {
   ShieldAlert,
@@ -37,7 +39,7 @@ interface SystemDetailsSheetProps {
 }
 
 export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: SystemDetailsSheetProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "approval">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "frameworks" | "approval">("details");
   const [obligationWizardOpen, setObligationWizardOpen] = useState(false);
   const { activeRole } = useDashboard();
 
@@ -80,6 +82,17 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
           )}
         >
           Details
+        </button>
+        <button
+          onClick={() => setActiveTab("frameworks")}
+          className={cn(
+            "flex-1 text-xs py-1.5 rounded-md font-medium transition-colors",
+            activeTab === "frameworks"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Frameworks
         </button>
         <button
           onClick={() => setActiveTab("approval")}
@@ -303,6 +316,25 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
         )}
       </div>
         </>
+      )}
+
+      {activeTab === "frameworks" && (
+        <div className="space-y-6">
+          <SystemExportsPanel systemId={system.id} />
+          <FrameworksPanel systemId={system.id} />
+          <FrameworksPanel
+            systemId={system.id}
+            framework="iso-42001"
+            label="ISO/IEC 42001:2023 Annex A (identifiers; titles are our paraphrases)"
+            upgradeText="Available on Business and above"
+          />
+          <FrameworksPanel
+            systemId={system.id}
+            framework="colorado-sb26-189"
+            label="Colorado SB 26-189"
+            upgradeText="Available on Business and above"
+          />
+        </div>
       )}
 
       {activeTab === "approval" && (

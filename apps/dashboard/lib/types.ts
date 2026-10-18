@@ -183,6 +183,52 @@ export interface GateControlMode {
   signedOff: boolean;
 }
 
+/** One framework item with the evidence linked to it. Relevance, not conformity. */
+export interface FrameworkItemStatus {
+  id: string;
+  title: string;
+  status: "covered" | "partial" | "no_evidence";
+  /** Mapped controls that pass. */
+  controls: string[];
+  /** Mapped evidence types that are indexed. */
+  evidence: string[];
+  requiredControls: string[];
+  requiredEvidence: string[];
+  /** Checklist items cite the statute section they come from. */
+  sourceUrl?: string | null;
+}
+
+export interface FrameworkView {
+  framework: string;
+  /** crosswalk (framework items) or checklist (a law's duties). */
+  type: "crosswalk" | "checklist";
+  version: string;
+  source: string;
+  reviewed: boolean;
+  disclaimer: string;
+  items: FrameworkItemStatus[];
+}
+
+/** One registered system in the AU automated-decision (APP 1.7-1.9) disclosure pack. */
+export interface AuAdmSystem {
+  systemId: string;
+  name: string;
+  status: "include" | "needs_input" | "not_applicable";
+  missing: string[];
+  reason: string;
+  draftStatement: string | null;
+}
+
+export interface AuAdmPack {
+  generatedAt: string;
+  obligationStart: string;
+  source: string;
+  legislation: string;
+  disclaimer: string;
+  elements: { clause: string; text: string }[];
+  systems: AuAdmSystem[];
+}
+
 /** Sealed evidence pack (JSON primary; PDF is Phase 6 export). */
 export interface EvidencePack {
   systemId: string;
@@ -198,6 +244,8 @@ export interface EvidencePack {
   determination?: Record<string, unknown>;
   conformity?: Record<string, unknown>;
   evgraphArtifacts?: Record<string, unknown>;
+  /** Framework crosswalks keyed by framework; absent when the plan does not include them. Covered by the seal. */
+  frameworks?: Record<string, FrameworkView>;
   evidencePackVersion: string;
   contentSha256: string;
   generator: string;

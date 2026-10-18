@@ -9,6 +9,7 @@ import { AssuranceMark } from "@/components/marketing/brand-icons";
 import { DemoButton } from "@/components/marketing/demo-button";
 import { IconTile, type Tone } from "@/components/marketing/primitives";
 import { iconToneClass, mainNav, type MegaItem, type MegaMenu } from "@/lib/marketing-nav";
+import { menuAfterClick } from "@/lib/menu-toggle";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +84,7 @@ export function SiteHeader({ tone }: { tone: Tone }) {
   const [mobileSection, setMobileSection] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverOpenedAt = useRef<number | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -156,6 +158,7 @@ export function SiteHeader({ tone }: { tone: Tone }) {
 
   function openWithHover(label: string) {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (openMenu !== label) hoverOpenedAt.current = Date.now();
     setOpenMenu(label);
   }
 
@@ -217,7 +220,11 @@ export function SiteHeader({ tone }: { tone: Tone }) {
                     type="button"
                     aria-expanded={expanded}
                     aria-controls={panelId}
-                    onClick={() => setOpenMenu(expanded ? null : entry.label)}
+                    onClick={() => {
+                      const next = menuAfterClick(openMenu, entry.label, hoverOpenedAt.current, Date.now());
+                      hoverOpenedAt.current = null;
+                      setOpenMenu(next);
+                    }}
                     className={cn(
                       "inline-flex items-center gap-1 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
                       expanded

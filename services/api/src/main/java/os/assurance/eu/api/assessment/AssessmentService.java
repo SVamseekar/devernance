@@ -121,7 +121,12 @@ public class AssessmentService {
     if (rationale == null || rationale.isBlank() || expiresOn == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Exception needs a rationale and an expiry");
     }
-    if (expiresOn.isAfter(LocalDate.now(clock).plusYears(1))) {
+    // Same UTC calendar as assess(), so "expired" and "accepted" agree whatever the server's zone.
+    LocalDate today = LocalDate.now(clock.withZone(ZoneOffset.UTC));
+    if (!expiresOn.isAfter(today)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Exception expiry must be after today (UTC)");
+    }
+    if (expiresOn.isAfter(today.plusYears(1))) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Exceptions may last at most one year");
     }
     exceptions.save(new EvidenceExceptionEntity(

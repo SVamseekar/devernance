@@ -1,0 +1,398 @@
+{
+  "framework": "iso-42001",
+  "type": "crosswalk",
+  "version": "2023",
+  "source": "ISO/IEC 42001:2023 (identifiers only; titles are Assurance OS paraphrases)",
+  "retrieved": "",
+  "reviewedBy": "",
+  "items": [
+    {
+      "id": "A.2.2",
+      "title": "Document a policy for developing and using AI systems",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.2.3",
+      "title": "Align the AI policy with other organisational policies",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.2.4",
+      "title": "Review the AI policy at planned intervals",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.3.2",
+      "title": "Define and assign responsibilities for AI work",
+      "controlCodes": [
+        "HUMAN_OVERSIGHT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.3.3",
+      "title": "Give people a way to raise concerns about AI systems",
+      "controlCodes": [
+        "HUMAN_OVERSIGHT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.4.2",
+      "title": "Record the resources each AI system depends on",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.4.3",
+      "title": "Record the data resources AI systems use",
+      "controlCodes": [
+        "DATA_GOVERNANCE"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.4.4",
+      "title": "Record the tools used to build and run AI systems",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.4.5",
+      "title": "Record compute and infrastructure resources for AI systems",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.4.6",
+      "title": "Record the people and skills AI work needs",
+      "controlCodes": [
+        "HUMAN_OVERSIGHT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.5.2",
+      "title": "Run a process to assess the impacts of AI systems",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "DPIA"
+      ]
+    },
+    {
+      "id": "A.5.3",
+      "title": "Keep records of AI impact assessments",
+      "controlCodes": [
+        "RECORD_KEEPING"
+      ],
+      "evidenceTypes": [
+        "DPIA"
+      ]
+    },
+    {
+      "id": "A.5.4",
+      "title": "Assess effects on individuals and groups of people",
+      "controlCodes": [
+        "RISK_MANAGEMENT",
+        "TRANSPARENCY"
+      ],
+      "evidenceTypes": [
+        "DPIA"
+      ]
+    },
+    {
+      "id": "A.5.5",
+      "title": "Assess wider effects on society",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "DPIA"
+      ]
+    },
+    {
+      "id": "A.6.1.2",
+      "title": "Set goals for responsible AI development",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.6.1.3",
+      "title": "Define processes for responsible design and development",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.6.2.2",
+      "title": "Specify requirements for new or changed AI systems",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.6.2.3",
+      "title": "Document how AI systems are designed and built",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.6.2.4",
+      "title": "Verify and validate AI systems before release",
+      "controlCodes": [
+        "ACCURACY_ROBUSTNESS"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD",
+        "CONTROL_MAP"
+      ]
+    },
+    {
+      "id": "A.6.2.5",
+      "title": "Plan and document how AI systems are deployed",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "CONTROL_MAP"
+      ]
+    },
+    {
+      "id": "A.6.2.6",
+      "title": "Operate and monitor AI systems in production",
+      "controlCodes": [
+        "RECORD_KEEPING",
+        "ACCURACY_ROBUSTNESS"
+      ],
+      "evidenceTypes": [
+        "CONTROL_MAP"
+      ]
+    },
+    {
+      "id": "A.6.2.7",
+      "title": "Give relevant parties the technical documentation they need",
+      "controlCodes": [
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.6.2.8",
+      "title": "Keep event logs for AI systems",
+      "controlCodes": [
+        "RECORD_KEEPING"
+      ],
+      "evidenceTypes": [
+        "CONTROL_MAP"
+      ]
+    },
+    {
+      "id": "A.7.2",
+      "title": "Manage data used to build and improve AI systems",
+      "controlCodes": [
+        "DATA_GOVERNANCE"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.7.3",
+      "title": "Record how data is obtained",
+      "controlCodes": [
+        "DATA_GOVERNANCE"
+      ],
+      "evidenceTypes": [
+        "VENDOR_DOC"
+      ]
+    },
+    {
+      "id": "A.7.4",
+      "title": "Set and check data quality requirements",
+      "controlCodes": [
+        "DATA_GOVERNANCE",
+        "ACCURACY_ROBUSTNESS"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.7.5",
+      "title": "Record where data comes from over its life",
+      "controlCodes": [
+        "DATA_GOVERNANCE"
+      ],
+      "evidenceTypes": [
+        "VENDOR_DOC",
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.7.6",
+      "title": "Define how data is prepared before use",
+      "controlCodes": [
+        "DATA_GOVERNANCE"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.8.2",
+      "title": "Tell users what they need to know about the system",
+      "controlCodes": [
+        "TRANSPARENCY"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.8.3",
+      "title": "Let outside parties report adverse effects",
+      "controlCodes": [
+        "TRANSPARENCY"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.8.4",
+      "title": "Plan how incidents are communicated to users",
+      "controlCodes": [
+        "TRANSPARENCY",
+        "RECORD_KEEPING"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.8.5",
+      "title": "Decide what information interested parties receive",
+      "controlCodes": [
+        "TRANSPARENCY"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.9.2",
+      "title": "Define processes for using AI systems responsibly",
+      "controlCodes": [
+        "HUMAN_OVERSIGHT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.9.3",
+      "title": "Set goals for responsible use",
+      "controlCodes": [
+        "RISK_MANAGEMENT"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    },
+    {
+      "id": "A.9.4",
+      "title": "Use AI systems only as intended",
+      "controlCodes": [
+        "HUMAN_OVERSIGHT",
+        "TECHNICAL_DOCUMENTATION"
+      ],
+      "evidenceTypes": [
+        "MODEL_CARD"
+      ]
+    },
+    {
+      "id": "A.10.2",
+      "title": "Split responsibilities with partners and third parties",
+      "controlCodes": [
+        "DATA_GOVERNANCE"
+      ],
+      "evidenceTypes": [
+        "VENDOR_DOC"
+      ]
+    },
+    {
+      "id": "A.10.3",
+      "title": "Manage suppliers of AI components and services",
+      "controlCodes": [
+        "DATA_GOVERNANCE",
+        "CYBERSECURITY"
+      ],
+      "evidenceTypes": [
+        "VENDOR_DOC"
+      ]
+    },
+    {
+      "id": "A.10.4",
+      "title": "Meet customers' needs for responsible AI",
+      "controlCodes": [
+        "TRANSPARENCY"
+      ],
+      "evidenceTypes": [
+        "POLICY"
+      ]
+    }
+  ]
+}

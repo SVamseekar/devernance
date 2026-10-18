@@ -21,6 +21,8 @@ import os.assurance.eu.api.audit.AuditEvent;
  * JSON remains the primary machine-readable pack format.
  */
 public final class EvidencePackPdfRenderer {
+  private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
+      new com.fasterxml.jackson.databind.ObjectMapper();
   private static final DateTimeFormatter DATE =
       DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
   private static final DateTimeFormatter DATETIME =
@@ -166,7 +168,30 @@ public final class EvidencePackPdfRenderer {
         addLine(document, bodyFont, "Annex I", "FUTURE until 2028-08-02");
       }
 
-      addHeading(document, headingFont, "12. Seal");
+      Map<String, Object> frameworks = pack.frameworks();
+      if (frameworks != null && !frameworks.isEmpty()) {
+        addHeading(document, headingFont, "12. Framework crosswalks");
+        for (Object value : frameworks.values()) {
+          if (!(value instanceof Map<?, ?> view)) {
+            continue;
+          }
+          addLine(document, bodyFont, "Framework", view.get("framework") + " " + view.get("version")
+              + (Boolean.TRUE.equals(view.get("reviewed")) ? "" : " (mapping not yet reviewed)"));
+          addLine(document, bodyFont, "Note", view.get("disclaimer"));
+          if (view.get("items") instanceof List<?> items) {
+            for (Object itemObj : items) {
+              if (itemObj instanceof Map<?, ?> item) {
+                addLine(document, bodyFont, String.valueOf(item.get("id")), item.get("status"));
+              } else if (itemObj != null) {
+                Map<?, ?> item = MAPPER.convertValue(itemObj, Map.class);
+                addLine(document, bodyFont, String.valueOf(item.get("id")), item.get("status"));
+              }
+            }
+          }
+        }
+      }
+
+      addHeading(document, headingFont, frameworks != null && !frameworks.isEmpty() ? "13. Seal" : "12. Seal");
       addLine(document, bodyFont, "contentSha256", pack.contentSha256());
       String signature = pack.signature() == null ? "" : pack.signature();
       String preview = signature.length() <= 64 ? signature : signature.substring(0, 64) + "…";
