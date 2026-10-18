@@ -1,0 +1,13 @@
+flowchart LR
+  api["<b>api</b><br/>built from infra/Dockerfile<br/>ports 8080:8080<br/>default stack"]
+  dashboard["<b>dashboard</b><br/>built from infra/Dockerfile.dashboard<br/>ports 3000:3000<br/>profiles: dashboard, full"]
+  minio["<b>minio</b><br/>minio/minio:RELEASE.2024-12-18T13-15-44Z<br/>ports 9000:9000, 9001:9001<br/>profiles: minio, full"]
+  minio_init["<b>minio-init</b><br/>minio/mc:RELEASE.2024-11-17T19-35-56Z<br/>profiles: minio, full"]
+  postgres["<b>postgres</b><br/>pgvector/pgvector:pg16<br/>ports 5432:5432<br/>default stack"]
+  vol_minio_data[("volume: minio_data")]
+  vol_postgres_data[("volume: postgres_data")]
+  api -->|"depends on (healthy)"| postgres
+  dashboard -->|"depends on (healthy)"| api
+  minio -.->|"mounts /data"| vol_minio_data
+  minio_init -->|"depends on (healthy)"| minio
+  postgres -.->|"mounts /var/lib/postgresql/data"| vol_postgres_data

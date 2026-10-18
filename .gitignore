@@ -37,5 +37,6 @@ __pycache__/
 .pytest_cache/
 
 # Claude Code local context (not for git)
+.claude/
 CLAUDE.md
 AGENTS.md
