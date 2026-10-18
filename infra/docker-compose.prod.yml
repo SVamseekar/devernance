@@ -86,6 +86,9 @@ services:
       ASSURANCE_STORAGE_ACCESS_KEY_ID: ${ASSURANCE_STORAGE_ACCESS_KEY_ID}
       ASSURANCE_STORAGE_SECRET_ACCESS_KEY: ${ASSURANCE_STORAGE_SECRET_ACCESS_KEY}
       ASSURANCE_STORAGE_PATH_STYLE: "true"
+      # Error reporting: off while SENTRY_DSN is blank. Personal data and traces are always off (SentryDefaults).
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 15s

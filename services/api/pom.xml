@@ -169,6 +169,11 @@
       <version>1.31.0</version>
     </dependency>
     <dependency>
+      <groupId>io.sentry</groupId>
+      <artifactId>sentry-spring-boot-4-starter</artifactId>
+      <version>8.58.0</version>
+    </dependency>
+    <dependency>
       <groupId>net.logstash.logback</groupId>
       <artifactId>logstash-logback-encoder</artifactId>
       <version>9.0</version>
