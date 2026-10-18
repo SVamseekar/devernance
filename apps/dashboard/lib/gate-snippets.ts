@@ -3,6 +3,9 @@ import type { CodeTab } from "@/components/marketing/code-tabs";
 /** Host-neutral: ASSURANCE_URL is your workspace URL (hosted or self-hosted), set as a CI variable. */
 const gatePath = "/api/v1/ci/release-gate";
 
+/** Published GitHub Action (github.com/SVamseekar/assurance-os-release-gate); it calls the same endpoint. */
+export const releaseGateAction = "SVamseekar/assurance-os-release-gate@v1";
+
 /** Real integration samples for the documented CI endpoint (docs/API.md, "CI release gate"). */
 export const gateSnippets: CodeTab[] = [
   {
@@ -10,19 +13,17 @@ export const gateSnippets: CodeTab[] = [
     filename: ".github/workflows/ai-release-gate.yml",
     code: `name: AI release gate
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   gate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Assurance OS release gate
-        env:
-          API_KEY: \${{ secrets.ASSURANCE_API_KEY }}
-          GATE: \${{ vars.ASSURANCE_URL }}${gatePath}
-          SYSTEM_ID: \${{ vars.ASSURANCE_SYSTEM_ID }}
-        run: |
-          res=$(curl -fsS -H "X-Api-Key: $API_KEY" "$GATE?systemId=$SYSTEM_ID")
-          echo "$res" | jq -r .content
-          exit "$(echo "$res" | jq -r .exitCode)"`,
+      - uses: ${releaseGateAction}
+        with:
+          api-key: \${{ secrets.ASSURANCE_API_KEY }}
+          system-id: \${{ vars.ASSURANCE_SYSTEM_ID }}
+          api-url: \${{ vars.ASSURANCE_URL }}`,
   },
   {
     label: "cURL",
