@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
+import java.util.UUID;
+import org.slf4j.MDC;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -131,12 +133,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
             return;
         }
         apiKeyUsage.touch(key.id());
-        tenantContext.setOverrides(key.tenantId(), key.userId());
-        try {
-            filterChain.doFilter(request, response);
-        } finally {
-            tenantContext.clearOverrides();
-        }
+        runAs(key.tenantId(), key.userId(), request, response, filterChain);
     }
 
     private void authenticateWithBearerToken(
@@ -153,10 +150,21 @@ public class TenantContextFilter extends OncePerRequestFilter {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Workspace is no longer active");
             return;
         }
-        tenantContext.setOverrides(claims.get().tenantId(), claims.get().userId());
+        runAs(claims.get().tenantId(), claims.get().userId(), request, response, filterChain);
+    }
+
+    private void runAs(
+            UUID tenantId,
+            UUID userId,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+        tenantContext.setOverrides(tenantId, userId);
+        MDC.put("tenantId", tenantId.toString());
         try {
             filterChain.doFilter(request, response);
         } finally {
+            MDC.remove("tenantId");
             tenantContext.clearOverrides();
         }
     }

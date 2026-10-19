@@ -22,6 +22,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -38,9 +39,12 @@ public class JwtService {
     private static final String ISSUER = "eu-ai-assurance-os";
     private static final long ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
+    private static final Duration JWKS_CACHE_TTL = Duration.ofMinutes(5);
+
     private final SigningKeyJpaRepository signingKeys;
     private final String keyEncryptionSecret;
     private RSAKey activeSigningKey;
+    private volatile CachedJwks cachedJwks;
 
     public JwtService(
             SigningKeyJpaRepository signingKeys,
@@ -156,12 +160,38 @@ public class JwtService {
         }
     }
 
+    /**
+     * Public keys for verifying tokens and evidence packs. Served to anyone, so the set is cached for a few
+     * minutes instead of reading and decrypting every stored key on each request.
+     */
     public JWKSet currentPublicJwks() {
+        CachedJwks cached = cachedJwks;
+        Instant now = Instant.now();
+        if (cached != null && now.isBefore(cached.expiresAt())) {
+            return cached.jwks();
+        }
         List<JWK> keys = signingKeys.findAll().stream()
-            .map(this::toRsaKey)
-            .map(RSAKey::toPublicJWK)
-            .map(k -> (JWK) k)
+            .map(JwtService::publicJwk)
             .toList();
-        return new JWKSet(keys.isEmpty() ? List.of(activeSigningKey.toPublicJWK()) : keys);
+        JWKSet jwks = new JWKSet(keys.isEmpty() ? List.of(activeSigningKey.toPublicJWK()) : keys);
+        cachedJwks = new CachedJwks(jwks, now.plus(JWKS_CACHE_TTL));
+        return jwks;
+    }
+
+    private record CachedJwks(JWKSet jwks, Instant expiresAt) {}
+
+    /** The public half only: no private key is decrypted to publish the set. */
+    private static JWK publicJwk(SigningKeyEntity entity) {
+        try {
+            RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(
+                new X509EncodedKeySpec(Base64.getDecoder().decode(entity.publicKeyPem())));
+            return new RSAKey.Builder(publicKey)
+                .keyID(entity.kid().toString())
+                .keyUse(KeyUse.SIGNATURE)
+                .algorithm(JWSAlgorithm.RS256)
+                .build();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load RSA public key " + entity.kid(), e);
+        }
     }
 }

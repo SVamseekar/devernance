@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,11 +12,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * Refuses to start the postgres (production) profile while any seeded demo account still
- * accepts the published development password. See audit finding F1.
+ * accepts the published development password. See audit finding F1. Checked after migrations have run and before
+ * the web server starts, so such an instance never answers a login.
  */
 @Component
-@Order(0)
-public class DemoCredentialGuard implements ApplicationRunner {
+public class DemoCredentialGuard implements SmartInitializingSingleton {
   public static final String DEV_PASSWORD = "dev-local-password-only";
   public static final List<String> SEEDED_EMAILS = List.of(
       "compliance@example.com",
@@ -42,7 +40,7 @@ public class DemoCredentialGuard implements ApplicationRunner {
   }
 
   @Override
-  public void run(ApplicationArguments args) {
+  public void afterSingletonsInstantiated() {
     boolean production = Arrays.asList(environment.getActiveProfiles()).contains("postgres");
     if (!production || allowDemoPasswords) {
       return;

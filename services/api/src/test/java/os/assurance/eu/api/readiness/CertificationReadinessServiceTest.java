@@ -84,7 +84,7 @@ class CertificationReadinessServiceTest {
     when(approvalWorkflowService.listBySystemId(SYSTEM)).thenReturn(List.of());
     when(determinationRuns.findFirstByTenantIdAndSystemIdOrderByCreatedAtDesc(TENANT, SYSTEM))
         .thenReturn(Optional.empty());
-    when(auditService.verifyChain()).thenReturn(new AuditChainVerifyResponse(true, 3, null));
+    when(auditService.recentVerification()).thenReturn(new AuditChainVerifyResponse(true, 3, null));
 
     CertificationReadinessResponse report = service.assess(system);
 
@@ -112,7 +112,7 @@ class CertificationReadinessServiceTest {
     when(approvalWorkflowService.listBySystemId(SYSTEM)).thenReturn(List.of());
     when(determinationRuns.findFirstByTenantIdAndSystemIdOrderByCreatedAtDesc(TENANT, SYSTEM))
         .thenReturn(Optional.of(mock(os.assurance.eu.api.determination.DeterminationRunEntity.class)));
-    when(auditService.verifyChain()).thenReturn(new AuditChainVerifyResponse(true, 12, null));
+    when(auditService.recentVerification()).thenReturn(new AuditChainVerifyResponse(true, 12, null));
 
     CertificationReadinessResponse report = service.assess(system);
 

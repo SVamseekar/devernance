@@ -264,7 +264,7 @@ class ApiControllerTest {
         .andExpect(jsonPath("$.status").value("UP"));
 
     mockMvc.perform(get("/actuator/metrics/assurance.eval.run.queued")
-            .with(authenticated()))
+            .header("X-Api-Key", ADMIN_API_KEY))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("assurance.eval.run.queued"))
         .andExpect(jsonPath("$.availableTags[0].tag").value("source"));
@@ -884,7 +884,7 @@ class ApiControllerTest {
   }
 
   @Test
-  void answersEvidenceQueryWithCitations() throws Exception {
+  void citesNothingWhenTheSystemHasNoEvidence() throws Exception {
     String systemId = createSystem();
 
     mockMvc.perform(post("/api/v1/evidence/query")
@@ -897,8 +897,8 @@ class ApiControllerTest {
                 """.formatted(systemId))
                     .with(authenticated()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.answer", not(blankOrNullString())))
-        .andExpect(jsonPath("$.citations", hasSize(2)));
+        .andExpect(jsonPath("$.answer", containsString("No indexed evidence")))
+        .andExpect(jsonPath("$.citations", hasSize(0)));
   }
 
   @Test
@@ -976,9 +976,10 @@ class ApiControllerTest {
                 """.formatted(systemId))
                     .with(authenticated()))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.answer", containsString("No indexed evidence")))
         .andExpect(jsonPath("$.answer", containsString("currently has a")))
-        .andExpect(jsonPath("$.citations", hasSize(2)))
-        .andExpect(jsonPath("$.citations[0].documentId").value("doc_dpia_mvp"));
+        .andExpect(jsonPath("$.confidence").value(0.0))
+        .andExpect(jsonPath("$.citations", hasSize(0)));
   }
 
   @Test
@@ -1259,6 +1260,42 @@ class ApiControllerTest {
         .andExpect(status().isOk())
         .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
             .header().string("X-Request-Id", "test-correlation-123"));
+  }
+
+  @Test
+  void replacesACorrelationIdThatIsNotAShortToken() throws Exception {
+    mockMvc.perform(get("/api/v1/systems")
+            .header("X-Request-Id", "x".repeat(65))
+            .with(authenticated()))
+        .andExpect(status().isOk())
+        .andExpect(header().string("X-Request-Id", not(containsString("xxx"))));
+    mockMvc.perform(get("/api/v1/systems")
+            .header("X-Request-Id", "a b\"c")
+            .with(authenticated()))
+        .andExpect(status().isOk())
+        .andExpect(header().string("X-Request-Id", not(containsString("\""))));
+  }
+
+  @Test
+  void platformMetricsAreOnlyForOperatorAdmins() throws Exception {
+    // Tests run without a metrics export, so the operator check is shown on /actuator/metrics.
+    mockMvc.perform(get("/actuator/metrics").header("X-Api-Key", ADMIN_API_KEY))
+        .andExpect(status().isOk());
+    // Same tenant, not an admin.
+    mockMvc.perform(get("/actuator/prometheus").with(authenticated()))
+        .andExpect(status().isNotFound());
+    mockMvc.perform(get("/actuator/metrics").header("X-Api-Key", AUDITOR_API_KEY))
+        .andExpect(status().isNotFound());
+    // Another workspace entirely.
+    mockMvc.perform(get("/actuator/metrics").header("X-Api-Key", SECOND_TENANT_API_KEY))
+        .andExpect(status().isNotFound());
+    mockMvc.perform(get("/actuator/info").header("X-Api-Key", SECOND_TENANT_API_KEY))
+        .andExpect(status().isNotFound());
+    mockMvc.perform(get("/actuator").header("X-Api-Key", SECOND_TENANT_API_KEY))
+        .andExpect(status().isNotFound());
+    // Probes stay public.
+    mockMvc.perform(get("/actuator/health/readiness"))
+        .andExpect(status().isOk());
   }
 
   @Test

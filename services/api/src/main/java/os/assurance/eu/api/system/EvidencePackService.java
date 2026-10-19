@@ -26,7 +26,6 @@ import os.assurance.eu.api.workflow.ApprovalWorkflow;
 import os.assurance.eu.api.workflow.ApprovalWorkflowService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EvidencePackService {
@@ -84,7 +83,11 @@ public class EvidencePackService {
     this.generator = generator;
   }
 
-  @Transactional
+  /**
+   * Not one transaction: the evgraph scan below runs external processes for up to a minute, and holding a
+   * pooled connection that long starves other requests. Each read runs in its own short transaction, and the
+   * export is recorded with the audit append's own.
+   */
   public EvidencePackResponse buildAndExport(UUID systemId, String exportFormat) {
     AiSystem system = repository.findById(systemId)
         .orElseThrow(() -> new IllegalArgumentException("AI system not found"));

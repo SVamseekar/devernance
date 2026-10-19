@@ -17,7 +17,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import os.assurance.eu.api.evidence.EvidenceDocument;
 import os.assurance.eu.api.evidence.EvidenceRepository;
 import os.assurance.eu.api.system.EvidencePackResponse;
@@ -56,8 +55,10 @@ public class GrcExportService {
     }
   }
 
-  /** Builds and signs a fresh pack (recorded in the audit ledger as a {@code grc-zip} export) and zips it. */
-  @Transactional
+  /**
+   * Builds and signs a fresh pack (recorded in the audit ledger as a {@code grc-zip} export) and zips it. Not
+   * transactional, for the same reason as {@link EvidencePackService#buildAndExport}.
+   */
   public Export build(UUID systemId) {
     EvidencePackResponse pack = packs.buildAndExport(systemId, FORMAT);
     List<EvidenceDocument> indexed = evidence.findDocumentsBySystemId(systemId).stream()

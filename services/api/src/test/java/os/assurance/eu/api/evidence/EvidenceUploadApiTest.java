@@ -129,4 +129,41 @@ class EvidenceUploadApiTest {
             .header("X-Api-Key", API_KEY))
         .andExpect(status().isPayloadTooLarge());
   }
+
+  @Test
+  void recordsTheServerDigestAndRefusesAMismatchedChecksum() throws Exception {
+    UUID systemId = createSystem();
+    byte[] bytes = fixture("oversight-sop.txt");
+    String expected = java.util.HexFormat.of().formatHex(
+        java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+    MockMultipartFile file = new MockMultipartFile("file", "oversight-sop.txt", "text/plain", bytes);
+
+    mockMvc.perform(multipart("/api/v1/evidence/documents/upload")
+            .file(file)
+            .param("systemId", systemId.toString())
+            .param("type", "POLICY")
+            .param("title", "Claimed digest")
+            .param("checksum", "sha256-" + "0".repeat(64))
+            .header("X-Api-Key", API_KEY))
+        .andExpect(status().isBadRequest());
+
+    mockMvc.perform(multipart("/api/v1/evidence/documents/upload")
+            .file(file)
+            .param("systemId", systemId.toString())
+            .param("type", "POLICY")
+            .param("title", "Matching digest")
+            .param("checksum", expected.toUpperCase())
+            .header("X-Api-Key", API_KEY))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.checksum").value("sha256-" + expected));
+
+    mockMvc.perform(multipart("/api/v1/evidence/documents/upload")
+            .file(file)
+            .param("systemId", systemId.toString())
+            .param("type", "POLICY")
+            .param("title", "No digest given")
+            .header("X-Api-Key", API_KEY))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.checksum").value("sha256-" + expected));
+  }
 }

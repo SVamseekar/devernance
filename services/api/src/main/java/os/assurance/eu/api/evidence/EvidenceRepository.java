@@ -46,13 +46,20 @@ public class EvidenceRepository {
         .findFirst();
   }
 
+  /** Embeddings of every chunk of these documents, without the chunk text. Callers pass only this tenant's documents. */
   @Transactional(readOnly = true)
-  public List<EvidenceChunk> findChunksForDocuments(List<UUID> documentIds) {
+  public List<EvidenceChunkJpaRepository.ChunkVector> findChunkVectors(List<UUID> documentIds) {
     if (documentIds.isEmpty()) {
       return List.of();
     }
-    return chunks.findAllByDocumentIdInOrderByDocumentIdAscOrdinalAsc(documentIds).stream()
-        .map(EvidenceChunkEntity::toDomain)
-        .toList();
+    return chunks.findVectorsByDocumentIdIn(documentIds);
+  }
+
+  @Transactional(readOnly = true)
+  public List<EvidenceChunk> findChunksByIds(List<UUID> chunkIds) {
+    if (chunkIds.isEmpty()) {
+      return List.of();
+    }
+    return chunks.findAllById(chunkIds).stream().map(EvidenceChunkEntity::toDomain).toList();
   }
 }

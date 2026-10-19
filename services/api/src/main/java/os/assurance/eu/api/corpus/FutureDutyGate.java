@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,24 +12,23 @@ public class FutureDutyGate implements CorpusForceLookup {
   private static final Pattern ANNEX_I = Pattern.compile("\\bAnnex I\\b");
   private static final Pattern ARTICLE = Pattern.compile("Art\\.?\\s*(\\d+)");
 
-  private final ProvisionJpaRepository provisions;
-  private final LocalDate asOf;
+  private final CorpusQueryService corpus;
+  private final CorpusAsOf asOf;
 
-  public FutureDutyGate(
-      ProvisionJpaRepository provisions,
-      @Value("${assurance.corpus.as-of:}") String asOf) {
-    this.provisions = provisions;
-    this.asOf = asOf == null || asOf.isBlank() ? LocalDate.now() : LocalDate.parse(asOf);
+  public FutureDutyGate(CorpusQueryService corpus, CorpusAsOf asOf) {
+    this.corpus = corpus;
+    this.asOf = asOf;
   }
 
+  /** Reads the cached current corpus, not the provisions table, because the gate asks once per obligation. */
   @Override
   public boolean citesFutureDuty(String legalRefs) {
     return cites(
         legalRefs,
-        provisions.findAll().stream()
+        corpus.current().provisions().stream()
             .map(row -> new Row(row.annex(), row.article(), row.forceFrom()))
             .toList(),
-        asOf);
+        asOf.today());
   }
 
   public record Row(String annex, String article, LocalDate forceFrom) {

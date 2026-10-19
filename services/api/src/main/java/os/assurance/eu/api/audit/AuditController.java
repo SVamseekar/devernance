@@ -1,6 +1,7 @@
 package os.assurance.eu.api.audit;
 
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,12 +37,19 @@ public class AuditController {
     this.authorizationService = authorizationService;
   }
 
+  static final int DEFAULT_LIMIT = 500;
+  static final int MAX_LIMIT = 1000;
+
+  /**
+   * Newest first and bounded: a busy workspace (every CI gate run is audited) can hold far more events than a
+   * page should carry. Page back with {@code before}; the workspace export holds the full trail.
+   */
   @GetMapping
-  public List<AuditEvent> listAuditEvents(@RequestParam(required = false) UUID systemId) {
-    if (systemId != null) {
-      return auditService.findBySystemId(systemId);
-    }
-    return auditService.findAll();
+  public List<AuditEvent> listAuditEvents(
+      @RequestParam(required = false) UUID systemId,
+      @RequestParam(required = false) Instant before,
+      @RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit) {
+    return auditService.recent(systemId, before, Math.max(1, Math.min(limit, MAX_LIMIT)));
   }
 
   @GetMapping("/verify-chain")
