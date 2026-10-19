@@ -3,14 +3,21 @@ package os.assurance.eu.api.billing;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.data.domain.Persistable;
 
-/** One row per paying tenant. Changed only by verified Dodo webhooks. */
+/**
+ * One row per paying tenant. Changed only by verified Dodo webhooks. {@link Persistable} makes the first row an
+ * INSERT, so two webhooks racing to create it cannot overwrite each other; the loser fails and Dodo redelivers it.
+ */
 @Entity
 @Table(name = "tenant_subscriptions")
-public class TenantSubscriptionEntity {
+public class TenantSubscriptionEntity implements Persistable<UUID> {
   @Id
   private UUID tenantId;
 
@@ -30,6 +37,9 @@ public class TenantSubscriptionEntity {
 
   @Column(nullable = false)
   private Instant updatedAt;
+
+  @Transient
+  private boolean isNew = true;
 
   protected TenantSubscriptionEntity() {
   }
@@ -82,5 +92,21 @@ public class TenantSubscriptionEntity {
     this.status = "CANCELLED";
     this.graceUntil = periodEnd;
     this.updatedAt = now;
+  }
+
+  @Override
+  public UUID getId() {
+    return tenantId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markPersisted() {
+    isNew = false;
   }
 }
