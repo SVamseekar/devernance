@@ -25,6 +25,7 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.util.Timeout;
 import org.apache.tika.Tika;
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
@@ -139,6 +140,11 @@ public class TextExtractionService {
             BodyContentHandler handler = new BodyContentHandler(maxChars);
             try (var in = org.apache.tika.io.TikaInputStream.get(bytes)) {
                 parserFor(filename).parse(in, handler, metadata, new ParseContext());
+            } catch (Exception parse) {
+                // Reaching maxChars stops the parse; keep the text read so far, as Tika.parseToString does.
+                if (!WriteLimitReachedException.isWriteLimitReached(parse)) {
+                    throw parse;
+                }
             }
             return handler.toString();
         }
