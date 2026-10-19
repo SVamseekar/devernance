@@ -57,6 +57,7 @@ public class SlmMapClient {
         unreachable = true;
         return Outcome.down();
       }
+      unreachable = false;
       return parse(response.body(), candidateIds);
     } catch (InterruptedException ex) {
       Thread.currentThread().interrupt();
