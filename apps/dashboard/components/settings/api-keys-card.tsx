@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { releaseGateWorkflow } from "@/lib/onboarding";
+import { siteConfig } from "@/lib/site-config";
 import type { ApiKeyCreated } from "@/lib/types";
 
 function formatDate(value: string | null): string {
@@ -132,7 +133,7 @@ export function ApiKeysCard() {
           </ul>
         )}
 
-        <pre className="overflow-x-auto rounded-lg bg-muted px-3 py-3 text-xs">{releaseGateWorkflow()}</pre>
+        <pre className="overflow-x-auto rounded-lg bg-muted px-3 py-3 text-xs">{releaseGateWorkflow(undefined, siteConfig.appUrl)}</pre>
       </CardContent>
     </Card>
   );

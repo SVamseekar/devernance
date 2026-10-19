@@ -258,6 +258,56 @@ jobs:
         if: needs.changes.outputs.dashboard == 'true' || github.event_name != 'pull_request'
         run: npm run build
 
+  api-image:
+    name: API image boots (embedding model, non-root)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Skip — no API or infra changes
+        if: needs.changes.outputs.api != 'true' && needs.changes.outputs.infra != 'true' && github.event_name == 'pull_request'
+        run: echo "No API or infra changes; job is a no-op for path filter."
+
+      - name: Build the production API image
+        if: needs.changes.outputs.api == 'true' || needs.changes.outputs.infra == 'true' || github.event_name != 'pull_request'
+        run: docker build -f infra/Dockerfile -t aos-api:ci .
+
+      - name: Start it with the sentence embedding model and Hugging Face unreachable
+        if: needs.changes.outputs.api == 'true' || needs.changes.outputs.infra == 'true' || github.event_name != 'pull_request'
+        # huggingface.co points at localhost, so startup fails if the image does not carry the model.
+        run: |
+          docker run -d --name api -p 8080:8080 --memory 3g \
+            --add-host huggingface.co:127.0.0.1 \
+            -e EVAL_CALLBACK_SECRET=ci-image-boot \
+            -e ASSURANCE_EVIDENCE_EMBEDDING_PROVIDER=djl-sentence \
+            aos-api:ci
+          for i in $(seq 1 60); do curl -fsS http://localhost:8080/actuator/health > /dev/null && break; sleep 3; done
+          curl -fsS http://localhost:8080/actuator/health || { docker logs api | tail -80; exit 1; }
+          test "$(docker exec api id -u)" != "0"
+
+      - name: Index a document and get a cited answer
+        if: needs.changes.outputs.api == 'true' || needs.changes.outputs.infra == 'true' || github.event_name != 'pull_request'
+        env:
+          KEY: 00000000-0000-0000-0000-000000000a01
+        run: |
+          system=$(curl -fsS -H "X-Api-Key: $KEY" -H 'Content-Type: application/json' \
+            -d '{"name":"Image boot check","owner":"CI","purpose":"Route claims","riskClass":"LIMITED","riskBasis":"CI","deploymentRegion":"EU"}' \
+            http://localhost:8080/api/v1/systems | python3 -c 'import json,sys;print(json.load(sys.stdin)["id"])')
+          curl -fsS -H "X-Api-Key: $KEY" -H 'Content-Type: application/json' \
+            -d "{\"systemId\":\"$system\",\"type\":\"POLICY\",\"title\":\"Oversight SOP\",\"sourceUri\":\"memory://sop\",\"content\":\"A human reviewer can override any automated claim routing decision before it is released.\"}" \
+            http://localhost:8080/api/v1/evidence/documents > /dev/null
+          curl -fsS -H "X-Api-Key: $KEY" -H 'Content-Type: application/json' \
+            -d "{\"systemId\":\"$system\",\"question\":\"Can a human override the routing decision?\"}" \
+            http://localhost:8080/api/v1/evidence/query \
+            | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["citations"],d;print("cited:",d["citations"][0]["title"])'
+          docker logs api 2>&1 | grep -q "/opt/models/all-minilm-l6-v2" || { echo "model not loaded from the image"; exit 1; }
+
+      - name: API logs
+        if: failure()
+        run: docker logs api 2>&1 | tail -200
+
   # Part 9: validate Terraform skeleton without cloud credentials (null provider only).
   infra-test:
     name: Infra tests (compose, backups, updater)

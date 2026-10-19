@@ -5,16 +5,16 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-/** Fails startup of the postgres profile when a required secret is missing, a dev default, or short. */
+/**
+ * Fails startup of the postgres profile when a required secret is missing, a dev default, or short. Checked once
+ * all beans exist and before the web server starts, so a misconfigured instance never answers a request.
+ */
 @Component
-@Order(0)
-public class ProductionSecretsGuard implements ApplicationRunner {
+public class ProductionSecretsGuard implements SmartInitializingSingleton {
   static final List<String> REQUIRED = List.of(
       "assurance.audit.chain-secret",
       "assurance.oauth.state-secret",
@@ -29,7 +29,7 @@ public class ProductionSecretsGuard implements ApplicationRunner {
   }
 
   @Override
-  public void run(ApplicationArguments args) {
+  public void afterSingletonsInstantiated() {
     if (!Arrays.asList(environment.getActiveProfiles()).contains("postgres")) {
       return;
     }

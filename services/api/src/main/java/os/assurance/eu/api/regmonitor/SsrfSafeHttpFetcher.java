@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import os.assurance.eu.api.net.PublicAddressPolicy;
 import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -99,11 +100,7 @@ public class SsrfSafeHttpFetcher {
     public InetAddress[] resolve(String host) throws UnknownHostException {
       InetAddress[] addresses = InetAddress.getAllByName(host);
       for (InetAddress addr : addresses) {
-        if (addr.isLoopbackAddress()
-            || addr.isLinkLocalAddress()
-            || addr.isSiteLocalAddress()
-            || addr.isAnyLocalAddress()
-            || addr.isMulticastAddress()) {
+        if (!PublicAddressPolicy.isPublic(addr)) {
           throw new SsrfRejectedException(
               "Reg-monitor URL resolves to a private or reserved address");
         }

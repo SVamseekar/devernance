@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -47,7 +46,7 @@ class DemoCredentialGuardTest {
     MockEnvironment env = new MockEnvironment();
     env.setActiveProfiles("postgres");
     DemoCredentialGuard guard = new DemoCredentialGuard(users, env, false);
-    assertThatThrownBy(() -> guard.run(new DefaultApplicationArguments()))
+    assertThatThrownBy(() -> guard.afterSingletonsInstantiated())
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("legal@example.com");
   }
@@ -58,6 +57,6 @@ class DemoCredentialGuardTest {
     when(users.findByEmailIgnoreCase("admin@example.com"))
         .thenReturn(Optional.of(user("admin@example.com", DemoCredentialGuard.DEV_PASSWORD)));
     DemoCredentialGuard guard = new DemoCredentialGuard(users, new MockEnvironment(), false);
-    guard.run(new DefaultApplicationArguments());
+    guard.afterSingletonsInstantiated();
   }
 }

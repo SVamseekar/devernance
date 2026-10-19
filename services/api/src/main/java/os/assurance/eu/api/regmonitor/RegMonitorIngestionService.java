@@ -11,7 +11,9 @@ import os.assurance.eu.api.audit.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Polls enabled sources, fetches SSRF-safely (or loads fixtures), dedupes on content_hash,
@@ -30,6 +32,7 @@ public class RegMonitorIngestionService {
   private final RegMonitorProperties properties;
   private final AuditService auditService;
   private final Clock clock;
+  private final TransactionTemplate transaction;
 
   public RegMonitorIngestionService(
       RegSourceJpaRepository sources,
@@ -40,7 +43,8 @@ public class RegMonitorIngestionService {
       RegImpactMapper impactMapper,
       RegMonitorProperties properties,
       AuditService auditService,
-      Clock clock) {
+      Clock clock,
+      PlatformTransactionManager transactionManager) {
     this.sources = sources;
     this.items = items;
     this.hints = hints;
@@ -50,14 +54,16 @@ public class RegMonitorIngestionService {
     this.properties = properties;
     this.auditService = auditService;
     this.clock = clock;
+    this.transaction = new TransactionTemplate(transactionManager);
   }
 
   /**
-   * Poll all enabled sources that are due. Safe to call from scheduler.
+   * Poll all enabled sources that are due. Safe to call from scheduler. Each feed is fetched outside
+   * any transaction, so a slow source never holds a database connection, and each source's items are
+   * stored in a transaction of their own, so one failing source does not undo the others.
    *
    * @return number of newly ingested items
    */
-  @Transactional
   public int pollDueSources() {
     Instant now = clock.instant();
     int ingested = 0;
@@ -66,7 +72,9 @@ public class RegMonitorIngestionService {
         continue;
       }
       try {
-        ingested += ingestSource(source, now);
+        List<ParsedFeedItem> parsed = loadItems(source);
+        Integer stored = transaction.execute(status -> storeItems(source, parsed, now));
+        ingested += stored == null ? 0 : stored;
       } catch (Exception ex) {
         LOGGER.warn("Reg-monitor poll failed for source {}: {}", source.code(), ex.getMessage());
       } finally {
@@ -102,7 +110,10 @@ public class RegMonitorIngestionService {
   }
 
   int ingestSource(RegSourceEntity source, Instant now) throws IOException {
-    List<ParsedFeedItem> parsed = loadItems(source);
+    return storeItems(source, loadItems(source), now);
+  }
+
+  private int storeItems(RegSourceEntity source, List<ParsedFeedItem> parsed, Instant now) {
     int created = 0;
     for (ParsedFeedItem item : parsed) {
       if (ingestItem(source, item, now)) {

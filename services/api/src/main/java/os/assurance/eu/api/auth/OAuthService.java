@@ -5,7 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import os.assurance.eu.api.audit.AuditChainHeads;
 import os.assurance.eu.api.tenant.TenantEntity;
 import os.assurance.eu.api.tenant.TenantJpaRepository;
@@ -32,6 +33,7 @@ public class OAuthService {
   private final RefreshTokenService refreshTokenService;
   private final AuthTokenService authTokens;
   private final TenantStatusCache tenantStatus;
+  private final TransactionTemplate transaction;
 
   public OAuthService(
       OAuthProperties properties,
@@ -43,7 +45,9 @@ public class OAuthService {
       JwtService jwtService,
       RefreshTokenService refreshTokenService,
       AuthTokenService authTokens,
-      TenantStatusCache tenantStatus) {
+      TenantStatusCache tenantStatus,
+      PlatformTransactionManager transactionManager) {
+    this.transaction = new TransactionTemplate(transactionManager);
     this.properties = properties;
     this.stateService = stateService;
     this.tokenClient = tokenClient;
@@ -68,7 +72,10 @@ public class OAuthService {
     return tokenClient.buildAuthorizationUrl(normalized, state, redirectUri);
   }
 
-  @Transactional
+  /**
+   * The code exchange and profile fetch call the identity provider (up to 10 s each), so they run before the
+   * transaction; only finding or creating the user and issuing tokens hold a database connection.
+   */
   public TokenResponse completeAuthorization(String provider, String code, String state, String browserNonce) {
     String normalized = normalizeProvider(provider);
     OAuthStateService.ValidationResult stateResult = stateService.validate(state, normalized, browserNonce);
@@ -84,11 +91,13 @@ public class OAuthService {
     Map<String, Object> userInfo = tokenClient.fetchUserInfo(normalized, tokenResponse);
     OAuthProviderProfile profile = OAuthProviderProfile.fromUserInfo(normalized, userInfo);
 
-    UserEntity user = resolveUser(profile);
-    if (!tenantStatus.isActive(user.tenantId())) {
-      throw new OAuthLoginException("workspace_deleted", "This workspace has been deleted.");
-    }
-    return issueTokenPair(user);
+    return transaction.execute(status -> {
+      UserEntity user = resolveUser(profile);
+      if (!tenantStatus.isActive(user.tenantId())) {
+        throw new OAuthLoginException("workspace_deleted", "This workspace has been deleted.");
+      }
+      return issueTokenPair(user);
+    });
   }
 
   UserEntity resolveUser(OAuthProviderProfile profile) {

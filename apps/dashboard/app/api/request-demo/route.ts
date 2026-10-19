@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { clientIp } from "@/lib/client-ip";
+import { readLimitedText } from "@/lib/read-limited-body";
 import { siteConfig } from "@/lib/site-config";
 
 export const runtime = "nodejs";
@@ -93,6 +95,8 @@ function buildDiscordEmbed(
   });
 
   return {
+    // Visitor text must never ping the channel (@everyone, role or user mentions).
+    allowed_mentions: { parse: [] },
     embeds: [
       {
         title: `New demo request — ${payload.companyName}`,
@@ -114,17 +118,17 @@ function buildDiscordEmbed(
   };
 }
 
-function getClientIp(request: NextRequest): string | undefined {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || undefined;
-  }
-  return request.headers.get("x-real-ip") ?? undefined;
-}
+const MAX_TRACKED_IPS = 10_000;
+const MAX_BODY_BYTES = 16 * 1024;
 
 function isRateLimited(ip: string | undefined): boolean {
   if (!ip) return false;
   const now = Date.now();
+  if (ipHits.size > MAX_TRACKED_IPS) {
+    for (const [key, entry] of ipHits) {
+      if (now > entry.resetAt) ipHits.delete(key);
+    }
+  }
   const entry = ipHits.get(ip);
   if (!entry || now > entry.resetAt) {
     ipHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
@@ -150,6 +154,7 @@ async function sendDemoRequestNotification(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(buildDiscordEmbed(payload, meta)),
+    signal: AbortSignal.timeout(5_000),
   });
 
   if (!response.ok) {
@@ -158,7 +163,7 @@ async function sendDemoRequestNotification(
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
+  const ip = clientIp(request) || undefined;
   if (isRateLimited(ip)) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
@@ -166,9 +171,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const text = await readLimitedText(request, MAX_BODY_BYTES);
+  if (text === null) {
+    return NextResponse.json({ error: "Request is too large" }, { status: 413 });
+  }
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(text);
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }

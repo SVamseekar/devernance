@@ -4,6 +4,7 @@ import os.assurance.eu.api.billing.EntitlementService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
 import os.assurance.eu.api.tenant.TenantAuthorizationService;
@@ -110,8 +111,9 @@ public class MappingProposalController {
   public record SetModeRequest(@NotBlank String mode) {
   }
 
-  public record MapDocumentsRequest(@NotEmpty @Valid List<MapDocument> documents) {
-    public record MapDocument(@NotBlank String title, @NotBlank String text) {
+  /** Bounded so one request cannot queue an unbounded number of model calls. */
+  public record MapDocumentsRequest(@NotEmpty @Size(max = 20) @Valid List<MapDocument> documents) {
+    public record MapDocument(@NotBlank @Size(max = 300) String title, @NotBlank @Size(max = 100_000) String text) {
     }
   }
 }

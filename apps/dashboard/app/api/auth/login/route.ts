@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { setSessionCookies } from "@/lib/session";
 import { fetchUpstream, serviceUnavailable } from "@/lib/upstream";
 import { clientIpHeaders } from "@/lib/client-ip";
+import { readLimitedJson } from "@/lib/read-limited-body";
 
 const API_BASE = process.env.ASSURANCE_API_BASE_URL ?? "http://localhost:8080";
 
 export async function POST(request: NextRequest) {
-  let body: { email?: unknown; password?: unknown };
-  try {
-    body = await request.json();
-  } catch {
+  const body = (await readLimitedJson(request)) as { email?: unknown; password?: unknown } | null;
+  if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const email = typeof body.email === "string" ? body.email : "";

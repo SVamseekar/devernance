@@ -14,60 +14,104 @@ import ai.djl.translate.Batchifier;
 import ai.djl.translate.Translator;
 import ai.djl.translate.TranslatorContext;
 import jakarta.annotation.PreDestroy;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.util.HexFormat;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+/**
+ * all-MiniLM-L6-v2 sentence embeddings (384 dimensions) through ONNX Runtime. The model files are pinned to one
+ * Hugging Face revision and checked against their SHA-256 before loading, so a changed or tampered upstream file
+ * cannot slip in. They are kept in {@code modelDir}: the production image bakes them in, so the API starts
+ * without reaching Hugging Face; elsewhere they are downloaded once and reused.
+ */
 public class DjlSentenceEmbeddingProvider implements EvidenceEmbeddingProvider {
 
-    private static final String HF_BASE =
-        "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main";
-    private static final String MODEL_URL = HF_BASE + "/onnx/model.onnx";
-    private static final String TOKENIZER_URL = HF_BASE + "/tokenizer.json";
+    static final String REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41";
+    private static final String BASE =
+        "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/" + REVISION;
+    static final ModelFile MODEL = new ModelFile(
+        "model.onnx", BASE + "/onnx/model.onnx",
+        "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452");
+    static final ModelFile TOKENIZER = new ModelFile(
+        "tokenizer.json", BASE + "/tokenizer.json",
+        "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037");
+    /** The model's position table holds 512; inputs are cut at the 256 tokens sentence-transformers uses. */
+    static final int MAX_TOKENS = 256;
 
     private final ZooModel<NDList, NDList> model;
     private final HuggingFaceTokenizer tokenizer;
 
-    public DjlSentenceEmbeddingProvider() throws Exception {
-        Path modelDir = Files.createTempDirectory("all-minilm-l6-v2");
-        Path modelFile = modelDir.resolve("model.onnx");
-        Path tokenizerFile = modelDir.resolve("tokenizer.json");
+    public DjlSentenceEmbeddingProvider(Path modelDir) throws Exception {
+        Files.createDirectories(modelDir);
         HttpClient client = HttpClient.newBuilder()
-            .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(20))
             .build();
-        downloadIfMissing(client, MODEL_URL, modelFile, "ONNX model");
+        Path modelFile = ensure(client, modelDir, MODEL);
         // Load tokenizer from an absolute file path. Passing a bare HuggingFace repo id
         // breaks inside some container runtimes (RelativeUrlWithoutBase).
-        downloadIfMissing(client, TOKENIZER_URL, tokenizerFile, "tokenizer.json");
+        Path tokenizerFile = ensure(client, modelDir, TOKENIZER);
 
         Criteria<NDList, NDList> criteria = Criteria.builder()
             .setTypes(NDList.class, NDList.class)
-            .optModelPath(modelDir)
+            .optModelPath(modelFile.getParent())
             .optModelName("model")
             .optEngine("OnnxRuntime")
             .optTranslator(new PassThroughTranslator())
             .build();
         this.model = criteria.loadModel();
+        // Without truncation a long question or an unbroken run of text exceeds the model's 512 positions and fails.
         this.tokenizer = HuggingFaceTokenizer.builder()
             .optTokenizerPath(tokenizerFile)
+            .optTruncation(true)
+            .optMaxLength(MAX_TOKENS)
             .build();
     }
 
-    private static void downloadIfMissing(HttpClient client, String url, Path dest, String label)
-            throws Exception {
-        if (Files.exists(dest) && Files.size(dest) > 0) {
-            return;
+    record ModelFile(String name, String url, String sha256) {}
+
+    /** Returns the verified file, downloading it first when it is missing or does not match its checksum. */
+    static Path ensure(HttpClient client, Path dir, ModelFile file) throws Exception {
+        Path dest = dir.resolve(file.name());
+        if (Files.exists(dest) && file.sha256().equals(sha256(dest))) {
+            return dest;
         }
+        Path part = dir.resolve(file.name() + ".part");
         HttpResponse<Path> resp = client.send(
-            HttpRequest.newBuilder().uri(URI.create(url)).GET().build(),
-            HttpResponse.BodyHandlers.ofFile(dest));
+            HttpRequest.newBuilder().uri(URI.create(file.url()))
+                .timeout(Duration.ofMinutes(5))
+                .GET().build(),
+            HttpResponse.BodyHandlers.ofFile(part));
         if (resp.statusCode() != 200) {
+            Files.deleteIfExists(part);
             throw new IllegalStateException(
-                "Failed to download " + label + " from " + url + ": HTTP " + resp.statusCode());
+                "Failed to download " + file.name() + " from " + file.url() + ": HTTP " + resp.statusCode());
         }
+        String actual = sha256(part);
+        if (!file.sha256().equals(actual)) {
+            Files.deleteIfExists(part);
+            throw new IllegalStateException(
+                file.name() + " does not match its pinned SHA-256 (got " + actual + "); refusing to load it");
+        }
+        return Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    static String sha256(Path file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (var in = new DigestInputStream(Files.newInputStream(file), digest)) {
+            in.transferTo(OutputStream.nullOutputStream());
+        }
+        return HexFormat.of().formatHex(digest.digest());
     }
 
     @Override

@@ -34,7 +34,7 @@ function hasSession(request: NextRequest): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Never bounce /login based on cookie presence — stale cookies plus a 401

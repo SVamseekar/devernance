@@ -24,7 +24,10 @@ public class RegMonitorPoller {
     this.tenantContext = tenantContext;
   }
 
-  @Scheduled(fixedDelayString = "${assurance.reg-monitor.poll-interval-ms:60000}")
+  // The first poll waits for startup runners (BootstrapData creates the tenant its audit events belong to).
+  @Scheduled(
+      fixedDelayString = "${assurance.reg-monitor.poll-interval-ms:60000}",
+      initialDelayString = "${assurance.reg-monitor.initial-delay-ms:30000}")
   public void poll() {
     // Audit append requires tenant context; use bootstrap MVP tenant for global feed events.
     tenantContext.setOverrides(TenantContext.DEFAULT_TENANT_ID, TenantContext.SYSTEM_USER_ID);

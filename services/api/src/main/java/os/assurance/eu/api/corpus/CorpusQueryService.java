@@ -15,7 +15,8 @@ public class CorpusQueryService {
   private final ProvisionJpaRepository provisions;
   private final GuidanceDocJpaRepository guidanceDocs;
   private final CorpusRelationshipJpaRepository relationships;
-  private record Cached(String versionHash, CorpusView view, Map<String, ProvisionView> byKey) {}
+  private final CorpusAsOf asOf;
+  private record Cached(String versionHash, LocalDate asOf, CorpusView view, Map<String, ProvisionView> byKey) {}
   private volatile Cached cached;
 
   public CorpusQueryService(
@@ -23,7 +24,9 @@ public class CorpusQueryService {
       InstrumentJpaRepository instruments,
       ProvisionJpaRepository provisions,
       GuidanceDocJpaRepository guidanceDocs,
-      CorpusRelationshipJpaRepository relationships) {
+      CorpusRelationshipJpaRepository relationships,
+      CorpusAsOf asOf) {
+    this.asOf = asOf;
     this.versions = versions;
     this.instruments = instruments;
     this.provisions = provisions;
@@ -46,18 +49,19 @@ public class CorpusQueryService {
 
   private Cached cachedCurrent() {
     String hash = currentVersionHash();
+    LocalDate today = asOf.today();
     Cached snapshot = cached;
-    if (snapshot != null && snapshot.versionHash().equals(hash)) {
+    if (snapshot != null && snapshot.versionHash().equals(hash) && snapshot.asOf().equals(today)) {
       return snapshot;
     }
     CorpusView view = versions.findFirstByOrderByBuiltAtDesc()
-        .map(this::view)
+        .map(version -> view(version, today))
         .orElseGet(() -> new CorpusView(null, List.of(), List.of(), List.of(), CorpusIngestService.ATTRIBUTION));
     Map<String, ProvisionView> byKey = new java.util.HashMap<>();
     for (ProvisionView p : view.provisions()) {
       byKey.put(p.provisionKey(), p);
     }
-    Cached fresh = new Cached(hash, view, Map.copyOf(byKey));
+    Cached fresh = new Cached(hash, today, view, Map.copyOf(byKey));
     cached = fresh;
     return fresh;
   }
@@ -72,7 +76,7 @@ public class CorpusQueryService {
     return provision(provisionKey).isPresent();
   }
 
-  private CorpusView view(CorpusVersionEntity version) {
+  private CorpusView view(CorpusVersionEntity version, LocalDate today) {
     List<InstrumentEntity> instrumentRows =
         instruments.findAllByCorpusVersionIdOrderBySeedCelexAsc(version.id());
     List<UUID> instrumentIds = instrumentRows.stream().map(InstrumentEntity::id).toList();
@@ -94,7 +98,7 @@ public class CorpusQueryService {
                 row.point(),
                 row.annex(),
                 row.textExcerpt(),
-                row.forceStatus().name(),
+                CorpusAsOf.statusOn(row.forceStatus(), row.forceFrom(), today).name(),
                 row.forceFrom(),
                 row.scopeNote()))
             .toList(),

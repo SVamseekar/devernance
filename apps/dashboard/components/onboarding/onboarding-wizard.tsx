@@ -10,6 +10,7 @@ import { RiskBadge } from "@/components/risk-badge";
 import { api, ApiError } from "@/lib/api";
 import { useCorpus } from "@/hooks/use-corpus";
 import { evidenceTypesFor, firstDutyDates, releaseGateWorkflow } from "@/lib/onboarding";
+import { siteConfig } from "@/lib/site-config";
 import { clearPlanIntent, loadPlanIntent, type PlanIntent } from "@/lib/plan-intent";
 import { PLANS } from "@/lib/pricing";
 import { registerSystem } from "@/lib/register-system";
@@ -279,7 +280,7 @@ function GateStep({ systemId }: { systemId: string }) {
             <p className="text-muted-foreground">Store it as the repository secret ASSURANCE_API_KEY.</p>
           </div>
         )}
-        <pre className="overflow-x-auto rounded-lg bg-muted px-3 py-3 text-xs">{releaseGateWorkflow(systemId)}</pre>
+        <pre className="overflow-x-auto rounded-lg bg-muted px-3 py-3 text-xs">{releaseGateWorkflow(systemId, siteConfig.appUrl)}</pre>
         <PlanUpgradeOffer />
         <div className="flex items-center justify-between border-t border-border pt-4">
           <SkipLink />

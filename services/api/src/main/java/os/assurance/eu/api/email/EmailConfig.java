@@ -36,10 +36,10 @@ public class EmailConfig {
     if (primaryHost.isBlank()) {
       throw new IllegalStateException("assurance.email.primary.host is required when assurance.email.mode=smtp");
     }
-    return new SmtpFailoverEmailSender(
+    return new AsyncEmailSender(new SmtpFailoverEmailSender(
         smtp(primaryHost, primaryPort, primaryUser, primaryPassword),
         fallbackHost.isBlank() ? null : smtp(fallbackHost, fallbackPort, fallbackUser, fallbackPassword),
-        from);
+        from));
   }
 
   private static JavaMailSenderImpl smtp(String host, int port, String user, String password) {

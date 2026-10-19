@@ -37,7 +37,9 @@ class EmailConfigTest {
   }
 
   @Test
-  void smtpModeBuildsFailoverSender() {
-    assertThat(build("smtp", "postgres")).isInstanceOf(SmtpFailoverEmailSender.class);
+  void smtpModeBuildsFailoverSenderOffTheRequestThread() {
+    EmailSender sender = build("smtp", "postgres");
+    assertThat(sender).isInstanceOf(AsyncEmailSender.class);
+    assertThat(((AsyncEmailSender) sender).delegate()).isInstanceOf(SmtpFailoverEmailSender.class);
   }
 }

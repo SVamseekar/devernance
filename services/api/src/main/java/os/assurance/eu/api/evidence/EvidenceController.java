@@ -91,6 +91,14 @@ public class EvidenceController {
     String filename = StringUtils.hasText(file.getOriginalFilename())
         ? StringUtils.cleanPath(file.getOriginalFilename()).replaceAll("[^A-Za-z0-9._-]", "_")
         : "upload";
+    String digest = "sha256-" + sha256Hex(file);
+    // The server computes the digest of the bytes it received; a client-supplied checksum can only confirm it.
+    if (checksum != null && !checksum.isBlank()
+        && !digest.equalsIgnoreCase(checksum.strip())
+        && !digest.substring("sha256-".length()).equalsIgnoreCase(checksum.strip())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "The checksum does not match the uploaded file. Expected a SHA-256 of the file.");
+    }
     String text;
     try (var in = file.getInputStream()) {
       text = textExtraction.extractFromUpload(in, filename, properties.maxContentCharacters());
@@ -100,12 +108,16 @@ public class EvidenceController {
     try (var in = file.getInputStream()) {
       uri = fileStorage.upload(key, in, file.getSize(), file.getContentType());
     }
-    String digest = checksum != null && !checksum.isBlank()
-        ? checksum
-        : "sha256-" + java.util.HexFormat.of().formatHex(
-            java.security.MessageDigest.getInstance("SHA-256").digest(file.getBytes()));
     var req = new CreateEvidenceDocumentRequest(systemId, type, title, uri, text, digest, null);
     return evidenceService.ingest(req);
+  }
+
+  private static String sha256Hex(MultipartFile file) throws Exception {
+    java.security.MessageDigest sha = java.security.MessageDigest.getInstance("SHA-256");
+    try (var in = new java.security.DigestInputStream(file.getInputStream(), sha)) {
+      in.transferTo(java.io.OutputStream.nullOutputStream());
+    }
+    return java.util.HexFormat.of().formatHex(sha.digest());
   }
 
   @GetMapping("/systems/{systemId}/documents")

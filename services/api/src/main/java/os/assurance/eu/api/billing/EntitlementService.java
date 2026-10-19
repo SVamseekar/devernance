@@ -7,8 +7,12 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import os.assurance.eu.api.system.AiSystemJpaRepository;
 import os.assurance.eu.api.tenant.TenantContext;
 import os.assurance.eu.api.tenant.TenantEntity;
@@ -41,10 +45,12 @@ public class EntitlementService {
   private final GateRunCounterJpaRepository counters;
   private final TenantContext tenantContext;
   private final Clock clock;
+  private final TransactionTemplate requiresNew;
 
   public EntitlementService(TenantJpaRepository tenants, TenantSubscriptionJpaRepository subscriptions,
       AiSystemJpaRepository systemsJpa, UserJpaRepository users, UserInviteJpaRepository invites,
-      GateRunCounterJpaRepository counters, TenantContext tenantContext, Clock clock) {
+      GateRunCounterJpaRepository counters, TenantContext tenantContext, Clock clock,
+      PlatformTransactionManager transactions) {
     this.tenants = tenants;
     this.subscriptions = subscriptions;
     this.systemsJpa = systemsJpa;
@@ -53,6 +59,8 @@ public class EntitlementService {
     this.counters = counters;
     this.tenantContext = tenantContext;
     this.clock = clock;
+    this.requiresNew = new TransactionTemplate(transactions);
+    this.requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
   }
 
   static PlanCatalog resolve(String tenantPlanCode, Instant trialEndsAt, String subscriptionPlan,
@@ -143,14 +151,31 @@ public class EntitlementService {
     UUID tenantId = tenantContext.tenantId();
     PlanCatalog plan = effectivePlan(tenantId);
     String period = currentPeriod();
+    ensureCounter(tenantId, period);
     GateRunCounterEntity counter = counters.findForUpdate(tenantId, period)
-        .orElseGet(() -> counters.saveAndFlush(new GateRunCounterEntity(tenantId, period, 0)));
+        .orElseThrow(() -> new IllegalStateException("Gate run counter missing for " + tenantId + " " + period));
     if (plan.gateRunsPerMonth() >= 0 && counter.runs() >= plan.gateRunsPerMonth()) {
       throw new PaymentRequiredException("gate_runs",
           "Your " + plan + " plan includes " + plan.gateRunsPerMonth() + " CI gate runs per month.");
     }
     counter.increment();
     counters.save(counter);
+  }
+
+  /**
+   * Creates this month's counter in its own transaction. Parallel pipelines (a CI matrix) often start the month
+   * together; the loser of the insert race just uses the row the winner created instead of failing its build.
+   */
+  private void ensureCounter(UUID tenantId, String period) {
+    // existsById, not findById: a loaded entity would be served stale to the locked read that follows.
+    if (counters.existsById(new GateRunCounterEntity.Key(tenantId, period))) {
+      return;
+    }
+    try {
+      requiresNew.executeWithoutResult(status -> counters.saveAndFlush(new GateRunCounterEntity(tenantId, period, 0)));
+    } catch (DataIntegrityViolationException raced) {
+      // another request created it first
+    }
   }
 
   @Transactional(readOnly = true)

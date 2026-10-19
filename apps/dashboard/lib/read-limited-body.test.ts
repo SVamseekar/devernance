@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { readLimitedText } from "./read-limited-body";
+import { readLimitedJson, readLimitedText } from "./read-limited-body";
 
 function streamed(parts: string[]): Request {
   const encoder = new TextEncoder();
@@ -31,4 +31,11 @@ test("counts bytes, not characters", async () => {
   // Six two-byte characters are 12 bytes.
   assert.equal(await readLimitedText(streamed(["éééééé"]), 11), null);
   assert.equal(await readLimitedText(streamed(["éééééé"]), 12), "éééééé");
+});
+
+test("readLimitedJson parses small JSON and refuses large or malformed bodies", async () => {
+  const post = (body: string) => new Request("http://x/", { method: "POST", body });
+  assert.deepEqual(await readLimitedJson(post('{"email":"a@b.c"}')), { email: "a@b.c" });
+  assert.equal(await readLimitedJson(post("not json")), null);
+  assert.equal(await readLimitedJson(post(JSON.stringify({ x: "y".repeat(100) })), 32), null);
 });

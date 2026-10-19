@@ -74,4 +74,23 @@ class TextExtractionServiceTest {
         // DNS-rebinding attacker to race against the validation check above.
         assertThat(resolver).isInstanceOf(org.apache.hc.client5.http.DnsResolver.class);
     }
+
+    @Test
+    void longTextUploadsKeepTheFirstMaxCharactersInsteadOfFailing() {
+        String text = "Human reviewers may override automated routing. ".repeat(10_000);
+        var in = new java.io.ByteArrayInputStream(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        String extracted = service.extractFromUpload(in, "long-policy.txt", 2_000);
+
+        assertThat(extracted).startsWith("Human reviewers may override automated routing.");
+        assertThat(extracted.length()).isLessThanOrEqualTo(2_000);
+    }
+
+    @Test
+    void privateTargetsInEveryReservedRangeAreRefused() {
+        for (String host : new String[] {"0.0.0.0", "100.64.0.1", "169.254.169.254", "fd00::1", "64:ff9b::7f00:1"}) {
+            assertThatThrownBy(() -> resolver.resolve(host)).as(host)
+                .isInstanceOf(TextExtractionService.SsrfRejectedException.class);
+        }
+    }
 }

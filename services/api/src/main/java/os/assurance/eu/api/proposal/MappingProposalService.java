@@ -13,7 +13,9 @@ import os.assurance.eu.api.system.AiSystemRepository;
 import os.assurance.eu.api.tenant.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -25,6 +27,7 @@ public class MappingProposalService {
   private final TenantContext tenantContext;
   private final RulesDocumentMapper rulesMapper;
   private final SlmMapClient slm;
+  private final TransactionTemplate transaction;
 
   public MappingProposalService(
       MappingProposalJpaRepository proposals,
@@ -32,7 +35,8 @@ public class MappingProposalService {
       CorpusQueryService corpus,
       AuditService auditService,
       TenantContext tenantContext,
-      SlmMapClient slm) {
+      SlmMapClient slm,
+      PlatformTransactionManager transactionManager) {
     this.proposals = proposals;
     this.systems = systems;
     this.corpus = corpus;
@@ -40,6 +44,7 @@ public class MappingProposalService {
     this.tenantContext = tenantContext;
     this.rulesMapper = new RulesDocumentMapper();
     this.slm = slm;
+    this.transaction = new TransactionTemplate(transactionManager);
   }
 
   @Transactional(readOnly = true)
@@ -82,30 +87,46 @@ public class MappingProposalService {
     return toView(saved, current);
   }
 
-  @Transactional
+  /**
+   * The model calls run before the transaction opens, so a slow or unreachable model never holds a
+   * database connection. After the first failed call the rest of the batch goes to the rules mapper.
+   */
   public List<ProposalView> mapDocuments(UUID systemId, List<MapDocumentRequest> documents) {
     requireSystem(systemId);
-    String current = corpus.currentVersionHash();
     List<LawProvision> lawIndex = lawIndex();
     List<String> candidateIds = lawIndex.stream().map(LawProvision::provisionKey).toList();
-    List<ProposalView> created = new ArrayList<>();
+    List<MappedDocument> mapped = new ArrayList<>();
+    boolean slmAvailable = true;
     for (MapDocumentRequest document : documents) {
-      SlmMapClient.Outcome outcome = slm.map(document.title(), document.text(), candidateIds);
+      SlmMapClient.Outcome outcome = slmAvailable
+          ? slm.map(document.title(), document.text(), candidateIds)
+          : SlmMapClient.Outcome.down();
+      if (outcome.kind() == SlmMapClient.Kind.DOWN) {
+        slmAvailable = false;
+      }
       if (outcome.kind() == SlmMapClient.Kind.INVALID) {
+        mapped.add(new MappedDocument(document, null, null));
+      } else if (outcome.kind() == SlmMapClient.Kind.ABSTAIN) {
+        mapped.add(new MappedDocument(document, MappingDraft.abstain(excerpt(document.text())), SlmMapClient.ADAPTER_VERSION));
+      } else if (outcome.kind() == SlmMapClient.Kind.CANDIDATE) {
+        mapped.add(new MappedDocument(document, citeCandidate(outcome, lawIndex, document.text()), SlmMapClient.ADAPTER_VERSION));
+      } else {
+        mapped.add(new MappedDocument(document, rulesMapper.map(document.title(), document.text(), lawIndex), null));
+      }
+    }
+    return transaction.execute(status -> persistMapped(systemId, mapped));
+  }
+
+  private List<ProposalView> persistMapped(UUID systemId, List<MappedDocument> mapped) {
+    requireSystem(systemId);
+    String current = corpus.currentVersionHash();
+    List<ProposalView> created = new ArrayList<>();
+    for (MappedDocument item : mapped) {
+      if (item.draft() == null) {
         auditSchemaInvalid(systemId);
         continue;
       }
-      MappingDraft draft;
-      String adapterVersion = null;
-      if (outcome.kind() == SlmMapClient.Kind.ABSTAIN) {
-        draft = MappingDraft.abstain(excerpt(document.text()));
-        adapterVersion = SlmMapClient.ADAPTER_VERSION;
-      } else if (outcome.kind() == SlmMapClient.Kind.CANDIDATE) {
-        draft = citeCandidate(outcome, lawIndex, document.text());
-        adapterVersion = SlmMapClient.ADAPTER_VERSION;
-      } else {
-        draft = rulesMapper.map(document.title(), document.text(), lawIndex);
-      }
+      MappingDraft draft = item.draft();
       MappingProposalEntity saved = proposals.save(new MappingProposalEntity(
           UUID.randomUUID(),
           tenantContext.tenantId(),
@@ -113,16 +134,20 @@ public class MappingProposalService {
           "PENDING",
           draft.relation(),
           current,
-          adapterVersion,
+          item.adapterVersion(),
           draft.provisionKey(),
           draft.excerpt(),
           Instant.now()));
       audit(saved, "mapping_proposal.mapped", Map.of(
-          "documentTitle", document.title(),
+          "documentTitle", item.document().title(),
           "relation", draft.relation()));
       created.add(toView(saved, current));
     }
     return created;
+  }
+
+  /** A null draft means the model answered with something outside the schema. */
+  private record MappedDocument(MapDocumentRequest document, MappingDraft draft, String adapterVersion) {
   }
 
   @Transactional

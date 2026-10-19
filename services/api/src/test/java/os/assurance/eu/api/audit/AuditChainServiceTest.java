@@ -76,7 +76,7 @@ class AuditChainServiceTest {
         id2, TENANT, null, ACTOR, "b", "r", "2", Map.of("x", 999), t2, h1, h2,
         t2.plusSeconds(3600L * 24 * 365 * 7));
 
-    when(repository.findAllByTenantIdOrderByCreatedAtAsc(TENANT)).thenReturn(List.of(e1, e2));
+    chainIs(e1, e2);
     AuditChainVerifyResponse result = service.verifyChain();
     assertThat(result.valid()).isFalse();
     assertThat(result.firstBreakId()).isEqualTo(id2);
@@ -105,11 +105,66 @@ class AuditChainServiceTest {
     UUID b2 = UUID.randomUUID();
     String h2 = local.hash(TENANT, b2, hg, ACTOR, "c", "r", "3", Map.of(), t.plusSeconds(1));
     Instant keep = t.plusSeconds(3600L * 24 * 365 * 7);
-    when(repository.findAllByTenantIdOrderByCreatedAtAsc(TENANT)).thenReturn(List.of(
+    chainIs(
         new AuditEventEntity(g, TENANT, null, ACTOR, "a", "r", "1", Map.of(), t, null, hg, keep),
         new AuditEventEntity(b1, TENANT, null, ACTOR, "b", "r", "2", Map.of(), t.plusSeconds(1), hg, h1, keep),
-        new AuditEventEntity(b2, TENANT, null, ACTOR, "c", "r", "3", Map.of(), t.plusSeconds(1), hg, h2, keep)));
+        new AuditEventEntity(b2, TENANT, null, ACTOR, "c", "r", "3", Map.of(), t.plusSeconds(1), hg, h2, keep));
     AuditChainVerifyResponse result = service.verifyChain();
     assertThat(result.valid()).isFalse();
+  }
+
+  @Test
+  void verifiesALongChainInBatches() {
+    AuditChainHasher local = new AuditChainHasher("test-audit-chain-secret");
+    Instant t = Instant.parse("2026-01-01T00:00:00Z");
+    Instant keep = t.plusSeconds(3600L * 24 * 365 * 7);
+    int count = AuditService.VERIFY_BATCH * 2 + 7;
+    AuditEventEntity[] events = new AuditEventEntity[count];
+    String prev = null;
+    for (int i = 0; i < count; i++) {
+      UUID id = UUID.randomUUID();
+      Instant at = t.plusSeconds(i);
+      String hash = local.hash(TENANT, id, prev, ACTOR, "e", "r", String.valueOf(i), Map.of("i", i), at);
+      events[i] = new AuditEventEntity(id, TENANT, null, ACTOR, "e", "r", String.valueOf(i), Map.of("i", i), at, prev, hash, keep);
+      prev = hash;
+    }
+    chainIs(events);
+    AuditChainVerifyResponse result = service.verifyChain();
+    assertThat(result.valid()).isTrue();
+    assertThat(result.checkedCount()).isEqualTo(count);
+    org.mockito.Mockito.verify(repository, org.mockito.Mockito.times(3)).findChainRows(any());
+  }
+
+  /** Serves the given events through the two projections verifyChain reads. */
+  private void chainIs(AuditEventEntity... events) {
+    List<AuditEventEntity> all = List.of(events);
+    when(repository.findChainLinks(TENANT)).thenReturn(all.stream().map(AuditChainServiceTest::link).toList());
+    when(repository.findChainRows(any())).thenAnswer(invocation -> {
+      java.util.Collection<UUID> ids = invocation.getArgument(0);
+      return all.stream().filter(e -> ids.contains(e.id())).map(AuditChainServiceTest::row).toList();
+    });
+  }
+
+  private static AuditEventJpaRepository.ChainLink link(AuditEventEntity e) {
+    return new AuditEventJpaRepository.ChainLink() {
+      @Override public UUID getId() { return e.id(); }
+      @Override public String getPrevEventHash() { return e.prevEventHash(); }
+      @Override public String getEventHash() { return e.eventHash(); }
+    };
+  }
+
+  private static AuditEventJpaRepository.ChainRow row(AuditEventEntity e) {
+    return new AuditEventJpaRepository.ChainRow() {
+      @Override public UUID getId() { return e.id(); }
+      @Override public UUID getTenantId() { return e.tenantId(); }
+      @Override public String getPrevEventHash() { return e.prevEventHash(); }
+      @Override public UUID getActorId() { return e.actorId(); }
+      @Override public String getEventType() { return e.eventType(); }
+      @Override public String getResourceType() { return e.resourceType(); }
+      @Override public String getResourceId() { return e.resourceId(); }
+      @Override public Map<String, Object> getPayload() { return e.payload(); }
+      @Override public Instant getCreatedAt() { return e.createdAt(); }
+      @Override public String getEventHash() { return e.eventHash(); }
+    };
   }
 }

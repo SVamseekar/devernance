@@ -87,7 +87,7 @@ public class CertificationReadinessService {
     boolean hasDetermination = determinationRuns
         .findFirstByTenantIdAndSystemIdOrderByCreatedAtDesc(tenantContext.tenantId(), system.id())
         .isPresent();
-    AuditChainVerifyResponse chain = auditService.verifyChain();
+    AuditChainVerifyResponse chain = auditService.recentVerification();
 
     dimensions.add(scoreRisk(system, gaps));
     dimensions.add(scoreControls(controls, gaps));

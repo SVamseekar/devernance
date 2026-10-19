@@ -13,11 +13,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Runs the evgraph CLI on accepted artifact files. The library stays outside the JVM.
@@ -31,25 +34,56 @@ public class EvgraphCli {
   private static final String PINNED_PACKAGE = "evgraph-cli==" + PINNED_VERSION;
   private static final int MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
 
+  static final Duration BUSY_WAIT = Duration.ofSeconds(20);
+
   private final ObjectMapper objectMapper;
   private final String command;
   private final Duration timeout;
+  private final Semaphore running;
 
   @Autowired
   public EvgraphCli(
       ObjectMapper objectMapper,
       @Value("${assurance.evgraph.command:evgraph}") String command,
-      @Value("${assurance.evgraph.allow-runtime-install:false}") boolean allowRuntimeInstall) {
-    this(objectMapper, resolveCommand(command, allowRuntimeInstall), allowRuntimeInstall, DEFAULT_TIMEOUT);
+      @Value("${assurance.evgraph.allow-runtime-install:false}") boolean allowRuntimeInstall,
+      @Value("${assurance.evgraph.max-concurrent-scans:4}") int maxConcurrentScans) {
+    this(objectMapper, resolveCommand(command, allowRuntimeInstall), allowRuntimeInstall, DEFAULT_TIMEOUT,
+        maxConcurrentScans);
   }
 
   EvgraphCli(ObjectMapper objectMapper, String resolvedCommand, boolean allowRuntimeInstall, Duration timeout) {
+    this(objectMapper, resolvedCommand, allowRuntimeInstall, timeout, 4);
+  }
+
+  EvgraphCli(ObjectMapper objectMapper, String resolvedCommand, boolean allowRuntimeInstall, Duration timeout,
+      int maxConcurrentScans) {
     this.objectMapper = objectMapper;
     this.command = resolvedCommand;
     this.timeout = timeout;
+    this.running = new Semaphore(Math.max(1, maxConcurrentScans), true);
   }
 
   public List<Map<String, Object>> currentGaps(Map<String, Object> artifacts) {
+    // Each scan starts Python processes; cap how many run at once so a burst of exports cannot exhaust the host.
+    boolean acquired;
+    try {
+      acquired = running.tryAcquire(BUSY_WAIT.toMillis(), TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Evidence scan interrupted; try again.");
+    }
+    if (!acquired) {
+      throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+          "Evidence scans are busy; try again in a minute.");
+    }
+    try {
+      return scan(artifacts);
+    } finally {
+      running.release();
+    }
+  }
+
+  private List<Map<String, Object>> scan(Map<String, Object> artifacts) {
     Path dir = null;
     try {
       dir = Files.createTempDirectory("evgraph-pack");

@@ -4,14 +4,22 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.Persistable;
 import os.assurance.eu.api.persistence.JsonMapConverter;
 
+/**
+ * Ids are assigned before saving, so without {@link Persistable} Spring Data would treat every new chunk as
+ * existing and issue a SELECT per chunk before inserting it. Chunks are written once and never updated.
+ */
 @Entity
 @Table(name = "evidence_chunks")
-public class EvidenceChunkEntity {
+public class EvidenceChunkEntity implements Persistable<UUID> {
   @Id
   private UUID id;
 
@@ -40,6 +48,9 @@ public class EvidenceChunkEntity {
   @Column(name = "metadata_json", nullable = false)
   private Map<String, Object> metadata;
 
+  @Transient
+  private boolean isNew = true;
+
   protected EvidenceChunkEntity() {
   }
 
@@ -53,6 +64,22 @@ public class EvidenceChunkEntity {
     this.embedding = chunk.embedding();
     this.embeddingProvider = chunk.embeddingProvider();
     this.metadata = chunk.metadata();
+  }
+
+  @Override
+  public UUID getId() {
+    return id;
+  }
+
+  @Override
+  public boolean isNew() {
+    return isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markPersisted() {
+    isNew = false;
   }
 
   public EvidenceChunk toDomain() {

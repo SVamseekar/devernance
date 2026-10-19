@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.tika.metadata.TikaCoreProperties;
 import os.assurance.eu.api.tenant.TenantContext;
+import os.assurance.eu.api.net.PublicAddressPolicy;
 import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -24,6 +25,7 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.util.Timeout;
 import org.apache.tika.Tika;
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
@@ -53,6 +55,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class TextExtractionService {
     private static final Logger log = LoggerFactory.getLogger(TextExtractionService.class);
     private static final int MAX_FETCH_CHARS = 20 * 1024 * 1024;
+    /** Same ceiling as uploads, so a URL cannot pull in more than a file upload could. */
+    private static final int MAX_FETCH_BYTES = 25 * 1024 * 1024;
     private static final Duration PARSE_TIMEOUT = Duration.ofSeconds(30);
     private final Tika tika = new Tika();
     private final FileStorageService fileStorage;
@@ -76,23 +80,10 @@ public class TextExtractionService {
 
     /** Extract text from an uploaded file's bytes. Never falls back to a metadata stub. */
     public String extractFromUpload(InputStream content, String filename, int maxChars) {
-        ClassLoader appLoader = TextExtractionService.class.getClassLoader();
-        Future<String> job = parser.submit(() -> {
-            ClassLoader previous = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(appLoader);
-            try {
-                Metadata metadata = new Metadata();
-                metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename);
-                return readWithTika(content, metadata, filename, maxChars);
-            } finally {
-                Thread.currentThread().setContextClassLoader(previous);
-            }
-        });
         String text;
         try {
-            text = job.get(PARSE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+            text = parseWithTimeout(content.readAllBytes(), filename, maxChars);
         } catch (TimeoutException e) {
-            job.cancel(true);
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
                 "The file took too long to read. Upload a smaller or text-based file.");
         } catch (Exception e) {
@@ -107,11 +98,39 @@ public class TextExtractionService {
     }
 
     /**
+     * Parses on the bounded Tika pool so one hostile or huge document cannot hold a request thread past
+     * {@link #PARSE_TIMEOUT}. Used for uploads and for documents fetched over HTTPS or from S3.
+     */
+    private String parseWithTimeout(byte[] bytes, String filename, int maxChars) throws Exception {
+        ClassLoader appLoader = TextExtractionService.class.getClassLoader();
+        Future<String> job = parser.submit(() -> {
+            ClassLoader previous = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(appLoader);
+            try {
+                Metadata metadata = new Metadata();
+                if (filename != null) {
+                    metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filename);
+                }
+                return readWithTika(bytes, metadata, filename, maxChars);
+            } finally {
+                Thread.currentThread().setContextClassLoader(previous);
+            }
+        });
+        try {
+            return job.get(PARSE_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            job.cancel(true);
+            throw e;
+        } catch (java.util.concurrent.ExecutionException e) {
+            throw e.getCause() instanceof Exception cause ? cause : e;
+        }
+    }
+
+    /**
      * Tika 4's zip detector throws ArchiveException on non-archives. Fall back to the
      * format parser named by the file extension when that happens.
      */
-    private String readWithTika(InputStream content, Metadata metadata, String filename, int maxChars) throws Exception {
-        byte[] bytes = content.readAllBytes();
+    private String readWithTika(byte[] bytes, Metadata metadata, String filename, int maxChars) throws Exception {
         try {
             return tika.parseToString(new java.io.ByteArrayInputStream(bytes), metadata, maxChars);
         } catch (Exception e) {
@@ -121,6 +140,11 @@ public class TextExtractionService {
             BodyContentHandler handler = new BodyContentHandler(maxChars);
             try (var in = org.apache.tika.io.TikaInputStream.get(bytes)) {
                 parserFor(filename).parse(in, handler, metadata, new ParseContext());
+            } catch (Exception parse) {
+                // Reaching maxChars stops the parse; keep the text read so far, as Tika.parseToString does.
+                if (!WriteLimitReachedException.isWriteLimitReached(parse)) {
+                    throw parse;
+                }
             }
             return handler.toString();
         }
@@ -186,19 +210,21 @@ public class TextExtractionService {
             .setRedirectsEnabled(false)
             .build();
 
+        byte[] bytes;
         try (CloseableHttpClient client = HttpClients.custom()
                 .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(requestConfig)
                 .disableRedirectHandling()
                 .build()) {
             HttpGet getRequest = new HttpGet(uri);
-            return client.execute(getRequest, response -> {
+            bytes = client.execute(getRequest, response -> {
+                int status = response.getCode();
+                if (status < 200 || status >= 300) {
+                    EntityUtils.consumeQuietly(response.getEntity());
+                    throw new IOException("HTTP " + status);
+                }
                 try (InputStream body = response.getEntity().getContent()) {
-                    String extracted = tika.parseToString(body, new Metadata(), MAX_FETCH_CHARS);
-                    EntityUtils.consume(response.getEntity());
-                    return (extracted != null && !extracted.isBlank()) ? extracted.strip() : null;
-                } catch (Exception e) {
-                    throw new IOException(e);
+                    return body.readNBytes(MAX_FETCH_BYTES + 1);
                 }
             });
         } catch (SsrfRejectedException e) {
@@ -209,6 +235,25 @@ public class TextExtractionService {
         } finally {
             connectionManager.close();
         }
+        if (bytes.length > MAX_FETCH_BYTES) {
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE,
+                "The source document is larger than 25 MB. Upload a smaller file.");
+        }
+        try {
+            String extracted = parseWithTimeout(bytes, fileNameOf(uri), MAX_FETCH_CHARS);
+            return (extracted != null && !extracted.isBlank()) ? extracted.strip() : null;
+        } catch (Exception e) {
+            log.warn("Text extraction failed for {}: {}", request.sourceUri(), e.toString());
+            return null;
+        }
+    }
+
+    private static String fileNameOf(URI uri) {
+        String path = uri.getPath();
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        return path.substring(path.lastIndexOf('/') + 1);
     }
 
     private String fetchFromS3(CreateEvidenceDocumentRequest request) {
@@ -230,7 +275,12 @@ public class TextExtractionService {
             }
         }
         try (InputStream body = fileStorage.download(bucket, key)) {
-            String extracted = tika.parseToString(body, new Metadata(), MAX_FETCH_CHARS);
+            byte[] bytes = body.readNBytes(MAX_FETCH_BYTES + 1);
+            if (bytes.length > MAX_FETCH_BYTES) {
+                throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE,
+                    "The source document is larger than 25 MB. Upload a smaller file.");
+            }
+            String extracted = parseWithTimeout(bytes, fileNameOf(uri), MAX_FETCH_CHARS);
             return (extracted != null && !extracted.isBlank()) ? extracted.strip() : null;
         } catch (ResponseStatusException e) {
             throw e;
@@ -263,11 +313,7 @@ public class TextExtractionService {
         public InetAddress[] resolve(String host) throws UnknownHostException {
             InetAddress[] addresses = InetAddress.getAllByName(host);
             for (InetAddress addr : addresses) {
-                if (addr.isLoopbackAddress()
-                        || addr.isLinkLocalAddress()
-                        || addr.isSiteLocalAddress()
-                        || addr.isAnyLocalAddress()
-                        || addr.isMulticastAddress()) {
+                if (!PublicAddressPolicy.isPublic(addr)) {
                     throw new SsrfRejectedException(
                         "Source URI resolves to a private or reserved address");
                 }

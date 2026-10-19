@@ -1,5 +1,6 @@
 package os.assurance.eu.api.proposal;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -117,6 +119,60 @@ class SlmProposerApiTest {
         .andExpect(jsonPath("$[0].adapterVersion").value(SlmMapClient.ADAPTER_VERSION));
     mockMvc.perform(get("/api/v1/systems/{id}/proposals", systemId).with(officer()))
         .andExpect(jsonPath("$.items[0].status").value("PENDING"));
+  }
+
+  @Test
+  void failedCallSendsTheRestOfTheBatchToRulesAndRecoveryClearsTheDownFlag() throws Exception {
+    AtomicInteger calls = new AtomicInteger();
+    AtomicInteger statusCode = new AtomicInteger(503);
+    HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    http.createContext("/map", exchange -> {
+      calls.incrementAndGet();
+      byte[] payload = "{\"relation\":\"abstain\"}".getBytes(StandardCharsets.UTF_8);
+      exchange.sendResponseHeaders(statusCode.get(), payload.length);
+      exchange.getResponseBody().write(payload);
+      exchange.close();
+    });
+    http.start();
+    server.set(http);
+    slm.setEndpointForTest("http://127.0.0.1:" + http.getAddress().getPort() + "/map");
+    String systemId = createSystem();
+
+    mockMvc.perform(post("/api/v1/systems/{id}/proposals/map", systemId)
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(fiveDocuments()))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.length()").value(5));
+    assertThat(calls.get()).isEqualTo(1);
+    mockMvc.perform(get("/api/v1/systems/{id}/proposals", systemId).with(officer()))
+        .andExpect(jsonPath("$.slmDown").value(true));
+
+    statusCode.set(200);
+    mockMvc.perform(post("/api/v1/systems/{id}/proposals/map", systemId)
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(oneDocument()))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$[0].relation").value("abstain"));
+    mockMvc.perform(get("/api/v1/systems/{id}/proposals", systemId).with(officer()))
+        .andExpect(jsonPath("$.slmDown").value(false));
+  }
+
+  @Test
+  void oversizedBatchesAreRejectedBeforeAnyModelCall() throws Exception {
+    String systemId = createSystem();
+    String document = "{\"title\":\"Note\",\"text\":\"Short note.\"}";
+    mockMvc.perform(post("/api/v1/systems/{id}/proposals/map", systemId)
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"documents\":[" + String.join(",", java.util.Collections.nCopies(21, document)) + "]}"))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(post("/api/v1/systems/{id}/proposals/map", systemId)
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"documents\":[{\"title\":\"" + "t".repeat(301) + "\",\"text\":\"Short note.\"}]}"))
+        .andExpect(status().isBadRequest());
   }
 
   private final AtomicReference<HttpServer> server = new AtomicReference<>();

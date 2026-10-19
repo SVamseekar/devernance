@@ -923,8 +923,9 @@ Drata:
 | `evidence-pack.json` | A freshly built signed evidence pack (the same content as `GET /systems/{systemId}/evidence-pack`) |
 | `VERIFY_EVIDENCE_PACK.md` | How to check the pack's signature and recompute its hash |
 
-`sha256` is the checksum recorded when the document was ingested: SHA-256 of the extracted text, unless the uploader
-supplied a checksum of their own. `pack_content_sha256` and `pack_signature_key_id` tie each row to the pack in the
+`sha256` is the checksum recorded when the document was ingested: for a file upload, the SHA-256 of the uploaded file
+as computed by the API (a `checksum` sent with the upload must match it, or the upload is refused with `400`); for a
+JSON document, the SHA-256 of the extracted text unless the caller supplied a checksum of their own. `pack_content_sha256` and `pack_signature_key_id` tie each row to the pack in the
 same ZIP. The pack is signed; the CSV is an index of it and is not itself signed. Each export is recorded in the
 audit ledger as `evidence_pack.exported` with `format: grc-zip`. The CSV follows the same rules as the
 questionnaire CSV (UTF-8 with byte-order mark, CRLF, RFC 4180 quoting, formula cells neutralised).
@@ -932,8 +933,12 @@ questionnaire CSV (UTF-8 with byte-order mark, CRLF, RFC 4180 quoting, formula c
 ## Audit
 
 ```http
-GET /audit-events?systemId=sys_001
+GET /audit-events?systemId=sys_001&limit=200&before=2026-10-19T09:30:00Z
 ```
+
+Newest first. `limit` defaults to 500 and is capped at 1000; `systemId` and `before` are optional. To page back, pass
+the `createdAt` of the last event you received as `before`. The full trail is in the workspace export
+(`GET /account/export`).
 
 ```http
 POST /audit-events

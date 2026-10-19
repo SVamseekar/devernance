@@ -3,21 +3,24 @@ package os.assurance.eu.api.evidence;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.UUID;
 import os.assurance.eu.api.audit.AuditService;
+import os.assurance.eu.api.demo.DemoProperties;
 import os.assurance.eu.api.evidence.EvidenceChunker.ChunkDraft;
 import os.assurance.eu.api.evidence.PromptInjectionGuard.SanitizedText;
 import os.assurance.eu.api.system.AiSystem;
 import os.assurance.eu.api.system.GateRecalculator;
 import os.assurance.eu.api.tenant.TenantContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class EvidenceService {
@@ -32,6 +35,7 @@ public class EvidenceService {
   private final TenantContext tenantContext;
   private final EvidenceProperties properties;
   private final GateRecalculator gateRecalculator;
+  private final TransactionTemplate transaction;
 
   public EvidenceService(
       EvidenceRepository repository,
@@ -44,7 +48,8 @@ public class EvidenceService {
       AuditService auditService,
       TenantContext tenantContext,
       EvidenceProperties properties,
-      GateRecalculator gateRecalculator) {
+      GateRecalculator gateRecalculator,
+      PlatformTransactionManager transactionManager) {
     this.repository = repository;
     this.queries = queries;
     this.textExtractionService = textExtractionService;
@@ -56,14 +61,29 @@ public class EvidenceService {
     this.tenantContext = tenantContext;
     this.properties = properties;
     this.gateRecalculator = gateRecalculator;
+    this.transaction = new TransactionTemplate(transactionManager);
   }
 
-  @Transactional
+  /**
+   * Fetching, parsing and embedding run before the transaction opens: a slow source URL or a long document must
+   * not hold a database connection. Only the inserts, the audit entry and the gate recalculation are transactional.
+   */
   public EvidenceDocumentResponse ingest(CreateEvidenceDocumentRequest request) {
     evidenceGuard.validateDocumentRequest(request);
     String extracted = textExtractionService.extract(request);
     SanitizedText sanitized = promptInjectionGuard.sanitizeDocumentText(extracted);
     List<ChunkDraft> chunkDrafts = chunker.chunk(sanitized.text());
+    List<String> embeddings = chunkDrafts.stream().map(draft -> embeddingService.embed(draft.content())).toList();
+    Map<String, Object> metadata = evidenceGuard.sanitizeMetadata(request.metadata());
+    return transaction.execute(status -> persist(request, sanitized, chunkDrafts, embeddings, metadata));
+  }
+
+  private EvidenceDocumentResponse persist(
+      CreateEvidenceDocumentRequest request,
+      SanitizedText sanitized,
+      List<ChunkDraft> chunkDrafts,
+      List<String> embeddings,
+      Map<String, Object> metadata) {
     Instant now = Instant.now();
     UUID documentId = UUID.randomUUID();
     String checksum = request.checksum() == null || request.checksum().isBlank()
@@ -79,8 +99,7 @@ public class EvidenceService {
         chunkDrafts.size(),
         sanitized.removedLines().isEmpty() ? "indexed" : "indexed_with_warnings",
         now));
-    Map<String, Object> metadata = evidenceGuard.sanitizeMetadata(request.metadata());
-    repository.saveChunks(toChunks(saved, chunkDrafts, metadata, sanitized.removedLines()));
+    repository.saveChunks(toChunks(saved, chunkDrafts, embeddings, metadata, sanitized.removedLines()));
     auditService.append(
         saved.systemId(),
         "evidence.document_indexed",
@@ -110,16 +129,26 @@ public class EvidenceService {
     List<EvidenceDocument> documents = repository.findDocumentsBySystemId(system.id());
     Map<UUID, EvidenceDocument> documentsById = documents.stream()
         .collect(Collectors.toMap(EvidenceDocument::id, Function.identity()));
-    List<ScoredChunk> scoredChunks = repository.findChunksForDocuments(documents.stream().map(EvidenceDocument::id).toList())
-        .stream()
-        .map(chunk -> new ScoredChunk(
-            chunk,
-            documentsById.get(chunk.documentId()),
-            embeddingService.similarity(questionEmbedding, chunk.embedding())))
-        .filter(scoredChunk -> scoredChunk.document() != null)
-        .filter(scoredChunk -> scoredChunk.score() >= properties.minRetrievalScore())
-        .sorted(Comparator.comparingDouble(ScoredChunk::score).reversed())
+    // Score on embeddings alone, then load the text of the few chunks that are cited. Chunks embedded by a
+    // different provider (before a provider switch) live in another vector space and cannot be compared.
+    String provider = embeddingService.providerName();
+    Map<UUID, Double> topScores = new LinkedHashMap<>();
+    repository.findChunkVectors(documents.stream().map(EvidenceDocument::id).toList()).stream()
+        .filter(vector -> provider.equals(vector.getEmbeddingProvider()))
+        .map(vector -> Map.entry(vector.getId(), embeddingService.similarity(questionEmbedding, vector.getEmbedding())))
+        .filter(scored -> scored.getValue() >= properties.minRetrievalScore())
+        .sorted(Map.Entry.<UUID, Double>comparingByValue().reversed())
         .limit(properties.maxRetrievedChunks())
+        .forEach(scored -> topScores.put(scored.getKey(), scored.getValue()));
+    Map<UUID, EvidenceChunk> chunksById = repository.findChunksByIds(List.copyOf(topScores.keySet())).stream()
+        .collect(Collectors.toMap(EvidenceChunk::id, Function.identity()));
+    List<ScoredChunk> scoredChunks = topScores.entrySet().stream()
+        .filter(scored -> chunksById.containsKey(scored.getKey()))
+        .map(scored -> {
+          EvidenceChunk chunk = chunksById.get(scored.getKey());
+          return new ScoredChunk(chunk, documentsById.get(chunk.documentId()), scored.getValue());
+        })
+        .filter(scoredChunk -> scoredChunk.document() != null)
         .toList();
 
     EvidenceQueryResponse response = scoredChunks.isEmpty()
@@ -135,13 +164,16 @@ public class EvidenceService {
         response.citations(),
         tenantContext.actorId(),
         Instant.now()));
+    // Demo questions are visible to every visitor and deleted after an hour (DemoQuestionCleanupJob); the
+    // append-only audit trail cannot forget, so it records only the length of a demo visitor's text.
+    boolean demo = DemoProperties.DEMO_TENANT_ID.equals(tenantContext.tenantId());
     auditService.append(
         system.id(),
         "evidence.query_answered",
         "ai_system",
         system.id().toString(),
         Map.of(
-            "question", sanitizedQuestion,
+            demo ? "questionLength" : "question", demo ? sanitizedQuestion.length() : sanitizedQuestion,
             "confidence", response.confidence(),
             "citationCount", response.citations().size()));
     return response;
@@ -150,6 +182,7 @@ public class EvidenceService {
   private List<EvidenceChunk> toChunks(
       EvidenceDocument document,
       List<ChunkDraft> chunkDrafts,
+      List<String> embeddings,
       Map<String, Object> requestMetadata,
       List<String> removedLines) {
     Map<String, Object> metadata = requestMetadata == null ? Map.of() : requestMetadata;
@@ -163,7 +196,7 @@ public class EvidenceService {
               draft.sectionRef(),
               draft.content(),
               checksum(draft.content()),
-              embeddingService.embed(draft.content()),
+              embeddings.get(index),
               embeddingService.providerName(),
               metadataWithGuard(metadata, removedLines));
         })
@@ -203,22 +236,14 @@ public class EvidenceService {
     return new EvidenceQueryResponse(answer, confidence, citations);
   }
 
+  /** No chunk scored high enough: say so, and cite nothing rather than documents that may not exist. */
   private EvidenceQueryResponse fallbackAnswer(AiSystem system) {
+    String gaps = system.openGaps().isEmpty() ? "none recorded" : String.join("; ", system.openGaps());
     return new EvidenceQueryResponse(
-        "%s currently has a %s release decision. Open gaps: %s."
-            .formatted(system.name(), system.releaseDecision(), String.join("; ", system.openGaps())),
-        system.evidenceCoverage() / 100.0,
-        List.of(
-            new Citation(
-                "doc_dpia_mvp",
-                "%s DPIA".formatted(system.name()),
-                "Release controls",
-                "Reviewer action is required before unresolved high-risk blockers are released."),
-            new Citation(
-                "doc_control_map_mvp",
-                "EU AI Act control map",
-                "High-risk systems",
-                "Risk management, data governance, logging, transparency, human oversight, accuracy, and cybersecurity controls must be evidenced.")));
+        "No indexed evidence for %s matched this question, so there is nothing to cite. Upload the document that answers it, then ask again. %s currently has a %s release decision. Open gaps: %s."
+            .formatted(system.name(), system.name(), system.releaseDecision(), gaps),
+        0.0,
+        List.of());
   }
 
   private String snippet(String content) {

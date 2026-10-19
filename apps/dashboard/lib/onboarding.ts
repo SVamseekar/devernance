@@ -1,3 +1,4 @@
+import { releaseGateAction } from "./gate-snippets";
 import type { CorpusProvision, RiskClass } from "./types";
 
 /** Evidence the release gate looks for, by risk class. A guide to what to upload first, not a full checklist. */
@@ -28,12 +29,12 @@ export function firstDutyDates(provisions: CorpusProvision[]): {
 }
 
 /** GitHub Actions step that fails the build unless the release gate passes. The key stays in a secret. */
-export function releaseGateWorkflow(systemId?: string): string {
+export function releaseGateWorkflow(systemId?: string, appUrl?: string): string {
   return `# .github/workflows/ai-release-gate.yml
 - name: Devernance release gate
-  run: |
-    decision=$(curl -fsS -H "X-Api-Key: \${{ secrets.ASSURANCE_API_KEY }}" \\
-      "https://<your-app-domain>/api/v1/ci/release-gate?systemId=${systemId ?? "<SYSTEM_ID>"}")
-    echo "$decision"
-    test "$(echo "$decision" | jq -r .exitCode)" = "0"`;
+  uses: ${releaseGateAction}
+  with:
+    api-key: \${{ secrets.ASSURANCE_API_KEY }}
+    system-id: ${systemId ?? "<SYSTEM_ID>"}
+    api-url: ${appUrl ?? "https://<your-app-domain>"}`;
 }
