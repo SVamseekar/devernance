@@ -161,6 +161,7 @@ Mitigations:
 - PDF extraction from arbitrary binary object-store docs is still limited vs text upload path.
 - The dashboard CSP allows `'unsafe-inline'` scripts: Next.js inlines its RSC payload, and a nonce-based policy would make every page dynamic. XSS defence rests on React escaping and on never rendering user HTML.
 - Rate limits, the demo question cap and the JWKS and chain-verification caches are in memory, so they hold per API instance. Production runs one instance; a second one would need a shared store (or Cloudflare edge rules) for the limits.
+- The per-account login limit (10 attempts in 15 minutes, across all addresses, against distributed guessing) also lets anyone who knows an address delay that user's password sign-in for up to 15 minutes. Google and Microsoft sign-in are not affected.
 - A document that hangs the PDF or Office parser past its 30 s timeout keeps one of two parser threads busy until it finishes; parsing is not isolated in a separate process.
 
 ## EU Context
