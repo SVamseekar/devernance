@@ -9,9 +9,9 @@ Related: root [`.env.example`](../.env.example), [DEPLOYMENT.md](./DEPLOYMENT.md
 1. **API env** (Spring):
    - `OAUTH_GOOGLE_CLIENT_ID` / `OAUTH_GOOGLE_CLIENT_SECRET`
    - `OAUTH_MICROSOFT_CLIENT_ID` / `OAUTH_MICROSOFT_CLIENT_SECRET`
-   - `OAUTH_REDIRECT_BASE_URL` = public dashboard origin (no trailing slash), e.g.  
+   - `OAUTH_REDIRECT_BASE_URL` = public dashboard origin (no trailing slash), e.g.
      `https://euassuranceai.souravamseekar.com` or `http://localhost:3000`
-   - `OAUTH_AUTO_PROVISION=false` in production (default)
+   - `OAUTH_AUTO_PROVISION`: `true` by default under the `postgres` profile (self-serve sign-up: only provider-verified emails are provisioned, each into its own workspace); set `false` for invite-only
    - Optional: `OAUTH_STATE_SECRET` (defaults to `AUDIT_CHAIN_SECRET` if unset)
 2. **Dashboard env** (Vercel / Next):
    - `ASSURANCE_API_BASE_URL` pointing at the Spring API
@@ -29,7 +29,7 @@ Related: root [`.env.example`](../.env.example), [DEPLOYMENT.md](./DEPLOYMENT.md
 | Step | URL |
 |------|-----|
 | Start (browser) | `{dashboard}/api/auth/oauth/{google\|microsoft}/start` |
-| Start (API) | `{api}/auth/oauth/{provider}/start` → IdP |
+| Start (API, called server-side by the BFF) | `{api}/auth/oauth/{provider}/start` → IdP URL, relayed to the browser |
 | Callback (browser / registered URI) | `{dashboard}/api/auth/oauth/{provider}/callback` |
 | Token exchange (server) | `POST {api}/auth/oauth/{provider}/callback` |
 
@@ -80,7 +80,7 @@ Password login regression must stay green (`AuthControllerTest`).
 
 ## Rollback
 
-- Leave `OAUTH_AUTO_PROVISION=false` (or unset) so unknown IdP users cannot self-join.
+- Set `OAUTH_AUTO_PROVISION=false` to stop new IdP users from creating workspaces; existing users can still sign in.
 - Clear client IDs/secrets to disable social buttons effectively (start redirects to `not_configured` / unavailable).
 - Revert redirect URIs in Google/Azure if the callback domain was wrong.
 - Clear stale `session_*` cookies before retesting.

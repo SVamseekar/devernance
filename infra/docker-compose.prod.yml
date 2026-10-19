@@ -99,6 +99,8 @@ services:
       timeout: 5s
       retries: 20
       start_period: 150s
+    # The API drains in-flight requests for up to 30 s on shutdown (server.shutdown=graceful).
+    stop_grace_period: 40s
     mem_limit: 3g
     logging: *logging
     networks: [internal]

@@ -26,8 +26,17 @@ Schema as implemented by Flyway under `services/api/src/main/resources/db/migrat
 | V18 | pinned legal corpus: instruments, provisions, mapping proposals |
 | V19 | proposal control mode, system change scope |
 | V20 | evidence applicability and exceptions |
+| V21 | audit chain heads (one serialised chain per tenant) |
+| V22 | proposal integrity (validation, locking, indexes) |
+| V23 | self-serve accounts (email verification, password reset tokens); postgres V23.1 lower(email) unique |
+| V24 | unique user email |
+| V25 | API key management (prefixed keys, names, revocation, last use) |
+| V26 | billing: subscriptions, webhook events, gate-run counters |
+| V27 | DPA acceptance |
+| V28 | Devernance rename (stored identifiers) |
+| V29 | query indexes: `ai_systems(tenant_id, created_at)`, `audit_events(tenant_id, system_id, created_at)`, `refresh_tokens(user_id)` |
 
-Canonical counts: `docs/METRICS_CANONICAL.md` (Flyway **V1–V20** + postgres V4).
+Canonical counts: `docs/METRICS_CANONICAL.md` (Flyway **V1–V20** + postgres V4); V21–V29 were added after that freeze.
 
 ---
 

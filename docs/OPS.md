@@ -65,9 +65,14 @@ Equivalent product UI path: `GET /api/v1/systems/{id}/release-gate` (same decisi
 | Endpoint | Auth | Purpose |
 |---|---|---|
 | `/actuator/health` (+ liveness/readiness) | Public | Probes |
-| `/actuator/info` | API key / JWT | Build info |
-| `/actuator/metrics` | API key / JWT | Micrometer snapshot |
-| `/actuator/prometheus` | API key / JWT | Prometheus text scrape |
+| `/actuator/info` | Operator admin (API key / JWT) | Build info |
+| `/actuator/metrics` | Operator admin (API key / JWT) | Micrometer snapshot |
+| `/actuator/prometheus` | Operator admin (API key / JWT) | Prometheus text scrape |
+
+"Operator admin" means a user with the `ADMIN` role in the platform operator tenant
+(`ASSURANCE_OPERATOR_TENANT_ID`). Everyone else, including customer admins and the public demo, gets `404`:
+these endpoints describe the whole platform, not one workspace (`OperatorActuatorFilter`). The dashboard BFF only
+forwards `/api/v1/*` paths, so none of these are reachable through the public site.
 
 `management.endpoints.web.exposure.include` defaults to `health,info,metrics,prometheus`.
 

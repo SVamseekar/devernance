@@ -82,11 +82,13 @@ curl -fsS http://localhost:8080/actuator/health
 |---|---|
 | Postgres | ≥ 512 MB |
 | API (local-hash embeddings) | ≥ 512 MB |
-| API (`djl-sentence` / ONNX) | **1–2 GB** (first start downloads model weights) |
+| API (`djl-sentence` / ONNX) | **1–2 GB** (the production image carries the model; other runs download it once) |
 | MinIO | ≥ 256 MB |
 | Dashboard container | ≥ 512 MB |
 
-The API image sets `-XX:MaxRAMPercentage=75.0` so the JVM leaves headroom for native DJL allocations.
+The API image sets `-XX:MaxRAMPercentage=60.0` so the JVM leaves room for ONNX Runtime, Tika, thread stacks and the
+code cache outside the heap, and `-XX:+ExitOnOutOfMemoryError` so an out-of-memory JVM restarts instead of limping on.
+The API drains in-flight requests for up to 30 s on shutdown (`server.shutdown=graceful`); Compose gives it 40 s.
 
 ### Evidence / DJL / object store path
 
@@ -94,7 +96,7 @@ The API image sets `-XX:MaxRAMPercentage=75.0` so the JVM leaves headroom for na
 |---|---|---|
 | Dev H2 | `local-hash` | Portable text embeddings; no DJL |
 | Compose default | `EVIDENCE_EMBEDDING_PROVIDER=local-hash` (in `.env.example`) | Fast local stack; no HF download |
-| Postgres profile (app default when env unset) | `djl-sentence` | DJL + ONNX all-MiniLM-L6-v2; downloads model + `tokenizer.json` on first boot |
+| Postgres profile (app default when env unset) | `djl-sentence` | DJL + ONNX all-MiniLM-L6-v2, pinned to one Hugging Face revision and SHA-256-checked before loading. The production image bakes the files into `/opt/models` (`ASSURANCE_EVIDENCE_DJL_MODEL_DIR`), so it starts without reaching Hugging Face; elsewhere they are downloaded once into `assurance.evidence.djl.model-dir` (default: the temp directory) and reused |
 | Object store off | `ASSURANCE_STORAGE_ENABLED=false` | Upload API returns synthetic `s3://` URIs; content still ingested from request body when provided |
 | Object store on | MinIO or real S3 | `FileStorageService` PUT/GET with path-style when endpoint set |
 

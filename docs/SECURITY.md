@@ -44,16 +44,21 @@ Controls:
 
 | Path | Purpose |
 |---|---|
-| `/.well-known/jwks.json` | JWT public keys |
+| `/.well-known/jwks.json` | JWT and evidence-pack public keys (also served by the dashboard at the same path) |
 | `/auth/login`, `/auth/refresh`, `/auth/logout` | Token lifecycle |
+| `/auth/signup`, `/auth/verify-email/**`, `/auth/password/**` | Self-serve sign-up and password reset (Turnstile at the BFF) |
+| `/auth/accept-invite`, `/auth/invites/**` | Invite preview and acceptance |
+| `/auth/demo` | Read-only demo session (only when `ASSURANCE_DEMO_ENABLED=true`) |
 | `/auth/oauth/**` | OAuth start + token exchange (BFF) |
+| `/api/public/**` | Free no-signup tools (read-only, rate limited per IP) |
+| `/api/v1/billing/webhooks/dodo` | Dodo webhooks (Standard Webhooks signature required) |
 | `/actuator/health` (+ `/liveness`, `/readiness` prefix) | Probes |
 
 All other routes require a valid Bearer token or API key. Spring Security is intentionally `permitAll` so this filter remains the single authentication gate — do not bypass it.
 
 ### Dashboard session hard-gate
 
-Next.js `middleware.ts` redirects unauthenticated browsers away from app shell routes (`/command`, `/systems`, `/approvals`, `/evidence`, `/evals`, `/contracts`, `/audit`, `/readiness`, `/reg-monitor`, …) to `/login`. API access goes through the BFF proxy with httpOnly cookies; the browser never sends tenant headers.
+Next.js `proxy.ts` (formerly `middleware.ts`) redirects unauthenticated browsers away from app shell routes (`/command`, `/systems`, `/approvals`, `/evidence`, `/evals`, `/contracts`, `/audit`, `/readiness`, `/reg-monitor`, …) to `/login`. API access goes through the BFF proxy with httpOnly cookies; the browser never sends tenant headers.
 
 ### Session cookies
 
@@ -139,7 +144,13 @@ Mitigations:
 - Short-window callback signatures with no default production secret.
 - Pessimistic eval run claims with Postgres `FOR UPDATE SKIP LOCKED`.
 - Product disclaimers: assisted determination / readiness only — never notified-body language.
-- OAuth state signed; BFF-mediated callback; production smoke runbook before claiming SSO live.
+- OAuth state signed; BFF-mediated start and callback (the API stays on the private network); production smoke runbook before claiming SSO live.
+- The dashboard BFF forwards only single, re-encoded path segments under `/api/v1/`: dot segments and decoded `/`, `\`, `?` or `#` are refused, so a session cannot reach actuator or other API routes through it. Request bodies are capped (26 MB for uploads, 16 KB for auth forms) before anything is buffered.
+- Platform metrics (`/actuator/metrics`, `/prometheus`, `/info`) answer only an admin of the operator tenant; everyone else gets `404`.
+- Authenticated API budget: 600 requests a minute per caller, 30 heavy requests (exports, packs, uploads, mapping) a minute per workspace; the public demo is budgeted per visitor address. Evidence scans (evgraph) run at most 4 at a time.
+- Outbound fetches (evidence URLs, regulatory feeds) connect only to globally routable addresses: private, loopback, link-local (cloud metadata), carrier-grade NAT, benchmark, documentation and reserved ranges are refused, including IPv6 forms that embed them. Fetched documents are capped at 25 MB and parsed under a 30 s timeout.
+- Auth emails are sent off the request thread, so response time does not reveal whether an address has an account.
+- Post-login and OAuth return paths must resolve to the same origin (`/\host` and control-character tricks are refused).
 
 ## Remaining residual risks (honest)
 
