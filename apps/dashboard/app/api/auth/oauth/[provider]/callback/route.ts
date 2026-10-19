@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { clientIpHeaders } from "@/lib/client-ip";
 import { safeNextPath } from "@/lib/auth-redirect";
 import { setSessionCookies } from "@/lib/session";
+import { fetchUpstream } from "@/lib/upstream";
 
 const API_BASE = process.env.ASSURANCE_API_BASE_URL ?? "http://localhost:8080";
 const SUPPORTED = new Set(["google", "microsoft"]);
@@ -45,15 +46,12 @@ export async function GET(
     return loginRedirect(request, "state");
   }
 
-  let upstream: Response;
-  try {
-    upstream = await fetch(`${API_BASE}/auth/oauth/${normalized}/callback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...clientIpHeaders(request) },
-      body: JSON.stringify({ code, state, nonce }),
-      cache: "no-store",
-    });
-  } catch {
+  const upstream = await fetchUpstream(`${API_BASE}/auth/oauth/${normalized}/callback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...clientIpHeaders(request) },
+    body: JSON.stringify({ code, state, nonce }),
+  });
+  if (!upstream) {
     return loginRedirect(request, "sign_in_unavailable");
   }
 

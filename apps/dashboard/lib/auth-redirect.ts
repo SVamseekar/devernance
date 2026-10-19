@@ -27,7 +27,11 @@ const PUBLIC_PATH_PREFIXES = [
 export function safeNextPath(value: string | null | undefined, fallback = "/command"): string {
   if (!value) return fallback;
   if (!value.startsWith("/") || value.startsWith("//")) return fallback;
+  // Browsers read `\` as `/` and drop tabs and newlines, so `/\evil.example` and `/\t/evil.example` leave the site.
+  if (/[\\\u0000-\u001f\u007f]/.test(value)) return fallback;
   if (value.startsWith("/api/") || value.startsWith("/login")) return fallback;
+  const origin = "https://same-origin.invalid";
+  if (new URL(value, origin).origin !== origin) return fallback;
   return value;
 }
 

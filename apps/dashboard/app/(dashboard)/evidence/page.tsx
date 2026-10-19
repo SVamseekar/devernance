@@ -215,10 +215,14 @@ export default function EvidencePage() {
                     <p className="mt-0.5">{c.snippet}</p>
                   </div>
                 ))}
-                <div className="border-l-2 border-primary/40 pl-3 text-xs text-muted-foreground">
-                  <span className="font-medium">Confidence: {Math.round(ragResponse.confidence * 100)}%</span>
-                  <p className="mt-0.5">Reviewer should inspect cited source material before release approval.</p>
-                </div>
+                {ragResponse.citations.length > 0 ? (
+                  <div className="border-l-2 border-primary/40 pl-3 text-xs text-muted-foreground">
+                    <span className="font-medium">Confidence: {Math.round(ragResponse.confidence * 100)}%</span>
+                    <p className="mt-0.5">Reviewer should inspect cited source material before release approval.</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No sources matched, so nothing is cited.</p>
+                )}
               </div>
             ) : queryError ? (
               <p role="alert" className="text-sm text-destructive">{queryError}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AUDIT_PAGE_SIZE } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { ShieldCheck, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useDashboard } from "@/context/dashboard-context";
@@ -80,6 +81,8 @@ export default function AuditPage() {
         <CardTitle>Immutable Audit Ledger</CardTitle>
         <CardDescription>
           Append-only record of evidence checks, approvals, overrides, and release decisions.
+          {events.length >= AUDIT_PAGE_SIZE &&
+            ` Showing the latest ${AUDIT_PAGE_SIZE} events; the workspace export in Settings has the full trail.`}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0 pb-0">

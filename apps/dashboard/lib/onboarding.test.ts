@@ -44,13 +44,17 @@ describe("firstDutyDates", () => {
 });
 
 describe("releaseGateWorkflow", () => {
-  it("fills in the system id and keeps the key in a secret", () => {
-    const yaml = releaseGateWorkflow("sys-123");
-    assert.match(yaml, /systemId=sys-123/);
-    assert.match(yaml, /secrets\.ASSURANCE_API_KEY/);
+  it("uses the published action with the system id, workspace URL, and a secret key", () => {
+    const yaml = releaseGateWorkflow("sys-123", "https://app.example.com");
+    assert.match(yaml, /uses: SVamseekar\/devernance-release-gate@v1/);
+    assert.match(yaml, /system-id: sys-123/);
+    assert.match(yaml, /api-url: https:\/\/app\.example\.com/);
+    assert.match(yaml, /api-key: \$\{\{ secrets\.ASSURANCE_API_KEY \}\}/);
     assert.doesNotMatch(yaml, /(dvn|aos)_/);
   });
-  it("leaves a placeholder when there is no system yet", () => {
-    assert.match(releaseGateWorkflow(), /<SYSTEM_ID>/);
+  it("leaves placeholders when there is no system or URL yet", () => {
+    const yaml = releaseGateWorkflow();
+    assert.match(yaml, /<SYSTEM_ID>/);
+    assert.match(yaml, /<your-app-domain>/);
   });
 });

@@ -84,7 +84,7 @@ export const landingNavLinks = [
   { href: "/docs", label: "Docs" },
 ] as const;
 
-/** Primary app nav — keep in sync with sidebar + middleware protected prefixes */
+/** Primary app nav — keep in sync with sidebar + proxy.ts protected prefixes */
 export const appRoutes = [
   { href: "/command", label: "Dashboard" },
   { href: "/systems", label: "AI Systems" },

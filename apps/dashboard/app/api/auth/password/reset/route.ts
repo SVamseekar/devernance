@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { clientIpHeaders } from "@/lib/client-ip";
+import { readLimitedJson } from "@/lib/read-limited-body";
 import { fetchUpstream, serviceUnavailable } from "@/lib/upstream";
 
 const API_BASE = process.env.ASSURANCE_API_BASE_URL ?? "http://localhost:8080";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null);
+  const body = (await readLimitedJson(request)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }

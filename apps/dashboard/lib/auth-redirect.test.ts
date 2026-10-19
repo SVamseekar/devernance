@@ -76,4 +76,14 @@ describe("safeNextPath", () => {
     assert.equal(safeNextPath("/api/auth/login"), "/command");
     assert.equal(safeNextPath("/evidence"), "/evidence");
   });
+
+  it("rejects values a browser resolves to another host", () => {
+    assert.equal(safeNextPath("/\\evil.example"), "/command");
+    assert.equal(safeNextPath("/\t/evil.example"), "/command");
+    assert.equal(safeNextPath("/\n/evil.example"), "/command");
+  });
+
+  it("keeps same-site paths with queries", () => {
+    assert.equal(safeNextPath("/systems?id=abc"), "/systems?id=abc");
+  });
 });

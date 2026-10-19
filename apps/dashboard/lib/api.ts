@@ -48,6 +48,9 @@ import { SYSTEM_EXPORTS, downloadFilename, exportPath, type SystemExportKind } f
 
 const BASE = "/api/proxy";
 
+/** Audit events loaded per request: enough for the ledger and the command view, small enough to poll. */
+export const AUDIT_PAGE_SIZE = 200;
+
 /** Parallel 401s must not keep assigning window.location (reload flicker). */
 let loginRedirectStarted = false;
 
@@ -328,9 +331,12 @@ export const api = {
       }),
   },
   audit: {
-    list: (systemId?: string) =>
+    /** Newest first; the API caps a page at 1000. The workspace export has the full trail. */
+    list: (systemId?: string, limit: number = AUDIT_PAGE_SIZE) =>
       request<AuditEvent[]>(
-        systemId ? `/audit-events?systemId=${systemId}` : "/audit-events"
+        systemId
+          ? `/audit-events?systemId=${encodeURIComponent(systemId)}&limit=${limit}`
+          : `/audit-events?limit=${limit}`
       ),
   },
   determination: {
