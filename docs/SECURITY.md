@@ -159,6 +159,9 @@ Mitigations:
 - Sector packs are SPI + stubs — no live proprietary connectors.
 - Reg monitor remote sources disabled by default; curated bootstrap is assistive, not legal authority.
 - PDF extraction from arbitrary binary object-store docs is still limited vs text upload path.
+- The dashboard CSP allows `'unsafe-inline'` scripts: Next.js inlines its RSC payload, and a nonce-based policy would make every page dynamic. XSS defence rests on React escaping and on never rendering user HTML.
+- Rate limits, the demo question cap and the JWKS and chain-verification caches are in memory, so they hold per API instance. Production runs one instance; a second one would need a shared store (or Cloudflare edge rules) for the limits.
+- A document that hangs the PDF or Office parser past its 30 s timeout keeps one of two parser threads busy until it finishes; parsing is not isolated in a separate process.
 
 ## EU Context
 
