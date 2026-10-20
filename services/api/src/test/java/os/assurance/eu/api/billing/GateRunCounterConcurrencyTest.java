@@ -13,7 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import os.assurance.eu.api.tenant.TenantContext;
@@ -27,7 +27,8 @@ class GateRunCounterConcurrencyTest {
   @Autowired GateRunCounterJpaRepository counters;
   @Autowired TenantContext tenantContext;
 
-  @Test
+  // Repeated because a lost update only shows under some interleavings; each repetition uses a fresh tenant.
+  @RepeatedTest(25)
   void parallelFirstRunsOfTheMonthAllCount() throws Exception {
     UUID tenantId = UUID.randomUUID();
     tenants.save(new TenantEntity(tenantId, "Matrix " + tenantId, "starter", "EU", Instant.now()));

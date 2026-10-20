@@ -61,7 +61,8 @@ public class DodoWebhookService {
     JsonNode root = objectMapper.readTree(rawBody);
     String type = root.path("type").asText();
     Instant now = clock.instant();
-    events.save(new BillingWebhookEventEntity(webhookId, type, sha256Hex(rawBody), now));
+    // Flushed now: a concurrent delivery of the same id waits here and then fails on the key, before doing any work.
+    events.saveAndFlush(new BillingWebhookEventEntity(webhookId, type, sha256Hex(rawBody), now));
     JsonNode data = root.path("data");
     String tenantIdText = data.path("metadata").path("tenant_id").asText("");
     if (tenantIdText.isBlank() || !type.startsWith("subscription.")) {
@@ -85,6 +86,10 @@ public class DodoWebhookService {
       events.deleteById(webhookId);
       return;
     }
+    // Locked before anything else reads this row: a row loaded earlier in the transaction would be returned from the
+    // persistence context with its stale state, and a concurrent event's change would be lost.
+    TenantSubscriptionEntity sub = subscriptions.findForUpdate(tenantId)
+        .orElseGet(() -> new TenantSubscriptionEntity(tenantId));
     // A subscription belongs to exactly one workspace. An event that names another workspace, or a different
     // subscription id than the one already bound, is acknowledged but ignored.
     String subscriptionId = textOrNull(data.path("subscription_id"));
@@ -99,8 +104,6 @@ public class DodoWebhookService {
     if (eventTime == null) {
       eventTime = now;
     }
-    TenantSubscriptionEntity sub = subscriptions.findById(tenantId)
-        .orElseGet(() -> new TenantSubscriptionEntity(tenantId));
     // While a subscription is live (active or in payment grace) a different id is a duplicate, not a replacement.
     // After it was cancelled, expired or lapsed, a new subscription takes over the workspace.
     boolean live = "ACTIVE".equals(sub.status()) || "ON_HOLD".equals(sub.status());

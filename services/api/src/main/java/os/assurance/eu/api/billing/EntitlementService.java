@@ -152,14 +152,10 @@ public class EntitlementService {
     PlanCatalog plan = effectivePlan(tenantId);
     String period = currentPeriod();
     ensureCounter(tenantId, period);
-    GateRunCounterEntity counter = counters.findForUpdate(tenantId, period)
-        .orElseThrow(() -> new IllegalStateException("Gate run counter missing for " + tenantId + " " + period));
-    if (plan.gateRunsPerMonth() >= 0 && counter.runs() >= plan.gateRunsPerMonth()) {
+    if (counters.incrementWithin(tenantId, period, plan.gateRunsPerMonth()) == 0) {
       throw new PaymentRequiredException("gate_runs",
           "Your " + plan + " plan includes " + plan.gateRunsPerMonth() + " CI gate runs per month.");
     }
-    counter.increment();
-    counters.save(counter);
   }
 
   /**
@@ -167,7 +163,6 @@ public class EntitlementService {
    * together; the loser of the insert race just uses the row the winner created instead of failing its build.
    */
   private void ensureCounter(UUID tenantId, String period) {
-    // existsById, not findById: a loaded entity would be served stale to the locked read that follows.
     if (counters.existsById(new GateRunCounterEntity.Key(tenantId, period))) {
       return;
     }
