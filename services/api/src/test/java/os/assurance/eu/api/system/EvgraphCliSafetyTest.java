@@ -41,6 +41,17 @@ class EvgraphCliSafetyTest {
     assertThat(cli.currentGaps(artifacts())).isEmpty();
   }
 
+  @Test
+  void noDatasetManifestMeansNoDatasetScan() throws Exception {
+    Path calls = Files.createTempFile("evgraph-calls", ".log");
+    Path bin = fakeBinary("echo \"$1\" >> " + calls + "; echo '{\"findings\":[]}'");
+    EvgraphCli cli = new EvgraphCli(new ObjectMapper(), bin.toString(), false, Duration.ofSeconds(20));
+    Map<String, Object> withoutDataset = new java.util.HashMap<>(artifacts());
+    withoutDataset.remove("dataset_manifest_csv");
+    cli.currentGaps(withoutDataset);
+    assertThat(Files.readAllLines(calls)).containsExactly("scan");
+  }
+
   private long countTempDirs() throws Exception {
     try (var s = Files.list(Path.of(System.getProperty("java.io.tmpdir")))) {
       return s.filter(p -> p.getFileName().toString().startsWith("evgraph-pack")).count();

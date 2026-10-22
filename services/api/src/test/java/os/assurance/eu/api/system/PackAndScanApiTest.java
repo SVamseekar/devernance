@@ -115,16 +115,20 @@ class PackAndScanApiTest {
 
     JsonNode artifacts = pack.get("acceptedArtifacts");
     assertThat(artifacts.get("approval").has("approved_at")).isFalse();
-    assertThat(artifacts.get("approval").get("approver").asText()).isNotBlank();
+    // No stage was approved, so nobody is named: the pack never invents an approver.
+    assertThat(artifacts.get("approval").get("approver").asText()).isEmpty();
     assertThat(artifacts.get("model_card").get("model_name").asText()).isNotBlank();
-    assertThat(artifacts.get("deployment").has("deployed_at")).isTrue();
-    assertThat(artifacts.get("dataset_manifest_csv").asText()).contains("license");
+    // Devernance records no deployment, so the pack states no deployment time (editing the system is not one).
+    assertThat(artifacts.get("deployment").has("deployed_at")).isFalse();
+    // The system lists no data sources, so there is no dataset manifest to scan, and none is made up.
+    assertThat(artifacts.has("dataset_manifest_csv")).isFalse();
 
     List<String> packGaps = gapKeys(pack.get("currentGaps"));
     assertThat(packGaps).contains("approval-precedes-deployment|INCONCLUSIVE");
     assertThat(packGaps).noneMatch(gap -> gap.toLowerCase(Locale.ROOT).contains("annex"));
     assertThat(packGaps).noneMatch(gap -> gap.contains("FUTURE") || gap.contains("PENDING") || gap.contains("REJECTED"));
 
+    assertThat(packGaps).noneMatch(gap -> gap.startsWith("dataset-manifest-complete"));
     List<String> cliGaps = scanExportedArtifacts(artifacts);
     assertThat(packGaps).containsExactlyInAnyOrderElementsOf(cliGaps);
 
@@ -150,6 +154,44 @@ class PackAndScanApiTest {
     assertThat(body).doesNotContain("conformity");
   }
 
+  @Test
+  void declaredDataSourcesBecomeTheDatasetManifestWithoutInventedLicenses() throws Exception {
+    MvcResult created = mockMvc.perform(post("/api/v1/systems")
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {"name":"Data source pack","owner":"Reviewer","purpose":"List data sources",
+                 "riskClass":"LIMITED","riskBasis":"Limited transparency duties",
+                 "deploymentRegion":"EU","dataContractStatus":"HEALTHY","openGaps":[],
+                 "dataSources":["CRM export","Vendor \\"scores\\", v2","CRM export","  "]}
+                """))
+        .andExpect(status().isCreated())
+        .andReturn();
+    String systemId = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asText();
+
+    JsonNode pack = objectMapper.readTree(mockMvc.perform(get("/api/v1/systems/{id}/evidence-pack", systemId)
+            .with(officer()))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString());
+    JsonNode artifacts = pack.get("acceptedArtifacts");
+    String csv = artifacts.get("dataset_manifest_csv").asText();
+    assertThat(csv).doesNotContain("ds-accepted").doesNotContain("Apache-2.0");
+    assertThat(csv.lines().toList()).containsExactly(
+        "dataset_id,source,license,contains_pii",
+        "CRM export,ai_system.dataSources,,",
+        "\"Vendor \"\"scores\"\", v2\",ai_system.dataSources,,");
+    assertThat(pack.get("evgraphArtifacts").get("dataset_manifest_csv").asText()).isEqualTo(csv);
+
+    List<String> packGaps = gapKeys(pack.get("currentGaps"));
+    assertThat(packGaps).filteredOn(gap -> gap.startsWith("dataset-manifest-complete"))
+        .containsExactly(
+            "dataset-manifest-complete|EXPECTATION_NOT_MET",
+            "dataset-manifest-complete|EXPECTATION_NOT_MET");
+    assertThat(packGaps).containsExactlyInAnyOrderElementsOf(scanExportedArtifacts(artifacts));
+  }
+
   private List<String> scanExportedArtifacts(JsonNode artifacts) throws Exception {
     Path dir = Files.createTempDirectory("pack-scan");
     Path modelCard = dir.resolve("model_card.json");
@@ -159,10 +201,12 @@ class PackAndScanApiTest {
     Files.writeString(modelCard, artifacts.get("model_card").toString());
     Files.writeString(approval, artifacts.get("approval").toString());
     Files.writeString(deployment, artifacts.get("deployment").toString());
-    Files.writeString(dataset, artifacts.get("dataset_manifest_csv").asText());
     List<String> gaps = new ArrayList<>();
     gaps.addAll(cliGaps("scan", modelCard.toString(), approval.toString(), deployment.toString()));
-    gaps.addAll(cliGaps("scan-dataset-manifest", dataset.toString()));
+    if (artifacts.has("dataset_manifest_csv")) {
+      Files.writeString(dataset, artifacts.get("dataset_manifest_csv").asText());
+      gaps.addAll(cliGaps("scan-dataset-manifest", dataset.toString()));
+    }
     return gaps;
   }
 
