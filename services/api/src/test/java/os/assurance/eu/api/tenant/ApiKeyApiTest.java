@@ -3,6 +3,7 @@ package os.assurance.eu.api.tenant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -177,6 +178,61 @@ class ApiKeyApiTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"name\":\"Evil\",\"adminEmail\":\"a@evil.example\",\"adminPassword\":\"long-enough-password\"}"))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void aNewKeyCanOnlyReadTheReleaseGateUnlessFullAccessIsAskedFor() throws Exception {
+    JsonNode created = createKey("CI gate");
+    assertThat(created.get("scope").asText()).isEqualTo("RELEASE_GATE");
+    String key = created.get("key").asText();
+    String systemId = createSystem();
+
+    mockMvc.perform(get("/api/v1/ci/release-gate").param("systemId", systemId).header("X-Api-Key", key))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/v1/systems").header("X-Api-Key", key))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(patch("/api/v1/systems/{id}", systemId).header("X-Api-Key", key)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"riskClass\":\"MINIMAL\"}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(post("/api/v1/ci/release-gate").param("systemId", systemId).header("X-Api-Key", key))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void aFullAccessKeyIsExplicitAndListedAsSuch() throws Exception {
+    String body = mockMvc.perform(post("/api/v1/api-keys").header("Authorization", adminBearer())
+            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Evidence upload bot\",\"scope\":\"FULL\"}"))
+        .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+    JsonNode created = json.readTree(body);
+    assertThat(created.get("scope").asText()).isEqualTo("FULL");
+    mockMvc.perform(get("/api/v1/systems").header("X-Api-Key", created.get("key").asText()))
+        .andExpect(status().isOk());
+
+    String listed = mockMvc.perform(get("/api/v1/api-keys").header("Authorization", adminBearer()))
+        .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    for (JsonNode row : json.readTree(listed)) {
+      if (row.get("id").asText().equals(created.get("id").asText())) {
+        assertThat(row.get("scope").asText()).isEqualTo("FULL");
+      }
+    }
+  }
+
+  @Test
+  void anUnknownScopeIsRejected() throws Exception {
+    mockMvc.perform(post("/api/v1/api-keys").header("Authorization", adminBearer())
+            .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"x\",\"scope\":\"ROOT\"}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void keysCreatedBeforeScopesKeepFullAccess() throws Exception {
+    byte[] bytes = new byte[32];
+    new SecureRandom().nextBytes(bytes);
+    String older = "dvn_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    apiKeys.save(new ApiKeyEntity(UUID.randomUUID(), ApiKeyHasher.sha256Hex(older), TenantContext.DEFAULT_TENANT_ID,
+        ADMIN_ID, Instant.now(), "Older key", older.substring(0, 12)));
+    mockMvc.perform(get("/api/v1/systems").header("X-Api-Key", older))
+        .andExpect(status().isOk());
   }
 
   @Test

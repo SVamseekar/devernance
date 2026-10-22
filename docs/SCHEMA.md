@@ -35,8 +35,9 @@ Schema as implemented by Flyway under `services/api/src/main/resources/db/migrat
 | V27 | DPA acceptance |
 | V28 | Devernance rename (stored identifiers) |
 | V29 | query indexes: `ai_systems(tenant_id, created_at)`, `audit_events(tenant_id, system_id, created_at)`, `refresh_tokens(user_id)` |
+| V30 | API key scope (`RELEASE_GATE` for new keys, `FULL` for keys created earlier) |
 
-Canonical counts: `docs/METRICS_CANONICAL.md` (Flyway **V1–V20** + postgres V4); V21–V29 were added after that freeze.
+Canonical counts: `docs/METRICS_CANONICAL.md` (Flyway **V1–V20** + postgres V4); V21–V30 were added after that freeze.
 
 ---
 

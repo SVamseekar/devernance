@@ -54,15 +54,19 @@ POST /auth/password/reset         # {token, newPassword}       -> 204
 ### API keys (CI release gate)
 
 ```http
-GET    /api/v1/api-keys          # [{id, name, prefix, createdAt, lastUsedAt, createdBy}]
-POST   /api/v1/api-keys          # {name} -> 201 {id, name, prefix, key}  (raw key shown once)
+GET    /api/v1/api-keys          # [{id, name, prefix, scope, createdAt, lastUsedAt, createdBy}]
+POST   /api/v1/api-keys          # {name, scope?} -> 201 {id, name, prefix, key, scope}  (raw key shown once)
 DELETE /api/v1/api-keys/{id}     # 204; revoked keys get 401 immediately
 ```
 
 - Roles: ADMIN and AI_ENGINEERING_LEAD. Keys look like `dvn_` + 43 characters (keys issued before the Devernance rename start `aos_` and still work); only a SHA-256 hash is stored.
 - Keys are created and revoked from a signed-in session only. A request authenticated by a key cannot
   create or revoke keys (403), so a leaked key cannot mint replacements.
-- A key acts with the permissions of the user who created it. Legacy UUID keys keep working.
+- `scope` is `RELEASE_GATE` (the default) or `FULL`. A `RELEASE_GATE` key can only call
+  `GET /api/v1/ci/release-gate`; anything else returns 403, so a key leaked from a CI secret store cannot change
+  systems, approvals or evidence. A `FULL` key acts with the permissions of the user who created it (still never
+  minting keys, inviting users or managing the workspace). Keys created before scopes existed, and legacy UUID
+  keys, are `FULL`.
 - CI calls `GET /api/v1/ci/release-gate?systemId=…` with `X-Api-Key`. The dashboard exposes the same path
   without a session cookie and forwards it unchanged.
 

@@ -1,6 +1,7 @@
 import type {
   AiSystem,
   ApiKeyCreated,
+  ApiKeyScope,
   ApiKeyView,
   BillingSummary,
   ApprovalWorkflow,
@@ -43,6 +44,7 @@ import type {
   PublicClaimsTeaser,
 } from "./public-claims";
 
+import { DEFAULT_API_KEY_SCOPE } from "./api-key-scope";
 import { loginRedirectHref } from "./auth-redirect";
 import { SYSTEM_EXPORTS, downloadFilename, exportPath, type SystemExportKind } from "./export-view";
 
@@ -419,8 +421,8 @@ export const api = {
   },
   apiKeys: {
     list: () => request<ApiKeyView[]>("/api-keys"),
-    create: (name: string) =>
-      request<ApiKeyCreated>("/api-keys", { method: "POST", body: JSON.stringify({ name }) }),
+    create: (name: string, scope: ApiKeyScope = DEFAULT_API_KEY_SCOPE) =>
+      request<ApiKeyCreated>("/api-keys", { method: "POST", body: JSON.stringify({ name, scope }) }),
     revoke: (id: string) => request<null>(`/api-keys/${id}`, { method: "DELETE" }),
   },
   ops: {
