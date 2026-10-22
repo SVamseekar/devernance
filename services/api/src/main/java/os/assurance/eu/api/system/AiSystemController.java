@@ -5,6 +5,7 @@ import os.assurance.eu.api.billing.Feature;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -154,6 +155,7 @@ public class AiSystemController {
     entitlements.requireSystemWritable(systemId);
     rejectComputedGateFields(request.evidenceCoverage(), request.evalScore(), request.dataContractStatus());
     AiSystem existing = getSystem(systemId);
+    requireReviewerToLowerRisk(existing.riskClass(), request.riskClass(), UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER);
     List<String> removedGapsForAudit = List.of();
     if (!gateInputs.manualInputs() && request.openGaps() != null) {
       List<String> removed = existing.openGaps().stream().filter(g -> !request.openGaps().contains(g)).toList();
@@ -198,13 +200,30 @@ public class AiSystemController {
       draft = gateInputs.recompute(draft);
     }
     AiSystem saved = saveWithCalculatedDecision(draft);
-    auditService.append(
-        saved.id(),
-        "ai_system.updated",
-        "ai_system",
-        saved.id().toString(),
-        Map.of("releaseDecision", saved.releaseDecision(), "gapsClosed", removedGapsForAudit));
+    Map<String, Object> auditPayload = new LinkedHashMap<>();
+    auditPayload.put("releaseDecision", saved.releaseDecision());
+    auditPayload.put("gapsClosed", removedGapsForAudit);
+    if (riskChanged) {
+      auditPayload.put("previousRiskClass", existing.riskClass());
+      auditPayload.put("riskClass", saved.riskClass());
+    }
+    auditService.append(saved.id(), "ai_system.updated", "ai_system", saved.id().toString(), auditPayload);
     return saved;
+  }
+
+  /**
+   * Lowering a risk class lowers the evidence the gate requires, so the people who want the release (engineering)
+   * cannot do it alone: only the listed reviewer roles may. Raising it, or keeping it, is open to every editor.
+   */
+  private void requireReviewerToLowerRisk(RiskClass current, RiskClass requested, UserRole... reviewers) {
+    if (requested == null || current == null || requested.ordinal() >= current.ordinal()) {
+      return;
+    }
+    UserRole role = authorizationService.currentRole();
+    if (!List.of(reviewers).contains(role)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "Lowering a risk class needs a reviewer role: " + List.of(reviewers));
+    }
   }
 
   @PostMapping("/{systemId}/risk-classification")
@@ -218,6 +237,8 @@ public class AiSystemController {
         UserRole.LEGAL_COUNSEL);
     entitlements.requireSystemWritable(systemId);
     AiSystem existing = getSystem(systemId);
+    requireReviewerToLowerRisk(existing.riskClass(), request.riskClass(),
+        UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.LEGAL_COUNSEL);
     List<String> openGaps = new ArrayList<>(existing.openGaps());
     if (request.humanOversightRequired() && openGaps.stream().noneMatch(this::isOversightGap)) {
       openGaps.add("Human oversight evidence required");
@@ -255,6 +276,7 @@ public class AiSystemController {
         "ai_system",
         saved.id().toString(),
         Map.of(
+            "previousRiskClass", existing.riskClass(),
             "riskClass", saved.riskClass(),
             "humanOversightRequired", request.humanOversightRequired(),
             "affectedUsers", saved.affectedUsers(),
