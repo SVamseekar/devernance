@@ -26,6 +26,13 @@ export const SUBPROCESSORS: Subprocessor[] = [
     link: "https://www.cloudflare.com/",
   },
   {
+    name: "Vercel",
+    purpose: "Hosting for the web app and its API proxy",
+    location: "Global edge; see provider",
+    dataCategories: "Traffic metadata (IP address, request headers); workspace data in transit through the proxy",
+    link: "https://vercel.com/legal/privacy-policy",
+  },
+  {
     name: "Google Analytics",
     purpose: "Website usage analytics, only for visitors who accept analytics cookies",
     location: "US (EU-US Data Privacy Framework)",
