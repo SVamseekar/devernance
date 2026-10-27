@@ -44,7 +44,7 @@ export const DEADLINES: Deadline[] = [
     id: "eu-art50-2",
     region: "EU",
     law: "EU AI Act",
-    label: "Article 50(2) marking of AI-generated content",
+    label: "Article 50(2) marking: grace period ends for systems on the market before 2 Aug 2026",
     date: "2026-12-02",
     source: OMNIBUS,
   },
