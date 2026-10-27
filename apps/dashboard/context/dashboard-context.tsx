@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from "react";
+import { createContext, useContext, useState, ReactNode, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AiSystem, DataContract, DriftEvent, AuditEvent, DataContractStatus, ReleaseDecision } from "@/lib/types";
@@ -13,12 +13,6 @@ import { useAuditEvents } from "@/hooks/use-audit-events";
 import { isLiveEntityId, isMockEntityId } from "@/lib/ids";
 
 interface DashboardContextType {
-  // Tenant & Actor selector
-  activeTenant: string;
-  setActiveTenant: (t: string) => void;
-  activeRole: string;
-  setActiveRole: (r: string) => void;
-
   // Selected state
   selectedSystem: AiSystem | null;
   setSelectedSystem: (s: AiSystem | null) => void;
@@ -41,9 +35,6 @@ interface DashboardContextType {
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  // Shared roles & headers
-  const [activeTenant, setActiveTenant] = useState("tenant-premium");
-  const [activeRole, setActiveRole] = useState("actor-priya");
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const pollAudits = pathname === "/audit" || pathname.startsWith("/audit/");
@@ -85,13 +76,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       ? apiAudits
       : null;
 
-  const [localDriftEvents, setLocalDriftEvents] = useState<DriftEvent[]>(MOCK_DRIFT_EVENTS);
-
-  // Set headers in localStorage on change
-  useEffect(() => {
-    localStorage.setItem("eu-ai-tenant-id", activeTenant);
-    localStorage.setItem("eu-ai-actor-id", activeRole);
-  }, [activeTenant, activeRole]);
+  const [localDriftEvents, setLocalDriftEvents] = useState<DriftEvent[]>(() => (allowMockFallback() ? MOCK_DRIFT_EVENTS : []));
 
   async function setDriftStatus(eventId: string, status: "ACKNOWLEDGED" | "RESOLVED") {
     if (liveContracts) {
@@ -208,10 +193,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   return (
     <DashboardContext.Provider
       value={{
-        activeTenant,
-        setActiveTenant,
-        activeRole,
-        setActiveRole,
         selectedSystem: updatedSelectedSystem,
         setSelectedSystem,
         selectedContract: updatedSelectedContract,

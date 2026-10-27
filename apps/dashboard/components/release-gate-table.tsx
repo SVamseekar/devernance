@@ -3,6 +3,9 @@ import { DecisionBadge } from "./decision-badge";
 import { normaliseDecision, cn } from "@/lib/utils";
 import type { AiSystem } from "@/lib/types";
 import { MOCK_WORKFLOWS } from "@/lib/mock-data";
+import { allowMockFallback } from "@/lib/live-mode";
+import { workflowsForSystem } from "@/lib/workflow-helpers";
+import { useOpenWorkflows } from "@/hooks/use-open-workflows";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { isLiveEntityId } from "@/lib/ids";
@@ -12,6 +15,7 @@ interface ReleaseGateTableProps {
 }
 
 export function ReleaseGateTable({ systems }: ReleaseGateTableProps) {
+  const { data: openWorkflows = [] } = useOpenWorkflows();
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -85,7 +89,7 @@ export function ReleaseGateTable({ systems }: ReleaseGateTableProps) {
                 </td>
                 <td className="py-3.5">
                   {(() => {
-                    const wfs = MOCK_WORKFLOWS[system.id] ?? [];
+                    const wfs = workflowsForSystem(system.id, openWorkflows, MOCK_WORKFLOWS, allowMockFallback());
                     const open = wfs.find((w) => w.status === "OPEN");
                     const last = wfs[0];
                     if (open) {

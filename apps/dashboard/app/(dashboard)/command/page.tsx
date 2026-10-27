@@ -12,6 +12,7 @@ import { useOpenWorkflows } from "@/hooks/use-open-workflows";
 import { useSystems } from "@/hooks/use-systems";
 import { api, ApiError } from "@/lib/api";
 import { firstPendingStage } from "@/lib/workflow-helpers";
+import { allowMockFallback } from "@/lib/live-mode";
 import { MOCK_CONTRACTS } from "@/lib/mock-data";
 import { normaliseDecision, cn, formatDate } from "@/lib/utils";
 import {
@@ -58,7 +59,7 @@ export default function CommandPage() {
   const qc = useQueryClient();
   const [overrideError, setOverrideError] = useState<string | null>(null);
   const [overriding, setOverriding] = useState(false);
-  const { data: contracts = MOCK_CONTRACTS } = useContracts();
+  const { data: contracts = allowMockFallback() ? MOCK_CONTRACTS : [] } = useContracts();
   const { data: openWorkflows = [] } = useOpenWorkflows();
   const { isError: systemsError, isSuccess: systemsSuccess, data: systemsData } = useSystems();
   // Same heuristic as Evidence: live API when systems query succeeds with real IDs

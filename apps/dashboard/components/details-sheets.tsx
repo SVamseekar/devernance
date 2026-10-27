@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sheet } from "./ui/sheet";
 import { ApprovalWorkflowPanel } from "./approval-workflow";
-import { MOCK_WORKFLOWS } from "@/lib/mock-data";
+import { isLiveEntityId } from "@/lib/ids";
+import { obligationSignals, type ObligationSignalStatus } from "@/lib/obligation-signals";
 import { RiskBadge } from "./risk-badge";
 import { DecisionBadge } from "./decision-badge";
 import { normaliseDecision, cn, formatDate } from "@/lib/utils";
 import type { AiSystem, DataContract, DriftEvent, AuditEvent } from "@/lib/types";
 import { useDashboard } from "@/context/dashboard-context";
 import { isPublicClaimsSystem, publicClaimsSlug } from "@/lib/public-claims";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import Link from "next/link";
 import { ObligationMapWizard } from "./obligation-map-wizard";
 import { FrameworksPanel } from "./frameworks-panel";
@@ -31,6 +33,13 @@ import {
   Download,
 } from "lucide-react";
 
+const SIGNAL_LABELS: Record<ObligationSignalStatus, string> = {
+  SIGNAL: "Evidence signal",
+  REVIEW: "Needs review",
+  GAP: "Gap",
+  NOT_ASSESSED: "Not assessed here",
+};
+
 interface SystemDetailsSheetProps {
   system: AiSystem | null;
   isOpen: boolean;
@@ -41,11 +50,43 @@ interface SystemDetailsSheetProps {
 export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: SystemDetailsSheetProps) {
   const [activeTab, setActiveTab] = useState<"details" | "frameworks" | "approval">("details");
   const [obligationWizardOpen, setObligationWizardOpen] = useState(false);
-  const { activeRole } = useDashboard();
+  const queryClient = useQueryClient();
+  const me = useQuery({ queryKey: ["me"], queryFn: api.me, retry: false, staleTime: 5 * 60_000 });
+  const systemId = system?.id ?? null;
+  const workflowsQuery = useQuery({
+    queryKey: ["workflows", "system", systemId],
+    queryFn: () => api.workflows.list(systemId as string),
+    enabled: isOpen && isLiveEntityId(systemId),
+  });
+  const stageAction = useMutation({
+    mutationFn: ({
+      action,
+      workflowId,
+      stageId,
+      rationale,
+      oversightEvidence,
+    }: {
+      action: "approve" | "reject" | "override";
+      workflowId: string;
+      stageId: string;
+      rationale: string;
+      oversightEvidence?: string;
+    }) => {
+      const id = systemId as string;
+      if (action === "approve") return api.workflows.approve(id, workflowId, stageId, rationale, oversightEvidence);
+      if (action === "reject") return api.workflows.reject(id, workflowId, stageId, rationale);
+      return api.workflows.override(id, workflowId, stageId, rationale);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      void queryClient.invalidateQueries({ queryKey: ["systems"] });
+      void queryClient.invalidateQueries({ queryKey: ["audit-events"] });
+    },
+  });
 
   if (!system) return null;
 
-  const workflows = MOCK_WORKFLOWS[system.id] ?? [];
+  const workflows = workflowsQuery.data ?? [];
   const activeWorkflow = workflows.find((w) => w.status === "OPEN") ?? null;
 
   const decision = normaliseDecision(system.releaseDecision);
@@ -53,16 +94,7 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
     .filter((e) => e.systemId === system.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // Dynamic EU Act Checklist Obligations
-  const obligations = [
-    { name: "Risk Management System (Art. 9)", status: "PASS", desc: "Systematic risk mapping for high-risk pipelines." },
-    { name: "Data Governance & Quality (Art. 10)", status: system.dataContractStatus === "BREACH" ? "BLOCKED" : system.dataContractStatus === "WARNING" ? "REVIEW" : "PASS", desc: "Training/validation datasets validation checks." },
-    { name: "Technical Documentation (Art. 11)", status: system.evidenceCoverage > 80 ? "PASS" : "REVIEW", desc: "Up-to-date model cards and system architecture sheets." },
-    { name: "Automatic Logging System (Art. 12)", status: "PASS", desc: "Immutable audit events collection." },
-    { name: "Transparency & Information (Art. 13)", status: system.riskClass === "limited" ? "PASS" : "PASS", desc: "Clear user disclosure warnings and disclosures." },
-    { name: "Human Oversight Procedures (Art. 14)", status: system.openGaps.some(g => g.toLowerCase().includes("human") || g.toLowerCase().includes("oversight")) ? "BLOCKED" : "PASS", desc: "Designated oversight procedure and override SOP." },
-    { name: "Accuracy, Robustness & Security (Art. 15)", status: system.evalScore >= 85 ? "PASS" : "BLOCKED", desc: "Benchmarked performance metrics against judge sets." }
-  ];
+  const obligations = obligationSignals(system);
 
   return (
     <Sheet
@@ -246,38 +278,52 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
         </div>
       )}
 
-      {/* EU Act Compliance Checklist */}
+      {/* EU AI Act evidence signals (high-risk Articles 9-15) */}
       <div>
         <h4 className="text-xs font-semibold text-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2.5">
           <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-          EU AI Act Obligation Checklist
+          EU AI Act evidence signals
         </h4>
-        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card">
-          {obligations.map((ob, i) => {
-            const status = ob.status;
-            return (
-              <div key={i} className="p-3 flex items-start gap-3 hover:bg-muted/10 transition-colors">
-                <div className="mt-0.5 shrink-0">
-                  {status === "PASS" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                  {status === "REVIEW" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
-                  {status === "BLOCKED" && <ShieldAlert className="w-4 h-4 text-red-500" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[11px] font-semibold text-foreground leading-snug">{ob.name}</p>
-                    <span className={cn(
-                      "text-[9px] uppercase font-bold px-1.5 py-0.2 rounded-full",
-                      status === "PASS" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
-                      status === "REVIEW" && "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
-                      status === "BLOCKED" && "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                    )}>{status}</span>
+        {obligations.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Articles 9–15 apply to high-risk systems. This system is not classed high-risk; use the obligation map
+            wizard to check which duties apply.
+          </p>
+        ) : (
+          <>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              What Devernance&apos;s own records show for each article. A signal is supporting evidence, not a
+              finding that the article is met.
+            </p>
+            <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card">
+              {obligations.map((ob) => (
+                <div key={ob.article} className="p-3 flex items-start gap-3 hover:bg-muted/10 transition-colors">
+                  <div className="mt-0.5 shrink-0">
+                    {ob.status === "SIGNAL" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    {ob.status === "REVIEW" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+                    {ob.status === "GAP" && <ShieldAlert className="w-4 h-4 text-red-500" />}
+                    {ob.status === "NOT_ASSESSED" && <Clock className="w-4 h-4 text-muted-foreground" />}
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{ob.desc}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold text-foreground leading-snug">
+                        {ob.name} ({ob.article})
+                      </p>
+                      <span className={cn(
+                        "text-[9px] uppercase font-bold px-1.5 py-0.2 rounded-full whitespace-nowrap",
+                        ob.status === "SIGNAL" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+                        ob.status === "REVIEW" && "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+                        ob.status === "GAP" && "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400",
+                        ob.status === "NOT_ASSESSED" && "bg-muted text-muted-foreground"
+                      )}>{SIGNAL_LABELS[ob.status]}</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{ob.detail}</p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Audit History */}
@@ -338,14 +384,30 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
       )}
 
       {activeTab === "approval" && (
-        <ApprovalWorkflowPanel
-          workflows={workflows}
-          activeWorkflow={activeWorkflow}
-          activeRole={activeRole}
-          onApprove={(wId, sId, r) => console.log("approve", wId, sId, r)}
-          onReject={(wId, sId, r) => console.log("reject", wId, sId, r)}
-          onOverride={(wId, sId, r) => console.log("override", wId, sId, r)}
-        />
+        <div className="space-y-2">
+          {workflowsQuery.isError && (
+            <p className="text-xs text-destructive">Could not load approval workflows for this system.</p>
+          )}
+          {stageAction.isError && (
+            <p className="text-xs text-destructive">
+              {stageAction.error instanceof ApiError ? stageAction.error.message : "The action failed. Try again."}
+            </p>
+          )}
+          <ApprovalWorkflowPanel
+            workflows={workflows}
+            activeWorkflow={activeWorkflow}
+            userRole={me.data?.role}
+            onApprove={(workflowId, stageId, rationale, oversightEvidence) =>
+              stageAction.mutate({ action: "approve", workflowId, stageId, rationale, oversightEvidence })
+            }
+            onReject={(workflowId, stageId, rationale) =>
+              stageAction.mutate({ action: "reject", workflowId, stageId, rationale })
+            }
+            onOverride={(workflowId, stageId, rationale) =>
+              stageAction.mutate({ action: "override", workflowId, stageId, rationale })
+            }
+          />
+        </div>
       )}
     </Sheet>
   );
