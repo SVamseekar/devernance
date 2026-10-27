@@ -246,8 +246,9 @@ public class EvidencePackService {
     modelCard.put("model_name", modelName);
     modelCard.put("intended_use", system.purpose() == null ? "" : system.purpose());
 
+    // Only an approved stage names an approver; without one the field stays empty (evgraph needs the key).
     Map<String, Object> approval = new LinkedHashMap<>();
-    approval.put("approver", "unassigned");
+    approval.put("approver", "");
     for (Map<String, Object> workflow : approvals) {
       Object stages = workflow.get("stages");
       if (!(stages instanceof List<?> list)) {
@@ -271,11 +272,9 @@ public class EvidencePackService {
       }
     }
 
+    // Devernance records no deployments, so there is no deployment time to state. A record edit is not a
+    // deployment: using updatedAt let any rename make "approval precedes deployment" pass.
     Map<String, Object> deployment = new LinkedHashMap<>();
-    Instant deployed = system.updatedAt() != null ? system.updatedAt() : system.createdAt();
-    if (deployed != null) {
-      deployment.put("deployed_at", deployed.toString());
-    }
 
     Map<String, Object> root = new LinkedHashMap<>();
     root.put(
@@ -287,7 +286,39 @@ public class EvidencePackService {
     root.put("model_card", modelCard);
     root.put("approval", approval);
     root.put("deployment", deployment);
+    String datasetManifest = datasetManifestCsv(system.dataSources());
+    if (datasetManifest != null) {
+      root.put("dataset_manifest_csv", datasetManifest);
+    }
     return root;
+  }
+
+  /**
+   * The system's declared data sources as an evgraph dataset manifest, or null when it declares none. Devernance
+   * stores no license or personal-data flag for a source, so both cells stay empty rather than being guessed.
+   */
+  static String datasetManifestCsv(List<String> dataSources) {
+    java.util.LinkedHashSet<String> ids = new java.util.LinkedHashSet<>();
+    for (String source : dataSources == null ? List.<String>of() : dataSources) {
+      if (source != null && !source.isBlank()) {
+        ids.add(source.strip().replaceAll("[\\r\\n]+", " "));
+      }
+    }
+    if (ids.isEmpty()) {
+      return null;
+    }
+    StringBuilder csv = new StringBuilder("dataset_id,source,license,contains_pii\n");
+    for (String id : ids) {
+      csv.append(csvCell(id)).append(",ai_system.dataSources,,\n");
+    }
+    return csv.toString();
+  }
+
+  private static String csvCell(String value) {
+    if (value.contains(",") || value.contains("\"")) {
+      return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+    return value;
   }
 
   private Map<String, Object> acceptedArtifacts(Map<String, Object> evgraphArtifacts) {
@@ -295,9 +326,10 @@ public class EvidencePackService {
     files.put("model_card", evgraphArtifacts.get("model_card"));
     files.put("approval", evgraphArtifacts.get("approval"));
     files.put("deployment", evgraphArtifacts.get("deployment"));
-    files.put(
-        "dataset_manifest_csv",
-        "dataset_id,source,license,contains_pii\nds-accepted,internal,Apache-2.0,false\n");
+    Object datasetManifest = evgraphArtifacts.get("dataset_manifest_csv");
+    if (datasetManifest != null) {
+      files.put("dataset_manifest_csv", datasetManifest);
+    }
     return files;
   }
 

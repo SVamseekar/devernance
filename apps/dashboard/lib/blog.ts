@@ -71,7 +71,7 @@ export const POSTS: BlogPost[] = [
         type: "ul",
         items: [
           "Article 50 transparency duties apply from 2 August 2026.",
-          "Article 50(2) marking of AI-generated content applies from 2 December 2026.",
+          "Article 50(2) marking of AI-generated content applies from 2 August 2026; systems already on the market before that date have until 2 December 2026.",
           "Annex III high-risk duties apply from 2 December 2027, after the Digital Omnibus on AI.",
           "Annex I embedded high-risk duties apply from 2 August 2028.",
         ],
@@ -115,7 +115,7 @@ export const POSTS: BlogPost[] = [
       { type: "h2", text: "Transparency did not move" },
       {
         type: "p",
-        text: "Article 50 transparency duties apply from 2 August 2026, and the Article 50(2) marking duty for AI-generated content applies from 2 December 2026. A chatbot or content feature that is not high-risk can still be in scope today.",
+        text: "Article 50 transparency duties apply from 2 August 2026, and the Article 50(2) marking duty for AI-generated content applies with them. Only systems already on the market before 2 August 2026 have until 2 December 2026 to add marking. A chatbot or content feature that is not high-risk can still be in scope today.",
       },
       { type: "h2", text: "What to do with the extra time" },
       {

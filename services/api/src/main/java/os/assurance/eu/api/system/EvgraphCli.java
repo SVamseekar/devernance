@@ -90,14 +90,18 @@ public class EvgraphCli {
       Path modelCard = dir.resolve("model_card.json");
       Path approval = dir.resolve("approval.json");
       Path deployment = dir.resolve("deployment.json");
-      Path dataset = dir.resolve("dataset_manifest.csv");
       objectMapper.writeValue(modelCard.toFile(), artifacts.get("model_card"));
       objectMapper.writeValue(approval.toFile(), artifacts.get("approval"));
       objectMapper.writeValue(deployment.toFile(), artifacts.get("deployment"));
-      Files.writeString(dataset, String.valueOf(artifacts.get("dataset_manifest_csv")));
       List<Map<String, Object>> gaps = new ArrayList<>();
       gaps.addAll(gapsFrom(command, "scan", modelCard.toString(), approval.toString(), deployment.toString()));
-      gaps.addAll(gapsFrom(command, "scan-dataset-manifest", dataset.toString()));
+      // No manifest means the system declares no data sources: there is nothing to scan, and no row is invented.
+      Object manifest = artifacts.get("dataset_manifest_csv");
+      if (manifest != null && !manifest.toString().isBlank()) {
+        Path dataset = dir.resolve("dataset_manifest.csv");
+        Files.writeString(dataset, manifest.toString());
+        gaps.addAll(gapsFrom(command, "scan-dataset-manifest", dataset.toString()));
+      }
       return gaps;
     } catch (IllegalStateException e) {
       throw e;

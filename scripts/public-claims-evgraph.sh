@@ -50,27 +50,31 @@ run_one() {
   local promo_rc=0
   local data_rc=0
 
+  # Run from the pack directory with bare file names so the committed reports
+  # cite pack-relative source paths, not this machine's checkout path.
+  pushd "$dir" >/dev/null
   set +e
   "$EVGRAPH" scan-promotion \
-    --model-card "$dir/model_card.json" \
-    --approval "$dir/approval.json" \
-    --deployment "$dir/deployment.json" \
+    --model-card model_card.json \
+    --approval approval.json \
+    --deployment deployment.json \
     --format markdown \
     --gate --strict >"$promo_md"
   promo_rc=$?
   "$EVGRAPH" scan-promotion \
-    --model-card "$dir/model_card.json" \
-    --approval "$dir/approval.json" \
-    --deployment "$dir/deployment.json" \
+    --model-card model_card.json \
+    --approval approval.json \
+    --deployment deployment.json \
     --format json >"$promo_json"
 
-  "$EVGRAPH" scan-dataset-manifest "$dir/dataset_manifest.csv" \
+  "$EVGRAPH" scan-dataset-manifest dataset_manifest.csv \
     --format markdown \
     --gate >"$data_md"
   data_rc=$?
-  "$EVGRAPH" scan-dataset-manifest "$dir/dataset_manifest.csv" \
+  "$EVGRAPH" scan-dataset-manifest dataset_manifest.csv \
     --format json >"$data_json"
   set -e
+  popd >/dev/null
 
   echo "promotion --gate --strict exit=$promo_rc"
   echo "dataset --gate exit=$data_rc"

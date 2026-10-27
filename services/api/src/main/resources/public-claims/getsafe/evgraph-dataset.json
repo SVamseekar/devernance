@@ -9,7 +9,7 @@
         "type": "Dataset",
         "observed_at": "2026-09-14T19:03:02.918418Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/getsafe/dataset_manifest.csv",
+          "path": "dataset_manifest.csv",
           "row": 0
         },
         "evidence_level": "STRUCTURAL",

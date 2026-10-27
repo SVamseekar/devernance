@@ -35,7 +35,7 @@ public class ApiKeyController {
   public ApiKeyService.Created create(HttpServletRequest request, @RequestBody(required = false) CreateBody body) {
     SessionOnly.require(request);
     authorization.requireAnyRole(UserRole.ADMIN, UserRole.AI_ENGINEERING_LEAD);
-    return service.create(body == null ? null : body.name());
+    return service.create(body == null ? null : body.name(), body == null ? null : body.scope());
   }
 
   @DeleteMapping("/{id}")
@@ -46,5 +46,5 @@ public class ApiKeyController {
     service.revoke(id);
   }
 
-  public record CreateBody(String name) {}
+  public record CreateBody(String name, ApiKeyScope scope) {}
 }

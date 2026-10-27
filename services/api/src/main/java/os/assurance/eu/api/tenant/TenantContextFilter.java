@@ -132,6 +132,11 @@ public class TenantContextFilter extends OncePerRequestFilter {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Workspace is no longer active");
             return;
         }
+        if (!key.scope().allows(request.getMethod(), request.getRequestURI())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                "This API key may only call GET " + ApiKeyScope.RELEASE_GATE_PATH + "; create a full-access key for other calls");
+            return;
+        }
         apiKeyUsage.touch(key.id());
         runAs(key.tenantId(), key.userId(), request, response, filterChain);
     }

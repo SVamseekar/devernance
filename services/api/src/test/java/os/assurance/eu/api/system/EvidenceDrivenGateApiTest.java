@@ -81,6 +81,55 @@ class EvidenceDrivenGateApiTest {
         .andExpect(jsonPath("$.openGaps", hasItem("No completed eval run")));
   }
 
+  @Test
+  void engineeringLeadCannotLowerTheRiskClassButCanRaiseIt() throws Exception {
+    String highId = create("HIGH", "");
+    mockMvc.perform(patch("/api/v1/systems/{id}", highId)
+            .with(engineer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"riskClass\":\"MINIMAL\"}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(post("/api/v1/systems/{id}/risk-classification", highId)
+            .with(engineer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"riskClass\":\"LIMITED\",\"basis\":\"Looks harmless\",\"humanOversightRequired\":false}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/v1/systems/{id}", highId).with(officer()))
+        .andExpect(jsonPath("$.riskClass").value("HIGH"));
+
+    String limitedId = create("LIMITED", "");
+    mockMvc.perform(patch("/api/v1/systems/{id}", limitedId)
+            .with(engineer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"riskClass\":\"HIGH\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.riskClass").value("HIGH"));
+  }
+
+  @Test
+  void aRiskClassChangeIsAuditedWithItsPreviousValue() throws Exception {
+    String highId = create("HIGH", "");
+    mockMvc.perform(patch("/api/v1/systems/{id}", highId)
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"riskClass\":\"MINIMAL\"}"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/v1/audit-events").param("systemId", highId).with(officer()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[?(@.eventType == 'ai_system.updated')].payload.previousRiskClass", hasItem("HIGH")))
+        .andExpect(jsonPath("$[?(@.eventType == 'ai_system.updated')].payload.riskClass", hasItem("MINIMAL")));
+
+    String otherId = create("HIGH", "");
+    mockMvc.perform(post("/api/v1/systems/{id}/risk-classification", otherId)
+            .with(officer())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"riskClass\":\"LIMITED\",\"basis\":\"Reviewed: transparency duties only\",\"humanOversightRequired\":false}"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/v1/audit-events").param("systemId", otherId).with(officer()))
+        .andExpect(jsonPath(
+            "$[?(@.eventType == 'risk_classification.updated')].payload.previousRiskClass", hasItem("HIGH")));
+  }
+
   private String create(String riskClass, String extra) throws Exception {
     MvcResult created = mockMvc.perform(post("/api/v1/systems")
             .with(officer())

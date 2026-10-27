@@ -327,10 +327,13 @@ export interface Me {
   demo: boolean;
 }
 
+export type ApiKeyScope = "RELEASE_GATE" | "FULL";
+
 export interface ApiKeyView {
   id: string;
   name: string;
   prefix: string;
+  scope?: ApiKeyScope;
   createdAt: string;
   lastUsedAt: string | null;
 }
@@ -340,6 +343,7 @@ export interface ApiKeyCreated {
   name: string;
   prefix: string;
   key: string;
+  scope?: ApiKeyScope;
 }
 
 export interface OpsReadiness {

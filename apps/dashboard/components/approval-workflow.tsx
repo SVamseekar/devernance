@@ -10,7 +10,8 @@ import { STAGE_LABELS, isActionableStage } from "@/lib/workflow-helpers";
 interface ApprovalWorkflowPanelProps {
   workflows: ApprovalWorkflow[];
   activeWorkflow: ApprovalWorkflow | null;
-  activeRole: string;
+  /** The signed-in user's role from /me; undefined while it loads. */
+  userRole: string | undefined;
   onApprove: (workflowId: string, stageId: string, rationale: string, oversightEvidence?: string) => void;
   onReject: (workflowId: string, stageId: string, rationale: string) => void;
   onOverride: (workflowId: string, stageId: string, rationale: string) => void;
@@ -27,7 +28,7 @@ function StageStatusIcon({ status }: { status: StageStatus }) {
 export function ApprovalWorkflowPanel({
   workflows,
   activeWorkflow,
-  activeRole,
+  userRole,
   onApprove,
   onReject,
   onOverride,
@@ -60,8 +61,8 @@ export function ApprovalWorkflowPanel({
           </div>
           <div className="space-y-2">
             {activeWorkflow.stages.map((stage) => {
-              const actionable = isActionableStage(stage, activeWorkflow.stages, activeRole);
-              const isAdmin = activeRole === "actor-admin";
+              const actionable = isActionableStage(stage, activeWorkflow.stages, userRole);
+              const isAdmin = userRole === "ADMIN";
               return (
                 <div
                   key={stage.id}
