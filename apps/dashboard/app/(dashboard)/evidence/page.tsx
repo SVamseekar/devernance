@@ -160,7 +160,7 @@ export default function EvidencePage() {
           <CardDescription>Register your first AI system to attach evidence.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/systems" className="text-sm text-primary hover:underline">
+          <Link href="/systems" className="text-sm text-primary underline">
             Register your first system
           </Link>
         </CardContent>
@@ -181,15 +181,15 @@ export default function EvidencePage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">System</label>
                 <Select value={selectedSystemId} onValueChange={(v) => v && setPickedId(v)}>
-                  <SelectTrigger><SelectValue>{selectedSystem?.name ?? "Select system"}</SelectValue></SelectTrigger>
+                  <SelectTrigger aria-label="System"><SelectValue>{selectedSystem?.name ?? "Select system"}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {systemOptions.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Question</label>
-                <Textarea rows={5} value={question} onChange={(e) => setQuestion(e.target.value)} />
+                <label htmlFor="rag-question" className="text-xs font-medium text-muted-foreground">Question</label>
+                <Textarea id="rag-question" rows={5} value={question} onChange={(e) => setQuestion(e.target.value)} />
               </div>
               <Button type="submit" disabled={querying || !apiOnline} size="sm">
                 {querying ? "Querying…" : "Ask with citations"}
@@ -266,6 +266,7 @@ export default function EvidencePage() {
               )}
               <input
                 type="file"
+                aria-label="Compliance file"
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
@@ -280,23 +281,23 @@ export default function EvidencePage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Type</label>
                 <Select value={docType} onValueChange={(v) => v && setDocType(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Type"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {EVIDENCE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Title</label>
-                <input className={INPUT} value={docTitle} onChange={(e) => setDocTitle(e.target.value)} />
+                <label htmlFor="doc-title" className="text-xs font-medium text-muted-foreground">Title</label>
+                <input id="doc-title" className={INPUT} value={docTitle} onChange={(e) => setDocTitle(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Source URI</label>
-                <input className={INPUT} value={docSource} onChange={(e) => setDocSource(e.target.value)} />
+                <label htmlFor="doc-source" className="text-xs font-medium text-muted-foreground">Source URI</label>
+                <input id="doc-source" className={INPUT} value={docSource} onChange={(e) => setDocSource(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Extracted text</label>
-                <Textarea rows={4} value={docContent} onChange={(e) => setDocContent(e.target.value)} />
+                <label htmlFor="doc-content" className="text-xs font-medium text-muted-foreground">Extracted text</label>
+                <Textarea id="doc-content" rows={4} value={docContent} onChange={(e) => setDocContent(e.target.value)} />
               </div>
               {uploadError && <p role="alert" className="text-xs text-destructive">{uploadError}</p>}
               <div className="flex items-center gap-3">

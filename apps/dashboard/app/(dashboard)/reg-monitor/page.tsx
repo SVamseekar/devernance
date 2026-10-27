@@ -71,7 +71,7 @@ export default function RegMonitorPage() {
         </p>
         {feed?.latencyNote && (
           <p className="text-[10px] text-muted-foreground mt-1.5 flex items-start gap-1.5">
-            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-600" />
+            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-700" />
             {feed.latencyNote}
           </p>
         )}
@@ -109,7 +109,7 @@ export default function RegMonitorPage() {
               AI system
             </label>
             <Select value={systemId} onValueChange={(v) => setSystemId(v ?? "")}>
-              <SelectTrigger className="h-9 text-xs">
+              <SelectTrigger aria-label="AI system" className="h-9 text-xs">
                 <SelectValue placeholder="Select system" />
               </SelectTrigger>
               <SelectContent>
@@ -222,6 +222,7 @@ export default function RegMonitorPage() {
                       Review notes
                     </label>
                     <input
+                      aria-label="Review notes"
                       className="w-full h-9 text-xs rounded-lg border border-border bg-background px-2.5"
                       placeholder="Human triage note (does not change risk/controls)"
                       value={notes[item.id] ?? ""}

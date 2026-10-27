@@ -50,7 +50,7 @@ export function SystemExportsPanel({ systemId }: { systemId: string }) {
               {state.status === "upgrade" && (
                 <>
                   {item.upgradeText}.{" "}
-                  <Link href="/settings#billing" className="text-primary underline-offset-4 hover:underline">
+                  <Link href="/settings#billing" className="text-primary underline-offset-4 underline">
                     See plans
                   </Link>
                 </>

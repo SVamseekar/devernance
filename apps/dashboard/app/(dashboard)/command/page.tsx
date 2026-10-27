@@ -213,8 +213,8 @@ export default function CommandPage() {
                 {m.trend === "neutral" && <Minus        className="w-3 h-3 text-muted-foreground shrink-0" />}
                 <p className={cn(
                   "text-xs truncate",
-                  m.trend === "up"      && "text-emerald-600 dark:text-emerald-400",
-                  m.trend === "down"    && "text-red-600 dark:text-red-400",
+                  m.trend === "up"      && "text-emerald-700 dark:text-emerald-400",
+                  m.trend === "down"    && "text-red-700 dark:text-red-400",
                   m.trend === "neutral" && "text-muted-foreground"
                 )}>
                   {m.sub}
@@ -251,7 +251,7 @@ export default function CommandPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="divide-y divide-border max-h-36 overflow-y-auto">
+            <div tabIndex={0} role="region" aria-label="Open approval workflows" className="divide-y divide-border max-h-36 overflow-y-auto">
               {openWorkflows.slice(0, 8).map((wf) => {
                 const system = systems.find((s) => s.id === wf.systemId);
                 return (
@@ -357,7 +357,7 @@ export default function CommandPage() {
           <CardContent className="px-0 pb-0">
             <div className="divide-y divide-border overflow-y-auto min-h-28 max-h-32">
               {blockedOrReviewSystems.length === 0 ? (
-                <div className="flex items-center justify-center gap-2 p-7 text-xs text-emerald-600 dark:text-emerald-400">
+                <div className="flex items-center justify-center gap-2 p-7 text-xs text-emerald-700 dark:text-emerald-400">
                   <CheckCircle2 className="w-4 h-4" />
                   All release gates are clear. No overrides needed.
                 </div>
@@ -394,7 +394,7 @@ export default function CommandPage() {
             <CardDescription>Open gaps blocking or flagging systems for release review.</CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="divide-y divide-border max-h-[260px] overflow-y-auto">
+            <div tabIndex={0} role="region" aria-label="Active Control Gaps" className="divide-y divide-border max-h-[260px] overflow-y-auto">
               {allGaps.map((item, i) => (
                 <div
                   key={i}
@@ -415,7 +415,7 @@ export default function CommandPage() {
                 </div>
               ))}
               {allGaps.length === 0 && (
-                <div className="flex items-center gap-2 px-6 py-5 text-sm text-emerald-600 dark:text-emerald-400">
+                <div className="flex items-center gap-2 px-6 py-5 text-sm text-emerald-700 dark:text-emerald-400">
                   <CheckCircle2 className="w-4 h-4" />
                   All control gaps resolved.
                 </div>
@@ -431,7 +431,7 @@ export default function CommandPage() {
             <CardDescription>Latest audit events across all systems.</CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="divide-y divide-border max-h-[260px] overflow-y-auto">
+            <div tabIndex={0} role="region" aria-label="Recent Activity" className="divide-y divide-border max-h-[260px] overflow-y-auto">
               {recentEvents.map((event) => {
                 const Icon = EVENT_ICON[event.eventType] ?? Clock;
                 const color = EVENT_COLOR[event.eventType] ?? "text-muted-foreground";
@@ -461,7 +461,7 @@ export default function CommandPage() {
             <CardDescription>Evidence coverage, eval score, and release decision per system.</CardDescription>
           </div>
           <Select value={riskFilter} onValueChange={(v) => v && setRiskFilter(v as typeof riskFilter)}>
-            <SelectTrigger className="w-32 h-8 text-xs shrink-0">
+            <SelectTrigger aria-label="Risk class filter" className="w-32 h-8 text-xs shrink-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -486,8 +486,9 @@ export default function CommandPage() {
       >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Oversight Justification</label>
+            <label htmlFor="oversight-justification" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Oversight Justification</label>
             <Textarea
+              id="oversight-justification"
               rows={4}
               value={justification}
               onChange={(e) => setJustification(e.target.value)}

@@ -44,7 +44,7 @@ export function SectorPackBadge({ sector, className }: SectorPackBadgeProps) {
       )}
       title={`${sectorPackLabel(packId)} pack (SPI overlay — not a live vendor connector)`}
     >
-      <span className="opacity-70">Pack</span>
+      <span>Pack</span>
       {sectorPackLabel(packId)}
     </span>
   );

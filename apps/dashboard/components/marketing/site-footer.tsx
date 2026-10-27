@@ -71,7 +71,7 @@ export function SiteFooter() {
             <ul className="flex flex-wrap gap-x-4 gap-y-1">
               {legalLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-white">
+                  <Link href={link.href} className="inline-flex min-h-6 items-center hover:text-white">
                     {link.label}
                   </Link>
                 </li>

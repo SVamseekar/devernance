@@ -315,7 +315,7 @@ export function ObligationMapWizard({
       <div key={question.id} className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground block">
           {question.label}
-          {question.required && <span className="text-amber-600 ml-1">*</span>}
+          {question.required && <span className="text-amber-700 ml-1">*</span>}
         </label>
         <p className="text-[10px] text-muted-foreground leading-snug">{question.help}</p>
         <div className="flex flex-wrap gap-1.5">
@@ -351,7 +351,7 @@ export function ObligationMapWizard({
     >
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 p-3 flex gap-2.5">
-          <Scale className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <Scale className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
           <div>
             <p className="text-[11px] font-semibold text-foreground mb-1">
               Human legal review required
@@ -397,7 +397,7 @@ export function ObligationMapWizard({
           <div className="space-y-4">
             <div className="space-y-4">{questionnaire.questions.map(renderQuestion)}</div>
             {error && (
-              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
+              <p className="text-xs text-red-700 dark:text-red-400 flex items-center gap-1.5">
                 <ShieldAlert className="w-3.5 h-3.5" />
                 {error}
               </p>

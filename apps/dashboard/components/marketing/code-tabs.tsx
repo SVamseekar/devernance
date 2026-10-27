@@ -15,7 +15,7 @@ function Line({ text }: { text: string }) {
     return (
       <>
         {comment[1]}
-        <span className="text-white/35">{comment[2]}</span>
+        <span className="text-white/55">{comment[2]}</span>
       </>
     );
   }

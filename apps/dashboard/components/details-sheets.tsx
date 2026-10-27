@@ -185,7 +185,7 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
             --strict; empty dataset licenses fail --gate.
           </p>
           <div className="flex flex-col gap-2">
-            <Link href="/public-claims" className="text-[10px] text-primary font-medium hover:underline">
+            <Link href="/public-claims" className="text-[10px] text-primary font-medium underline">
               Open public-claims catalog
             </Link>
             <Button
@@ -247,7 +247,7 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
           <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">Evaluation Score</p>
           <p className={cn(
             "text-2xl font-bold mt-1",
-            system.evalScore >= 85 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+            system.evalScore >= 85 ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"
           )}>{system.evalScore}%</p>
           <p className="text-[10px] text-muted-foreground mt-1">Pass threshold: 85%</p>
         </div>
@@ -506,7 +506,7 @@ export function ContractDetailsSheet({ contract, isOpen, onClose, driftEvents, s
           Active Schema Drift Log
         </h4>
         {openEvents.length === 0 ? (
-          <div className="flex items-center gap-2 p-3.5 border border-dashed border-border rounded-xl text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50/20">
+          <div className="flex items-center gap-2 p-3.5 border border-dashed border-border rounded-xl text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50/20">
             <CheckCircle2 className="w-4 h-4" />
             No open schema drift events detected.
           </div>

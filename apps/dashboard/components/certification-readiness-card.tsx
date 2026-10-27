@@ -104,7 +104,7 @@ export function CertificationReadinessCard({
                 </p>
                 <Link
                   href={DIMENSION_HREF[gap.dimension] ?? "/systems"}
-                  className="inline-flex items-center gap-0.5 text-[10px] text-primary font-medium mt-1 hover:underline"
+                  className="inline-flex items-center gap-0.5 text-[10px] text-primary font-medium mt-1 underline"
                 >
                   Open {gap.dimension.replace("_", " ")}
                   <ArrowRight className="w-3 h-3" />

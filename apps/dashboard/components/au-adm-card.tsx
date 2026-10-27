@@ -44,7 +44,7 @@ export function AuAdmCard() {
         {pack.error instanceof ApiError && pack.error.status === 402 && (
           <p className="text-muted-foreground">
             {AU_ADM_UPGRADE_TEXT}.{" "}
-            <Link href="/settings#billing" className="text-primary underline-offset-4 hover:underline">
+            <Link href="/settings#billing" className="text-primary underline-offset-4 underline">
               See plans
             </Link>
           </p>
@@ -89,11 +89,11 @@ export function AuAdmCard() {
             </ul>
             <p className="text-[10px] text-muted-foreground">
               {pack.data.disclaimer}{" "}
-              <a href={pack.data.legislation} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a href={pack.data.legislation} target="_blank" rel="noreferrer" className="text-primary underline">
                 Legislation
               </a>{" "}
               ·{" "}
-              <a href={pack.data.source} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+              <a href={pack.data.source} target="_blank" rel="noreferrer" className="text-primary underline">
                 OAIC
               </a>
             </p>
