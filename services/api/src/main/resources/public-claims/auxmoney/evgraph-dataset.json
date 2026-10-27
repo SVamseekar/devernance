@@ -9,7 +9,7 @@
         "type": "Dataset",
         "observed_at": "2026-09-14T19:03:03.834528Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/auxmoney/dataset_manifest.csv",
+          "path": "dataset_manifest.csv",
           "row": 0
         },
         "evidence_level": "STRUCTURAL",
@@ -25,7 +25,7 @@
         "type": "Dataset",
         "observed_at": "2026-09-14T19:03:03.834528Z",
         "source": {
-          "path": "/Users/souravamseekarmarti/Projects/devernance/services/api/src/main/resources/public-claims/auxmoney/dataset_manifest.csv",
+          "path": "dataset_manifest.csv",
           "row": 1
         },
         "evidence_level": "STRUCTURAL",
