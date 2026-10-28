@@ -130,7 +130,7 @@ export function BillingCard() {
                   <li>{formatLimit(plan.editors)} editor seats (viewers are free)</li>
                   <li>{formatLimit(plan.gateRunsPerMonth)} CI gate runs</li>
                   {plan.features.map((f) => (
-                    <li key={f.label} className={f.available ? "" : "opacity-60"}>
+                    <li key={f.label} className={f.available ? "" : "italic"}>
                       {f.label}
                     </li>
                   ))}

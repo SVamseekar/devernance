@@ -36,7 +36,7 @@ export default function SystemsPage() {
         {allSystems.some(isPublicClaimsSystem) && (
           <p className="text-[10px] text-muted-foreground leading-relaxed mt-2">
             Named EU firms in this registry are{" "}
-            <Link href="/public-claims" className="text-primary hover:underline">
+            <Link href="/public-claims" className="text-primary underline">
               public-claims teasers
             </Link>
             , not customers.

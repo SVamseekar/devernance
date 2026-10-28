@@ -76,10 +76,10 @@ export function SystemNode({ data }: NodeProps) {
         className={cn(
           "text-xs font-bold mb-0.5",
           d.decision === "Blocked"
-            ? "text-red-600 dark:text-red-400"
+            ? "text-red-700 dark:text-red-400"
             : d.decision === "Review"
-            ? "text-amber-600 dark:text-amber-400"
-            : "text-emerald-600 dark:text-emerald-400"
+            ? "text-amber-700 dark:text-amber-400"
+            : "text-emerald-700 dark:text-emerald-400"
         )}
       >
         {d.decision}

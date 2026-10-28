@@ -100,7 +100,7 @@ function TeaserCard({ teaser }: { teaser: PublicClaimsTeaser }) {
                 href={source.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary hover:underline inline-flex items-center gap-1"
+                className="text-primary underline inline-flex items-center gap-1"
               >
                 {source.title}
                 <ExternalLink className="w-3 h-3" />
@@ -142,7 +142,7 @@ export default function PublicClaimsPage() {
     <div className="space-y-4">
       <div className="rounded-xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/15 px-4 py-3 space-y-2">
         <p className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
-          <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+          <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
           Public-claims teasers — not customers
         </p>
         <p className="text-[10px] text-muted-foreground leading-relaxed">
@@ -162,14 +162,14 @@ export default function PublicClaimsPage() {
         <p className="text-[10px] text-muted-foreground">
           Retrieved {query.data?.retrievedAt ?? "—"}. Seeding{" "}
           {query.data?.seedingEnabled ? "on (local demo)" : "off (catalog only)"}.{" "}
-          <Link href="/systems" className="text-primary hover:underline">
+          <Link href="/systems" className="text-primary underline">
             Registry
           </Link>
         </p>
       </div>
 
       {query.isError && (
-        <p className="text-xs text-red-600">
+        <p className="text-xs text-red-700">
           Could not load public-claims catalog. Start the API with authentication.
         </p>
       )}

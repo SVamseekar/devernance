@@ -96,7 +96,7 @@ export default async function ComparePage({ params }: Params) {
                 <ul className="mt-3 space-y-1.5">
                   {sources.map((s) => (
                     <li key={s.url}>
-                      <a href={s.url} rel="noopener noreferrer" target="_blank" className="text-brand hover:underline">
+                      <a href={s.url} rel="noopener noreferrer" target="_blank" className="text-brand underline underline-offset-2">
                         {s.title}
                       </a>{" "}
                       (retrieved {checked})
@@ -108,7 +108,7 @@ export default async function ComparePage({ params }: Params) {
             <p className="mt-4">
               Last checked {checked}. Facts about other products come only from their own public pages and may have
               changed since. Tell us at{" "}
-              <a href={`mailto:${siteConfig.supportEmail}`} className="text-brand hover:underline">
+              <a href={`mailto:${siteConfig.supportEmail}`} className="text-brand underline underline-offset-2">
                 {siteConfig.supportEmail}
               </a>{" "}
               if something is out of date. Devernance provides evidence and readiness tooling, not legal advice.

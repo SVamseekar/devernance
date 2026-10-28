@@ -42,7 +42,7 @@ export function FrameworksPanel({
         <p className="font-semibold text-foreground">{label}</p>
         <p className="mt-1 text-muted-foreground">
           {upgradeText}.{" "}
-          <Link href="/settings#billing" className="text-primary underline-offset-4 hover:underline">
+          <Link href="/settings#billing" className="text-primary underline-offset-4 underline">
             See plans
           </Link>
         </p>
@@ -71,7 +71,7 @@ export function FrameworksPanel({
           {!data.reviewed && <span className="ml-2 font-normal text-muted-foreground">(mapping pending review)</span>}
         </p>
         <p className="mt-1 text-muted-foreground">{data.disclaimer}</p>
-        <a href={data.source} target="_blank" rel="noreferrer" className="mt-1 inline-block text-primary underline-offset-4 hover:underline">
+        <a href={data.source} target="_blank" rel="noreferrer" className="mt-1 inline-block text-primary underline-offset-4 underline">
           Source
         </a>
       </div>
@@ -101,7 +101,7 @@ export function FrameworksPanel({
                   {item.sourceUrl && (
                     <>
                       {" · "}
-                      <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                      <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="text-primary underline">
                         Statute
                       </a>
                     </>

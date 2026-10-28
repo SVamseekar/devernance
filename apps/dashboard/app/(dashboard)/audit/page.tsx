@@ -10,8 +10,8 @@ const EVENT_CONFIG: Record<string, { icon: React.ElementType; color: string; bg:
   RELEASE_GATE_CALCULATED: { icon: ShieldCheck,   color: "text-indigo-600 dark:text-indigo-400",  bg: "bg-indigo-50 dark:bg-indigo-950/50" },
   EVIDENCE_INDEXED:        { icon: FileText,       color: "text-sky-600 dark:text-sky-400",        bg: "bg-sky-50 dark:bg-sky-950/50" },
   EVIDENCE_QUERIED:        { icon: FileText,       color: "text-sky-600 dark:text-sky-400",        bg: "bg-sky-50 dark:bg-sky-950/50" },
-  DRIFT_EVENT_CREATED:     { icon: AlertTriangle,  color: "text-amber-600 dark:text-amber-400",    bg: "bg-amber-50 dark:bg-amber-950/50" },
-  CONTRACT_UPDATED:        { icon: CheckCircle2,   color: "text-emerald-600 dark:text-emerald-400",bg: "bg-emerald-50 dark:bg-emerald-950/50" },
+  DRIFT_EVENT_CREATED:     { icon: AlertTriangle,  color: "text-amber-700 dark:text-amber-400",    bg: "bg-amber-50 dark:bg-amber-950/50" },
+  CONTRACT_UPDATED:        { icon: CheckCircle2,   color: "text-emerald-700 dark:text-emerald-400",bg: "bg-emerald-50 dark:bg-emerald-950/50" },
 };
 const DEFAULT_CFG = { icon: ShieldCheck, color: "text-muted-foreground", bg: "bg-muted" };
 
@@ -30,10 +30,10 @@ function PayloadSummary({ eventType, payload }: { eventType: string; payload: Re
   if (eventType === "RELEASE_GATE_CALCULATED") {
     const decision = String(payload.decision ?? "");
     const color = decision === "PASS"
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-emerald-700 dark:text-emerald-400"
       : decision === "BLOCKED"
-      ? "text-red-600 dark:text-red-400"
-      : "text-amber-600 dark:text-amber-400";
+      ? "text-red-700 dark:text-red-400"
+      : "text-amber-700 dark:text-amber-400";
     return (
       <p className="text-xs text-muted-foreground mt-0.5">
         Decision: <span className={`font-semibold ${color}`}>{decision}</span>
@@ -43,7 +43,7 @@ function PayloadSummary({ eventType, payload }: { eventType: string; payload: Re
   }
   if (eventType === "DRIFT_EVENT_CREATED") {
     const sev = String(payload.severity ?? "");
-    const sevColor = sev === "BREACH" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400";
+    const sevColor = sev === "BREACH" ? "text-red-700 dark:text-red-400" : "text-amber-700 dark:text-amber-400";
     return (
       <p className="text-xs text-muted-foreground mt-0.5">
         <span className={`font-semibold ${sevColor}`}>{sev}</span>

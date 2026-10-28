@@ -20,7 +20,7 @@ export function LegalPageShell({ title, description, children }: LegalPageShellP
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <article className="prose-legal max-w-3xl">
           <p className="text-sm text-ink-muted">Last updated: {siteConfig.legalLastUpdated}</p>
-          <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink/90 [&_a]:text-brand [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-ink">
+          <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink/90 [&_a]:text-brand [&_a]:underline [&_a]:underline-offset-2 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-ink">
             {children}
           </div>
         </article>

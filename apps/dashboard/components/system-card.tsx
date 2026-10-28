@@ -78,7 +78,7 @@ export function SystemCard({ system }: SystemCardProps) {
             )}
             <Link
               href={`/readiness?systemId=${system.id}`}
-              className="text-[10px] text-primary font-medium hover:underline mt-1 inline-block"
+              className="text-[10px] text-primary font-medium underline mt-1 inline-block"
             >
               View breakdown
             </Link>
@@ -104,7 +104,7 @@ export function SystemCard({ system }: SystemCardProps) {
       {system.openGaps.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            <span className="text-amber-600 dark:text-amber-400 font-medium">
+            <span className="text-amber-700 dark:text-amber-400 font-medium">
               {system.openGaps.length} gap{system.openGaps.length !== 1 ? "s" : ""}
             </span>
             {" — "}

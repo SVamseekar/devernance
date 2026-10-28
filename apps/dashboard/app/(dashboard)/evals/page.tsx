@@ -110,7 +110,7 @@ export default function EvalsPage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">System</label>
                 <Select value={selectedSystemId} onValueChange={(v) => v && setSelectedSystemId(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="System"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {systems.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
@@ -124,14 +124,14 @@ export default function EvalsPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] font-semibold text-primary underline flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Register Dataset
                   </button>
                 </div>
                 <Select value={activeDataset} onValueChange={(v) => v && setDataset(v)}>
-                  <SelectTrigger><SelectValue placeholder="Create an eval dataset first" /></SelectTrigger>
+                  <SelectTrigger aria-label="Dataset"><SelectValue placeholder="Create an eval dataset first" /></SelectTrigger>
                   <SelectContent>
                     {evalDatasets.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>
@@ -142,8 +142,9 @@ export default function EvalsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Pass threshold (%)</label>
+                <label htmlFor="eval-threshold" className="text-xs font-medium text-muted-foreground">Pass threshold (%)</label>
                 <input
+                  id="eval-threshold"
                   type="number" min={70} max={98} value={threshold}
                   onChange={(e) => setThreshold(Number(e.target.value))}
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
@@ -164,7 +165,7 @@ export default function EvalsPage() {
           <CardContent>
             <div className="min-h-60 max-h-72 overflow-auto rounded-lg bg-zinc-950 text-emerald-400 font-mono text-xs p-4 leading-loose">
               {consoleLines.length === 0
-                ? <span className="text-zinc-600">Awaiting eval run…</span>
+                ? <span className="text-zinc-400">Awaiting eval run…</span>
                 : consoleLines.map((line, i) => <div key={i}>{line}</div>)
               }
             </div>
@@ -183,8 +184,8 @@ export default function EvalsPage() {
               {[
                 { label: "Queued",      count: operations.queued ?? 0,                    color: "text-foreground" },
                 { label: "Running",     count: operations.running ?? 0,                   color: "text-primary" },
-                { label: "Retryable",   count: (operations.retryQueue ?? []).length,      color: "text-amber-600 dark:text-amber-400" },
-                { label: "Dead Letter", count: (operations.deadLetter ?? []).length,      color: "text-red-600 dark:text-red-400" },
+                { label: "Retryable",   count: (operations.retryQueue ?? []).length,      color: "text-amber-700 dark:text-amber-400" },
+                { label: "Dead Letter", count: (operations.deadLetter ?? []).length,      color: "text-red-700 dark:text-red-400" },
               ].map((op) => (
                 <div key={op.label} className="bg-muted/40 rounded-xl px-4 py-3.5">
                   <p className={cn("text-2xl font-bold", op.color)}>{op.count}</p>
@@ -205,8 +206,9 @@ export default function EvalsPage() {
       >
         <form onSubmit={handleCreateDataset} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dataset Name</label>
+            <label htmlFor="dataset-name" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dataset Name</label>
             <input
+              id="dataset-name"
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
               value={newDsName}
               onChange={(e) => setNewDsName(e.target.value)}
@@ -214,8 +216,9 @@ export default function EvalsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</label>
+            <label htmlFor="dataset-description" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</label>
             <input
+              id="dataset-description"
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
               value={newDsDesc}
               onChange={(e) => setNewDsDesc(e.target.value)}
@@ -223,16 +226,18 @@ export default function EvalsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Version</label>
+            <label htmlFor="dataset-version" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Version</label>
             <input
+              id="dataset-version"
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
               value={newDsVersion}
               onChange={(e) => setNewDsVersion(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sample count</label>
+            <label htmlFor="dataset-samples" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sample count</label>
             <input
+              id="dataset-samples"
               type="number"
               min={1}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"

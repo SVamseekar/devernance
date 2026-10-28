@@ -111,7 +111,7 @@ function ReadinessPageInner() {
               if (isLiveEntityId(value)) setPickedId(value);
             }}
           >
-            <SelectTrigger className="h-9 text-xs">
+            <SelectTrigger aria-label="AI system" className="h-9 text-xs">
               <SelectValue placeholder="Select system">
                 {selectedName ?? "Select system"}
               </SelectValue>
@@ -209,9 +209,9 @@ function ReadinessPageInner() {
                       <span
                         className={cn(
                           "tabular-nums font-semibold shrink-0",
-                          dim.status === "PASS" && "text-emerald-600 dark:text-emerald-400",
-                          dim.status === "PARTIAL" && "text-amber-600 dark:text-amber-400",
-                          dim.status === "FAIL" && "text-red-600 dark:text-red-400"
+                          dim.status === "PASS" && "text-emerald-700 dark:text-emerald-400",
+                          dim.status === "PARTIAL" && "text-amber-700 dark:text-amber-400",
+                          dim.status === "FAIL" && "text-red-700 dark:text-red-400"
                         )}
                       >
                         {dim.score}%

@@ -59,8 +59,8 @@ export function ReleaseGateTable({ systems }: ReleaseGateTableProps) {
                     className={cn(
                       "text-sm font-medium",
                       system.evalScore >= 85
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-amber-600 dark:text-amber-400"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-amber-700 dark:text-amber-400"
                     )}
                   >
                     {system.evalScore}%
@@ -96,17 +96,17 @@ export function ReleaseGateTable({ systems }: ReleaseGateTableProps) {
                       const activeStage = open.stages.find((s) => s.status === "PENDING");
                       const stagePos = activeStage ? `Stage ${activeStage.stageOrder}/${open.stages.filter(s => s.status !== "SKIPPED").length}` : "";
                       return (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
                           OPEN · {stagePos}
                         </span>
                       );
                     }
                     if (last?.status === "APPROVED") {
-                      return <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">✓ Approved</span>;
+                      return <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">✓ Approved</span>;
                     }
                     if (last?.status === "REJECTED") {
-                      return <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">✗ Rejected</span>;
+                      return <span className="text-[10px] text-red-700 dark:text-red-400 font-medium">✗ Rejected</span>;
                     }
                     return <span className="text-[10px] text-muted-foreground">—</span>;
                   })()}
