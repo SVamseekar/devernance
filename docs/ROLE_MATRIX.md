@@ -20,7 +20,7 @@ Source of truth for RBAC enforcement via `TenantAuthorizationService.requireAnyR
 | Data contract create / update / report drift | ✓ | ✓ | ✓ | — | — |
 | Acknowledge drift (note required) | ✓ | ✓ | ✓ | — | — |
 | Resolve WARNING drift (note required) | ✓ | ✓ | ✓ | — | — |
-| Resolve BREACH drift (note required) | ✓ | — | ✓ | — | — |
+| Resolve BREACH drift, or change a resolved breach (note required) | ✓ | — | ✓ | — | — |
 | Eval dataset list | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Eval dataset create | ✓ | ✓ | — | — | — |
 | Eval run create (queue) | ✓ | ✓ | ✓ | — | — |

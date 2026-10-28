@@ -169,10 +169,17 @@ public class DataContractService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "A note is required to acknowledge or resolve drift: say what was done about it");
     }
-    if (request.status() == DriftStatus.RESOLVED && existing.severity() == DriftSeverity.BREACH
-        && actorRole != UserRole.ADMIN && actorRole != UserRole.COMPLIANCE_OFFICER) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-          "Only compliance or an admin can resolve a data contract breach");
+    boolean signOffRole = actorRole == UserRole.ADMIN || actorRole == UserRole.COMPLIANCE_OFFICER;
+    if (existing.severity() == DriftSeverity.BREACH && !signOffRole) {
+      if (request.status() == DriftStatus.RESOLVED) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Only compliance or an admin can resolve a data contract breach");
+      }
+      if (existing.status() == DriftStatus.RESOLVED) {
+        // The resolution is compliance's sign-off; nobody else may rewrite or reopen it.
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Only compliance or an admin can change a resolved data contract breach");
+      }
     }
     Instant now = Instant.now();
     DriftEvent saved = driftEvents.save(new DriftEvent(
@@ -289,9 +296,10 @@ public class DataContractService {
     return DataContractStatus.HEALTHY;
   }
 
+  /** Acknowledged drift is still drift: only a resolution clears it, so acknowledging cannot unblock a release. */
   private DataContractStatus deriveStatus(List<DriftEvent> events) {
     List<DriftEvent> open = events.stream()
-        .filter(event -> event.status() == DriftStatus.OPEN)
+        .filter(event -> event.status() != DriftStatus.RESOLVED)
         .toList();
     if (open.stream().anyMatch(event -> event.severity() == DriftSeverity.BREACH)) {
       return DataContractStatus.BREACH;

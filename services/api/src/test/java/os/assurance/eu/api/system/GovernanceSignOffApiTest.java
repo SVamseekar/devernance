@@ -198,6 +198,10 @@ class GovernanceSignOffApiTest {
     mockMvc.perform(patch(drift).with(engineer()).contentType(MediaType.APPLICATION_JSON)
             .content("{\"status\":\"acknowledged\",\"note\":\"Partner feed paused\"}"))
         .andExpect(status().isOk());
+    // Acknowledging is not resolving: the breach still blocks.
+    gate(systemId)
+        .andExpect(jsonPath("$.dataContractStatus").value("BREACH"))
+        .andExpect(jsonPath("$.blockers", hasItem("Data contract breach is open")));
     mockMvc.perform(patch(drift).with(officer()).contentType(MediaType.APPLICATION_JSON)
             .content("{\"status\":\"resolved\",\"note\":\"DPO confirmed no genetic data reached the model\"}"))
         .andExpect(status().isOk())
@@ -206,6 +210,14 @@ class GovernanceSignOffApiTest {
     mockMvc.perform(get("/api/v1/audit-events").param("systemId", systemId).with(officer()))
         .andExpect(jsonPath("$[?(@.eventType == 'data_contract.drift_updated')].payload.note",
             hasItem("DPO confirmed no genetic data reached the model")));
+    // The sign-off cannot be rewritten or reopened by the engineer afterwards.
+    mockMvc.perform(patch(drift).with(engineer()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"status\":\"acknowledged\",\"note\":\"overwrite\"}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(patch(drift).with(engineer()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"status\":\"open\"}"))
+        .andExpect(status().isForbidden());
+    gate(systemId).andExpect(jsonPath("$.dataContractStatus").value("HEALTHY"));
   }
 
   @Test

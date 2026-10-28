@@ -458,8 +458,9 @@ the release gate to block. Resolving the event with:
 
 recalculates the contract, system data-contract status, and release decision.
 
-Acknowledging or resolving needs a `note` saying what was done (`400` without one). Only compliance or an admin can
-resolve a `breach` (`403` for others), so the engineer whose pipeline caused it does not also close it. The event
+Acknowledging or resolving needs a `note` saying what was done (`400` without one). Acknowledged drift still counts:
+only `resolved` clears a warning or a breach. Only compliance or an admin can resolve a `breach`, or change one that
+is already resolved (`403` for others), so the engineer whose pipeline caused it does not also close it. The event
 keeps `resolutionNote`, `resolvedBy` and `resolvedAt`, and the audit event `data_contract.drift_updated` carries the
 note.
 
