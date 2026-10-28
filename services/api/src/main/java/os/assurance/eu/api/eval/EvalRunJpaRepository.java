@@ -19,6 +19,9 @@ public interface EvalRunJpaRepository extends JpaRepository<EvalRunEntity, UUID>
 
   List<EvalRunEntity> findAllByTenantIdAndStatusOrderByQueuedAtAsc(UUID tenantId, String status);
 
+  List<EvalRunEntity> findTop20ByTenantIdAndSystemIdAndStatusOrderByCompletedAtDesc(
+      UUID tenantId, UUID systemId, String status);
+
   List<EvalRunEntity> findAllByTenantIdAndStatusOrderByFailedAtDesc(UUID tenantId, String status);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -6,32 +6,51 @@ import java.util.Map;
 import java.util.UUID;
 import os.assurance.eu.api.audit.AuditService;
 import os.assurance.eu.api.system.ReleaseDecision;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Completes queued eval runs with generated placeholder metrics. Nothing is measured, so it is off unless
+ * {@code assurance.eval.synthetic-metrics.enabled} is set (demos and tests); real results arrive through the signed
+ * result callback. Generated metrics carry {@code "synthetic": true} so they are never mistaken for a measurement.
+ */
 @Service
 public class EvalRunWorkerService {
+  static final String DISABLED = "No eval worker runs here: report measured results with the signed "
+      + "PATCH /api/v1/eval-runs/{runId}/result callback";
+
   private final EvalDatasetRepository datasets;
   private final EvalRunRepository evalRuns;
   private final EvalRunCompletionService completionService;
   private final AuditService auditService;
   private final EvalRunMetrics metrics;
+  private final boolean syntheticMetrics;
 
   public EvalRunWorkerService(
       EvalDatasetRepository datasets,
       EvalRunRepository evalRuns,
       EvalRunCompletionService completionService,
       AuditService auditService,
-      EvalRunMetrics metrics) {
+      EvalRunMetrics metrics,
+      @Value("${assurance.eval.synthetic-metrics.enabled:false}") boolean syntheticMetrics) {
     this.datasets = datasets;
     this.evalRuns = evalRuns;
     this.completionService = completionService;
     this.auditService = auditService;
     this.metrics = metrics;
+    this.syntheticMetrics = syntheticMetrics;
+  }
+
+  public boolean syntheticMetricsEnabled() {
+    return syntheticMetrics;
   }
 
   public EvalRun execute(UUID runId) {
+    if (!syntheticMetrics) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, DISABLED);
+    }
     EvalRunClaim claim = evalRuns.claimQueuedForExecution(runId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Eval run not found"));
     EvalRun run = claim.run();
@@ -46,6 +65,9 @@ public class EvalRunWorkerService {
   }
 
   EvalRun executeClaimed(EvalRun running) {
+    if (!syntheticMetrics) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, DISABLED);
+    }
     if (!"running".equals(running.status())) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Eval run is not running");
     }
@@ -85,7 +107,7 @@ public class EvalRunWorkerService {
         running.runId().toString(),
         Map.of("dataset", dataset.name(), "datasetVersion", dataset.version(), "sampleCount", dataset.sampleCount()));
     try {
-      return completionService.complete(running.runId(), calculateMetrics(running, dataset), "worker");
+      return completionService.complete(running.runId(), calculateMetrics(running, dataset), "synthetic-worker");
     } catch (RuntimeException exception) {
       EvalRun failed = recordFailure(running, exception);
       auditService.append(
@@ -167,6 +189,7 @@ public class EvalRunWorkerService {
     metrics.put("costUsd", Math.round((1.25 + bucket(run, dataset, "cost", 700) / 100.0) * 100.0) / 100.0);
     metrics.put("sampleCount", dataset.sampleCount());
     metrics.put("goldenDataset", dataset.golden());
+    metrics.put("synthetic", true);
     return metrics;
   }
 

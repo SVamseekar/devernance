@@ -45,7 +45,8 @@ class ApprovalWorkflowServiceTest {
     tenantContext = mock(TenantContext.class);
     when(tenantContext.tenantId()).thenReturn(TENANT_ID);
     when(tenantContext.actorId()).thenReturn(ACTOR_ID);
-    service = new ApprovalWorkflowService(repository, notifications, users, auditService, tenantContext);
+    service = new ApprovalWorkflowService(repository, notifications, users, auditService, tenantContext,
+        org.mockito.Mockito.mock(org.springframework.context.ApplicationEventPublisher.class));
   }
 
   @Test

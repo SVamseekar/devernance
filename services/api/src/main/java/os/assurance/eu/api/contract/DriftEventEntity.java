@@ -40,6 +40,13 @@ public class DriftEventEntity {
   @Column(nullable = false)
   private Instant updatedAt;
 
+  @Column(length = 2048)
+  private String resolutionNote;
+
+  private UUID resolvedBy;
+
+  private Instant resolvedAt;
+
   protected DriftEventEntity() {
   }
 
@@ -53,9 +60,13 @@ public class DriftEventEntity {
     this.status = event.status();
     this.createdAt = event.createdAt();
     this.updatedAt = event.updatedAt();
+    this.resolutionNote = event.resolutionNote();
+    this.resolvedBy = event.resolvedBy();
+    this.resolvedAt = event.resolvedAt();
   }
 
   public DriftEvent toDomain() {
-    return new DriftEvent(id, contractId, severity, field, description, status, createdAt, updatedAt);
+    return new DriftEvent(id, contractId, severity, field, description, status, createdAt, updatedAt,
+        resolutionNote, resolvedBy, resolvedAt);
   }
 }

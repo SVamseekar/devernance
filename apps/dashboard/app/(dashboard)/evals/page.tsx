@@ -11,7 +11,7 @@ import { useEvalOperations } from "@/hooks/use-eval-runs";
 import { useEvalDatasets } from "@/hooks/use-eval-datasets";
 import { api, ApiError } from "@/lib/api";
 import { toApiThreshold } from "@/lib/eval-threshold";
-import type { EvalRun } from "@/lib/types";
+import { evalCallbackSnippet, evalRunLines } from "@/lib/eval-callback";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/context/dashboard-context";
 import { Modal } from "@/components/ui/modal";
@@ -28,8 +28,11 @@ export default function EvalsPage() {
   const [dataset, setDataset] = useState("");
   const activeDataset = dataset || evalDatasets[0] || "";
   const [threshold, setThreshold] = useState(85);
+  const [modelVersion, setModelVersion] = useState("");
+  const [promptVersion, setPromptVersion] = useState("");
   const [consoleLines, setConsoleLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
+  const [queuedRunId, setQueuedRunId] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDsName, setNewDsName] = useState("");
@@ -40,40 +43,42 @@ export default function EvalsPage() {
 
   async function handleRun(e: React.SyntheticEvent) {
     e.preventDefault();
-    setRunning(true);
     const system = systems.find((s) => s.id === selectedSystemId) ?? systems[0];
-    if (!system) {
-      setConsoleLines(["> Create an eval dataset first"]);
-      setRunning(false);
+    if (!system || !activeDataset) {
+      setConsoleLines(["> Register a system and an eval dataset first"]);
       return;
     }
-    setConsoleLines([`> queued eval run for ${system.name}`, "> submitting to API…"]);
+    setRunning(true);
+    setConsoleLines([`> queueing eval run for ${system.name}…`]);
     try {
       const { runId } = await api.evals.create({
-        systemId: selectedSystemId, dataset: activeDataset,
-        modelVersion: `${system.name.toLowerCase().replace(/\s/g, "-")}-2026-06`,
-        promptVersion: "v1", threshold: toApiThreshold(threshold),
+        systemId: system.id, dataset: activeDataset,
+        modelVersion: modelVersion.trim(), promptVersion: promptVersion.trim(),
+        threshold: toApiThreshold(threshold),
       });
-      setConsoleLines((p) => [...p, `> run ${runId} created, executing…`]);
-      const result: EvalRun = await api.evals.execute(runId);
-      const m = result.metrics;
+      setQueuedRunId(runId);
       setConsoleLines([
-        `> run ${runId} — ${system.name}`,
-        `> faithfulness:       ${m.faithfulness !== undefined ? Math.round(m.faithfulness * 100) : "—"}%`,
-        `> relevance:          ${m.relevance !== undefined ? Math.round(m.relevance * 100) : "—"}%`,
-        `> safety refusal:     ${m.safetyRefusal !== undefined ? Math.round(m.safetyRefusal * 100) : "—"}%`,
-        `> bias slice pass:    ${m.biasSlicePassRate !== undefined ? Math.round(m.biasSlicePassRate * 100) : "—"}%`,
-        `> latency p95:        ${m.latencyP95Ms ?? "—"}ms`,
-        `> cost:               $${m.costUsd ?? "—"}`,
-        `> decision:           ${result.releaseDecision}`,
+        `> run ${runId} queued for ${system.name}`,
+        "> Devernance does not run models. Your eval harness reports what it measured with the signed callback.",
       ]);
     } catch (err) {
       setConsoleLines([
-        `> eval run for ${system.name} failed`,
+        `> could not queue the eval run for ${system.name}`,
         `> ${err instanceof ApiError ? err.message : "The eval service did not respond."}`,
       ]);
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function handleCheck() {
+    if (!queuedRunId) return;
+    try {
+      const run = await api.evals.get(queuedRunId);
+      setConsoleLines(evalRunLines(run));
+      if (run.status === "completed") await qc.invalidateQueries();
+    } catch (err) {
+      setConsoleLines([`> ${err instanceof ApiError ? err.message : "The eval service did not respond."}`]);
     }
   }
 
@@ -102,8 +107,11 @@ export default function EvalsPage() {
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Eval Gate Runner</CardTitle>
-            <CardDescription>LLM-as-judge, RAG faithfulness, safety refusal, latency, and cost guardrails.</CardDescription>
+            <CardTitle>Queue an eval run</CardTitle>
+            <CardDescription>
+              Record which model and prompt version is being evaluated. Your harness reports faithfulness, relevance,
+              safety refusal and bias-slice results; safety and bias each have their own floor.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRun} className="space-y-4">
@@ -141,6 +149,25 @@ export default function EvalsPage() {
                 )}
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="eval-model-version" className="text-xs font-medium text-muted-foreground">Model version</label>
+                  <input
+                    id="eval-model-version" required value={modelVersion} placeholder="gpt-4o-mini-2024-07-18"
+                    onChange={(e) => setModelVersion(e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="eval-prompt-version" className="text-xs font-medium text-muted-foreground">Prompt version</label>
+                  <input
+                    id="eval-prompt-version" required value={promptVersion} placeholder="claims-routing-v12"
+                    onChange={(e) => setPromptVersion(e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <label htmlFor="eval-threshold" className="text-xs font-medium text-muted-foreground">Pass threshold (%)</label>
                 <input
@@ -150,25 +177,38 @@ export default function EvalsPage() {
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50"
                 />
               </div>
-              <Button type="submit" disabled={running}>
-                {running ? "Running…" : "Run eval gate"}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={running}>
+                  {running ? "Queueing…" : "Queue eval run"}
+                </Button>
+                <Button type="button" variant="outline" disabled={!queuedRunId} onClick={handleCheck}>
+                  Check result
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Gate Console</CardTitle>
-            <CardDescription>Worker output with release decision.</CardDescription>
+            <CardTitle>Run status</CardTitle>
+            <CardDescription>The queued run, then the measured result once your harness reports it.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="min-h-60 max-h-72 overflow-auto rounded-lg bg-zinc-950 text-emerald-400 font-mono text-xs p-4 leading-loose">
               {consoleLines.length === 0
-                ? <span className="text-zinc-400">Awaiting eval run…</span>
+                ? <span className="text-zinc-400">No run queued yet.</span>
                 : consoleLines.map((line, i) => <div key={i}>{line}</div>)
               }
             </div>
+            {queuedRunId && (
+              <div className="mt-3 space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Report the result from your harness or CI</p>
+                <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-100">
+                  {evalCallbackSnippet(queuedRunId)}
+                </pre>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -176,8 +216,8 @@ export default function EvalsPage() {
       {operations && (
         <Card>
           <CardHeader>
-            <CardTitle>Worker Operations</CardTitle>
-            <CardDescription>Queued, running, retryable, and failed eval runs.</CardDescription>
+            <CardTitle>Eval run queue</CardTitle>
+            <CardDescription>Runs waiting for a reported result, and runs that failed.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3">

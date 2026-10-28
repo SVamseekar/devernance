@@ -67,6 +67,7 @@ DELETE /api/v1/api-keys/{id}     # 204; revoked keys get 401 immediately
   systems, approvals or evidence. A `FULL` key acts with the permissions of the user who created it (still never
   minting keys, inviting users or managing the workspace). Keys created before scopes existed, and legacy UUID
   keys, are `FULL`.
+- A key that is not well formed, unknown or revoked gets `401`.
 - CI calls `GET /api/v1/ci/release-gate?systemId=…` with `X-Api-Key`. The dashboard exposes the same path
   without a session cookie and forwards it unchanged.
 
@@ -340,16 +341,23 @@ recalculates the system release gate. The signature is computed over
 Callbacks with identical metrics are idempotent; conflicting replays return
 `409 Conflict`.
 
+Devernance does not run models. A queued run waits for your eval harness to report what it measured with the
+signed callback above.
+
+The run's own decision is BLOCKED when the averaged score is below its `threshold` **or** any per-metric floor
+fails: `safetyRefusal` below `assurance.eval.floor.safety-refusal` (0.90) or `biasSlicePassRate` below
+`assurance.eval.floor.bias-slice-pass-rate` (0.80). The average alone can hide a collapsed slice. The release gate
+blocks on the latest completed run's verdict (see Release Gate). A new approval cycle (`EVAL_REGRESSION`) opens only
+when the run fails or the score drops below the previous one.
+
 ```http
 POST /eval-runs/{runId}/execute
 ```
 
-Manually executes a queued eval run immediately with the same backend-owned
-worker path used by background dispatch. The durable worker records
-`running`, increments `workerAttempts`, generates deterministic MVP metrics for
-faithfulness, relevance, safety refusal, bias slice pass rate, latency, and
-cost, completes the run, stores metrics, and recalculates the system release
-gate. Worker failures are persisted with `failureReason`; retryable failures
+Demo and test only. Completes a queued run with **generated placeholder metrics**, marked `"synthetic": true`, so
+it is refused with `409` unless `assurance.eval.synthetic-metrics.enabled=true` (env
+`ASSURANCE_EVAL_SYNTHETIC_METRICS`, default `false`). The background dispatcher runs only when both that flag and
+`assurance.eval.worker.enabled` are true. Worker failures are persisted with `failureReason`; retryable failures
 return to `queued` with a delayed `queuedAt`, and exhausted failures become
 `failed`. Re-executing a completed run returns `409 Conflict`.
 
@@ -449,6 +457,15 @@ the release gate to block. Resolving the event with:
 ```
 
 recalculates the contract, system data-contract status, and release decision.
+
+Acknowledging or resolving needs a `note` saying what was done (`400` without one). Only compliance or an admin can
+resolve a `breach` (`403` for others), so the engineer whose pipeline caused it does not also close it. The event
+keeps `resolutionNote`, `resolvedBy` and `resolvedAt`, and the audit event `data_contract.drift_updated` carries the
+note.
+
+```json
+{ "status": "resolved", "note": "Column dropped at ingestion in PR #412; DPO confirmed no data reached the model" }
+```
 
 ## Audit chain verification
 
@@ -693,14 +710,31 @@ Response:
 ```json
 {
   "systemId": "sys_001",
-  "decision": "blocked",
-  "blockers": [
-    "Human oversight SOP missing",
-    "Bias eval below threshold",
-    "claims_events.v4 data contract breach"
+  "decision": "REVIEW",
+  "blockers": [],
+  "reviewReasons": [
+    "Approval pending: COMPLIANCE_REVIEW (EVAL_REGRESSION cycle)",
+    "Annex IV section IV.3 is missing from the conformity dossier"
   ]
 }
 ```
+
+`blockers` explain BLOCKED. `reviewReasons` list what keeps the system from PASS once nothing blocks it, and are
+filled for every decision. What the gate reads:
+
+| Input | Blocks | Sends to review |
+|---|---|---|
+| Risk class | PROHIBITED | |
+| Eval | score below 78; no completed run (HIGH); latest run failed its threshold or a metric floor | score below 85 |
+| Evidence | | coverage below 82% for the risk class |
+| Data contract | open breach | open warning, or no contract |
+| Controls | any control BLOCKED; unmet obligations from the determination run | |
+| Human oversight (HIGH) | classification opened the oversight gap and `HUMAN_OVERSIGHT` is not PASS | |
+| Approvals | the latest decided cycle was rejected (any risk class) | a cycle is open (HIGH) |
+| Conformity (HIGH) | | an Annex IV section is MISSING; FRIA not RECORDED or WAIVED |
+
+A rejected cycle stays in force until a later cycle is approved or an admin overrides the rejected stage; a new eval
+run cannot clear it. Approval changes update the stored `releaseDecision` at once.
 
 ### CI/CD machine contract (Part 8)
 
@@ -720,6 +754,7 @@ Response:
   "systemName": "Claims Triage AI",
   "decision": "BLOCKED",
   "blockers": ["Data contract breach is open"],
+  "reviewReasons": ["Evidence coverage 72% is below 82%"],
   "evalScore": 78,
   "evidenceCoverage": 72,
   "dataContractStatus": "BREACH",
@@ -752,8 +787,13 @@ Response:
   "generatedAt": "2026-06-05T10:30:00Z",
   "decision": "blocked",
   "riskClassification": {},
-  "evidence": [],
-  "evalRuns": [],
+  "evidence": [{ "coverage": 100, "openGaps": [], "documents": [
+    { "documentId": "…", "type": "MODEL_CARD", "title": "GPT-4o System Card", "sha256": "sha256-e2579e…",
+      "ingestionStatus": "indexed", "indexedAt": "2026-10-28T08:16:17Z" } ] }],
+  "evalRuns": [{ "latestScore": 91, "releaseDecision": "PASS", "runs": [
+    { "runId": "…", "dataset": "golden-health-v1", "modelVersion": "gpt-4o-mini-2024-07-18",
+      "promptVersion": "v12", "threshold": 0.85, "metrics": { "faithfulness": 0.91, "biasSlicePassRate": 0.88 },
+      "runDecision": "PASS", "synthetic": false, "completedAt": "2026-10-28T08:17:21Z" } ] }],
   "dataContracts": [],
   "approvals": [],
   "auditEvents": [],
@@ -766,7 +806,9 @@ Response:
 
 Seal notes:
 
-- `evidencePackVersion` is currently `"1.0"`.
+- `evidencePackVersion` is currently `"1.2"`. Version 1.2 seals the document list (with each file's SHA-256) and the
+  20 most recent completed eval runs (versions, metrics, run decision, and whether the metrics were synthetic), so a
+  buyer can check both without the unsigned GRC index.
 - `contentSha256` is SHA-256 over canonical JSON (every object's keys sorted, ISO-8601 instants)
   of the pack fields **excluding** `contentSha256` and `signature`, with `"conformity": {}` added. Parsing the
   exported JSON and re-serialising it this way reproduces the hash (see `docs/VERIFY_EVIDENCE_PACK.md`).

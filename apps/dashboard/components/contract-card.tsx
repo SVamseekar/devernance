@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils";
 import type { DataContract, DriftEvent } from "@/lib/types";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { DriftEventActions } from "./drift-event-actions";
 
 interface ContractCardProps {
   contract: DataContract;
   driftEvents: DriftEvent[];
+  /** When given, open drift can be acknowledged or resolved from the card. */
+  onDriftAction?: (event: DriftEvent, status: "ACKNOWLEDGED" | "RESOLVED", note: string) => Promise<void>;
 }
 
 const STATUS_CONFIG = {
@@ -31,8 +34,8 @@ const STATUS_CONFIG = {
   },
 };
 
-export function ContractCard({ contract, driftEvents }: ContractCardProps) {
-  const openEvents = driftEvents.filter((e) => e.status === "OPEN");
+export function ContractCard({ contract, driftEvents, onDriftAction }: ContractCardProps) {
+  const openEvents = driftEvents.filter((e) => e.status !== "RESOLVED");
   const cfg = STATUS_CONFIG[contract.status] ?? STATUS_CONFIG.HEALTHY;
   const Icon = cfg.icon;
 
@@ -57,9 +60,16 @@ export function ContractCard({ contract, driftEvents }: ContractCardProps) {
           {openEvents.map((event) => (
             <div key={event.id} className="flex gap-2.5 text-xs">
               <div className="w-1 rounded-full bg-red-400 flex-shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <span className="font-semibold text-foreground">{event.field ?? "schema"}</span>
                 <span className="text-muted-foreground"> — {event.description}</span>
+                <span className="ml-1 text-[10px] uppercase text-muted-foreground">({event.severity}, {event.status})</span>
+                {event.resolutionNote && (
+                  <p className="text-[10px] text-muted-foreground italic">Acknowledged: “{event.resolutionNote}”</p>
+                )}
+                {onDriftAction && (
+                  <DriftEventActions event={event} onAct={(status, note) => onDriftAction(event, status, note)} />
+                )}
               </div>
             </div>
           ))}

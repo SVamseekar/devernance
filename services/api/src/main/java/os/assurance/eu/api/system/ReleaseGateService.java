@@ -38,6 +38,7 @@ public class ReleaseGateService {
   private final ConformityService conformityService;
   private final CorpusForceLookup corpusForceLookup;
   private final GateControlSource gateControls;
+  private final List<ReleaseGateSignals> signalSources;
   private final boolean evidenceDriven;
 
   @Autowired
@@ -50,6 +51,7 @@ public class ReleaseGateService {
       ConformityService conformityService,
       CorpusForceLookup corpusForceLookup,
       GateControlSource gateControls,
+      List<ReleaseGateSignals> signalSources,
       @org.springframework.beans.factory.annotation.Value("${assurance.gate.manual-inputs:true}") boolean manualInputs) {
     this.systemControls = systemControls;
     this.controls = controls;
@@ -59,6 +61,7 @@ public class ReleaseGateService {
     this.conformityService = conformityService;
     this.corpusForceLookup = corpusForceLookup;
     this.gateControls = gateControls;
+    this.signalSources = signalSources == null ? List.of() : List.copyOf(signalSources);
     this.evidenceDriven = !manualInputs;
   }
 
@@ -79,6 +82,7 @@ public class ReleaseGateService {
         conformityService,
         corpusForceLookup,
         null,
+        List.of(),
         true);
   }
 
@@ -92,6 +96,7 @@ public class ReleaseGateService {
     this.conformityService = null;
     this.corpusForceLookup = null;
     this.gateControls = null;
+    this.signalSources = List.of();
     this.evidenceDriven = false;
   }
 
@@ -104,11 +109,13 @@ public class ReleaseGateService {
 
   public ReleaseGateResponse calculate(AiSystem system, List<String> controlBlockers) {
     List<String> blockers = new ArrayList<>();
-
+    List<String> reviewReasons = new ArrayList<>();
     if (system.riskClass() == RiskClass.PROHIBITED) {
       blockers.add("Risk class is prohibited for release");
     }
-    if (system.riskClass() == RiskClass.HIGH && hasOversightGap(system.openGaps())) {
+    // The oversight gap opened at classification is answered by compliance passing the HUMAN_OVERSIGHT control.
+    boolean oversightAnswered = humanOversightPassed(system.id());
+    if (system.riskClass() == RiskClass.HIGH && hasOversightGap(system.openGaps()) && !oversightAnswered) {
       blockers.add("High-risk system is missing required human oversight evidence");
     }
     boolean noEvalYet = evidenceDriven && system.evalScore() == 0;
@@ -122,40 +129,88 @@ public class ReleaseGateService {
     }
     if (controlBlockers != null) {
       for (String controlBlocker : controlBlockers) {
-        if (controlBlocker != null && !controlBlocker.isBlank() && !blockers.contains(controlBlocker)) {
-          blockers.add(controlBlocker);
-        }
+        addOnce(blockers, controlBlocker);
+      }
+    }
+    for (ReleaseGateSignals.Signal signal : signals(system)) {
+      addOnce(signal.level() == ReleaseGateSignals.Level.BLOCK ? blockers : reviewReasons, signal.message());
+    }
+
+    if (system.evidenceCoverage() < EVIDENCE_PASS_THRESHOLD) {
+      reviewReasons.add("Evidence coverage " + system.evidenceCoverage() + "% is below " + EVIDENCE_PASS_THRESHOLD + "%");
+    }
+    if (!noEvalYet && system.evalScore() >= EVAL_HARD_BLOCK_THRESHOLD && system.evalScore() < EVAL_PASS_THRESHOLD) {
+      reviewReasons.add("Eval score " + system.evalScore() + " is below " + EVAL_PASS_THRESHOLD);
+    }
+    if (system.dataContractStatus() == DataContractStatus.WARNING) {
+      reviewReasons.add("Data contract has an open warning, or no data contract is recorded");
+    }
+    for (String gap : system.openGaps()) {
+      if (oversightAnswered && gap.toLowerCase(Locale.ROOT).contains("oversight")) {
+        continue;
+      }
+      addOnce(reviewReasons, "Open gap: " + gap);
+    }
+    if (system.riskClass() == RiskClass.HIGH) {
+      for (String flag : loadConformityReviewFlags(system.id(), system.riskClass())) {
+        addOnce(reviewReasons, describeConformityFlag(flag));
       }
     }
 
     if (!blockers.isEmpty()) {
-      return finish(system, ReleaseDecision.BLOCKED, blockers);
+      return finish(system, ReleaseDecision.BLOCKED, blockers, reviewReasons);
     }
-
-    boolean needsReview = system.evidenceCoverage() < EVIDENCE_PASS_THRESHOLD
-        || system.evalScore() < EVAL_PASS_THRESHOLD
-        || system.dataContractStatus() == DataContractStatus.WARNING
-        || !system.openGaps().isEmpty();
-    if (!needsReview && system.riskClass() == RiskClass.HIGH) {
-      needsReview = !loadConformityReviewFlags(system.id(), system.riskClass()).isEmpty();
-    }
-
     return finish(
         system,
-        needsReview ? ReleaseDecision.REVIEW : ReleaseDecision.PASS,
-        List.of());
+        reviewReasons.isEmpty() ? ReleaseDecision.PASS : ReleaseDecision.REVIEW,
+        List.of(),
+        reviewReasons);
   }
 
-  private ReleaseGateResponse finish(AiSystem system, ReleaseDecision decision, List<String> blockers) {
+  private ReleaseGateResponse finish(
+      AiSystem system, ReleaseDecision decision, List<String> blockers, List<String> reviewReasons) {
     List<GateControl> controls = gateControls == null || system.id() == null
         ? List.of()
         : gateControls.acceptedLinks(system.id());
     ReleaseDecision adjusted = ControlModePolicy.apply(decision, controls);
+    List<String> reasons = new ArrayList<>(reviewReasons);
+    if (decision == ReleaseDecision.PASS && adjusted == ReleaseDecision.REVIEW) {
+      reasons.add("An accepted control link requires review or sign-off");
+    }
     return new ReleaseGateResponse(
         system.id(),
         adjusted,
         ControlModePolicy.blockers(adjusted, blockers, controls),
-        controls);
+        controls,
+        reasons);
+  }
+
+  private List<ReleaseGateSignals.Signal> signals(AiSystem system) {
+    if (system.id() == null || signalSources.isEmpty()) {
+      return List.of();
+    }
+    List<ReleaseGateSignals.Signal> out = new ArrayList<>();
+    for (ReleaseGateSignals source : signalSources) {
+      out.addAll(source.signals(system));
+    }
+    return out;
+  }
+
+  private static void addOnce(List<String> list, String message) {
+    if (message != null && !message.isBlank() && !list.contains(message)) {
+      list.add(message);
+    }
+  }
+
+  static String describeConformityFlag(String flag) {
+    if (flag.startsWith("ANNEX_IV_INCOMPLETE:")) {
+      return "Annex IV section " + flag.substring("ANNEX_IV_INCOMPLETE:".length())
+          + " is missing from the conformity dossier";
+    }
+    if ("FRIA_NOT_RECORDED".equals(flag)) {
+      return "Fundamental rights impact assessment (FRIA) is not recorded or waived";
+    }
+    return flag;
   }
 
   private List<String> loadControlBlockers(UUID systemId) {
@@ -243,6 +298,13 @@ public class ReleaseGateService {
       return List.of();
     }
     return conformityService.reviewBlockers(systemId, riskClass);
+  }
+
+  private boolean humanOversightPassed(UUID systemId) {
+    if (systemControls == null || controls == null || tenantContext == null || systemId == null) {
+      return false;
+    }
+    return controlStatusIndex(systemId).get("HUMAN_OVERSIGHT") == ControlStatus.PASS;
   }
 
   private boolean hasOversightGap(List<String> gaps) {

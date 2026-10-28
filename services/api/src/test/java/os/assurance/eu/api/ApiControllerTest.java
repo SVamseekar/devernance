@@ -758,8 +758,22 @@ class ApiControllerTest {
                 }
                 """)
                     .with(authenticated()))
+        .andExpect(status().isBadRequest());
+
+    mockMvc.perform(patch("/api/v1/data-contracts/{contractId}/drift-events/{eventId}", contractId, eventId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "status": "resolved",
+                  "note": "Mapped denial_reason_category to fairness monitoring in pipeline v4.2"
+                }
+                """)
+                    .with(authenticated()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("RESOLVED"));
+        .andExpect(jsonPath("$.status").value("RESOLVED"))
+        .andExpect(jsonPath("$.resolutionNote").value("Mapped denial_reason_category to fairness monitoring in pipeline v4.2"))
+        .andExpect(jsonPath("$.resolvedBy").isNotEmpty())
+        .andExpect(jsonPath("$.resolvedAt").isNotEmpty());
 
     mockMvc.perform(get("/api/v1/data-contracts/{contractId}/drift-events", contractId)
         .with(authenticated()))
@@ -840,7 +854,7 @@ class ApiControllerTest {
         .andExpect(jsonPath("$.generatedAt", not(blankOrNullString())))
         .andExpect(jsonPath("$.riskClassification.riskClass").value("LIMITED"))
         .andExpect(jsonPath("$.auditEvents", not(hasSize(0))))
-        .andExpect(jsonPath("$.evidencePackVersion").value("1.1"))
+        .andExpect(jsonPath("$.evidencePackVersion").value("1.2"))
         .andExpect(jsonPath("$.contentSha256", not(blankOrNullString())))
         .andExpect(jsonPath("$.generator", not(blankOrNullString())));
   }

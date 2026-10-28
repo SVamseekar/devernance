@@ -33,6 +33,7 @@ import type {
   SectorPack,
   SectorPacksResponse,
   SystemControl,
+  ConformityDossier,
   WorkflowNotification,
   WorkspaceInvite,
   WorkspaceUser,
@@ -124,6 +125,11 @@ export interface CreateSystemPayload {
   deploymentRegion: string;
   sector?: string;
   decisionImpact?: string;
+  vendorName?: string;
+  modelName?: string;
+  modelVersion?: string;
+  dataSources?: string[];
+  affectedUsers?: string[];
 }
 
 export interface ClassifyPayload {
@@ -170,7 +176,9 @@ export const api = {
       request<FrameworkView>(`/systems/${id}/frameworks/${framework}`, undefined, { quietPlanLimit: true }),
     evgraphArtifacts: (id: string) =>
       request<Record<string, unknown>>(`/systems/${id}/evgraph-artifacts`),
-    conformity: (id: string) => request<Record<string, unknown>>(`/systems/${id}/conformity`),
+    conformity: (id: string) => request<ConformityDossier>(`/systems/${id}/conformity`),
+    updateConformity: (id: string, payload: Pick<ConformityDossier, "annexIv" | "fria">) =>
+      request<ConformityDossier>(`/systems/${id}/conformity`, { method: "PUT", body: JSON.stringify(payload) }),
     /**
      * Phase 6 PDF export of the sealed pack. Returns contentSha256 from response header.
      */
@@ -315,8 +323,6 @@ export const api = {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    execute: (id: string) =>
-      request<EvalRun>(`/eval-runs/${id}/execute`, { method: "POST" }),
   },
   contracts: {
     list: (systemId?: string) =>
@@ -326,10 +332,16 @@ export const api = {
     get: (id: string) => request<DataContract>(`/data-contracts/${id}`),
     driftEvents: (id: string) =>
       request<DriftEvent[]>(`/data-contracts/${id}/drift-events`),
-    updateDriftEvent: (contractId: string, eventId: string, status: "ACKNOWLEDGED" | "RESOLVED") =>
+    create: (payload: { systemId: string; name: string; owner: string; version: string; coverage: number }) =>
+      request<DataContract>("/data-contracts", {
+        method: "POST",
+        body: JSON.stringify({ ...payload, status: "healthy" }),
+      }),
+    /** A note is required: the API refuses to acknowledge or resolve drift without one. */
+    updateDriftEvent: (contractId: string, eventId: string, status: "ACKNOWLEDGED" | "RESOLVED", note: string) =>
       request<DriftEvent>(`/data-contracts/${contractId}/drift-events/${eventId}`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, note }),
       }),
   },
   audit: {

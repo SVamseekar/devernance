@@ -66,12 +66,23 @@ public final class EvidencePackPdfRenderer {
 
       addHeading(document, headingFont, "3. Evidence summary");
       for (Map<String, Object> row : pack.evidence()) {
-        addMapLines(document, bodyFont, row);
+        addLine(document, bodyFont, "Coverage", row.get("coverage") + "%");
+        addLine(document, bodyFont, "Open gaps", row.get("openGaps"));
+        for (Map<String, Object> doc : rows(row.get("documents"))) {
+          addLine(document, bodyFont, String.valueOf(doc.get("type")),
+              doc.get("title") + " — " + doc.get("sha256") + " (" + doc.get("ingestionStatus") + ")");
+        }
       }
 
       addHeading(document, headingFont, "4. Eval runs");
       for (Map<String, Object> row : pack.evalRuns()) {
-        addMapLines(document, bodyFont, row);
+        addLine(document, bodyFont, "Latest score", row.get("latestScore"));
+        for (Map<String, Object> run : rows(row.get("runs"))) {
+          addLine(document, bodyFont, String.valueOf(run.get("completedAt")),
+              run.get("dataset") + " · model " + run.get("modelVersion") + " · prompt " + run.get("promptVersion")
+                  + " · " + run.get("runDecision") + (Boolean.TRUE.equals(run.get("synthetic")) ? " · SYNTHETIC" : "")
+                  + " · " + run.get("metrics"));
+        }
       }
 
       addHeading(document, headingFont, "5. Data contracts");
@@ -236,6 +247,14 @@ public final class EvidencePackPdfRenderer {
     for (Map.Entry<String, Object> entry : map.entrySet()) {
       addLine(document, font, entry.getKey(), entry.getValue());
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static java.util.List<Map<String, Object>> rows(Object value) {
+    if (!(value instanceof java.util.List<?> list)) {
+      return java.util.List.of();
+    }
+    return list.stream().filter(Map.class::isInstance).map(item -> (Map<String, Object>) item).toList();
   }
 
   private static String formatInstant(Instant instant) {

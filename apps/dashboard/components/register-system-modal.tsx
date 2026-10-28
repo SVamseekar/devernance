@@ -12,7 +12,10 @@ import { api, ApiError } from "@/lib/api";
 import { type RiskAnswers } from "@/lib/risk-class";
 import { registerSystem } from "@/lib/register-system";
 import { SECTOR_PACK_OPTIONS } from "@/lib/sector-packs";
-import { QUESTIONNAIRE, deriveRegistration, sectorAnswerDefaults } from "@/lib/system-registration";
+import { QUESTIONNAIRE, deriveRegistration, initialAnswers, sectorAnswerDefaults } from "@/lib/system-registration";
+
+const FIELD =
+  "w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/50";
 
 interface RegisterSystemModalProps {
   isOpen: boolean;
@@ -29,13 +32,14 @@ export function RegisterSystemModal({ isOpen, onClose, onRegistered }: RegisterS
   const [owner, setOwner] = useState("");
   const [sector, setSector] = useState("insurance");
   const [purpose, setPurpose] = useState("");
+  const [vendorName, setVendorName] = useState("");
+  const [modelName, setModelName] = useState("");
+  const [modelVersion, setModelVersion] = useState("");
+  const [dataSources, setDataSources] = useState("");
+  const [affectedUsers, setAffectedUsers] = useState("");
+  const [decisionImpact, setDecisionImpact] = useState("");
 
-  const [answers, setAnswers] = useState<RiskAnswers>({
-    q_biometrics: false,
-    q_essential: false,
-    q_hr: false,
-    q_interaction: false
-  });
+  const [answers, setAnswers] = useState<RiskAnswers>(() => initialAnswers("insurance"));
 
   function handleToggleAnswer(id: string, val: boolean) {
     setAnswers((p) => ({ ...p, [id]: val }));
@@ -54,7 +58,10 @@ export function RegisterSystemModal({ isOpen, onClose, onRegistered }: RegisterS
     setSaving(true);
     setError(null);
     try {
-      const created = await registerSystem({ name, owner, purpose, sector, answers });
+      const created = await registerSystem({
+        name, owner, purpose, sector, answers,
+        vendorName, modelName, modelVersion, dataSources, affectedUsers, decisionImpact,
+      });
       await qc.invalidateQueries({ queryKey: ["systems"] });
       onRegistered?.(created.id);
       setStep(1);
@@ -134,6 +141,49 @@ export function RegisterSystemModal({ isOpen, onClose, onRegistered }: RegisterS
                 placeholder="Describe what choices this AI model informs or automates, and who is affected..."
               />
             </div>
+            <fieldset className="space-y-3 rounded-lg border border-border p-3">
+              <legend className="px-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Model and data (buyers ask for these)
+              </legend>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="system-vendor" className="text-[11px] font-medium text-muted-foreground">Vendor</label>
+                  <input id="system-vendor" className={FIELD} value={vendorName}
+                    onChange={(e) => setVendorName(e.target.value)} placeholder="Microsoft (Azure OpenAI)" />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="system-model" className="text-[11px] font-medium text-muted-foreground">Model</label>
+                  <input id="system-model" className={FIELD} value={modelName}
+                    onChange={(e) => setModelName(e.target.value)} placeholder="gpt-4o-mini" />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="system-model-version" className="text-[11px] font-medium text-muted-foreground">Model version</label>
+                  <input id="system-model-version" className={FIELD} value={modelVersion}
+                    onChange={(e) => setModelVersion(e.target.value)} placeholder="2024-07-18" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="system-data-sources" className="text-[11px] font-medium text-muted-foreground">
+                  Data sources (comma separated)
+                </label>
+                <input id="system-data-sources" className={FIELD} value={dataSources}
+                  onChange={(e) => setDataSources(e.target.value)} placeholder="Health declaration, Medical reports" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="system-affected" className="text-[11px] font-medium text-muted-foreground">
+                    People affected (comma separated)
+                  </label>
+                  <input id="system-affected" className={FIELD} value={affectedUsers}
+                    onChange={(e) => setAffectedUsers(e.target.value)} placeholder="Applicants, Underwriters" />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="system-impact" className="text-[11px] font-medium text-muted-foreground">Decision it informs</label>
+                  <input id="system-impact" className={FIELD} value={decisionImpact}
+                    onChange={(e) => setDecisionImpact(e.target.value)} placeholder="pricing" />
+                </div>
+              </div>
+            </fieldset>
             <div className="flex justify-end pt-3">
               <Button disabled={!name || !owner} onClick={() => setStep(2)}>
                 Next: Risk Analysis

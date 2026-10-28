@@ -17,6 +17,8 @@ import Link from "next/link";
 import { ObligationMapWizard } from "./obligation-map-wizard";
 import { FrameworksPanel } from "./frameworks-panel";
 import { SystemExportsPanel } from "./system-exports-panel";
+import { DriftEventActions } from "./drift-event-actions";
+import { SystemSignoffPanel } from "./system-signoff-panel";
 import { Button } from "./ui/button";
 import {
   ShieldAlert,
@@ -48,7 +50,7 @@ interface SystemDetailsSheetProps {
 }
 
 export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: SystemDetailsSheetProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "frameworks" | "approval">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "signoff" | "frameworks" | "approval">("details");
   const [obligationWizardOpen, setObligationWizardOpen] = useState(false);
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ["me"], queryFn: api.me, retry: false, staleTime: 5 * 60_000 });
@@ -115,6 +117,19 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
         >
           Details
         </button>
+        {isLiveEntityId(system.id) && (
+          <button
+            onClick={() => setActiveTab("signoff")}
+            className={cn(
+              "flex-1 text-xs py-1.5 rounded-md font-medium transition-colors",
+              activeTab === "signoff"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Sign-off
+          </button>
+        )}
         <button
           onClick={() => setActiveTab("frameworks")}
           className={cn(
@@ -364,6 +379,10 @@ export function SystemDetailsSheet({ system, isOpen, onClose, auditEvents }: Sys
         </>
       )}
 
+      {activeTab === "signoff" && isLiveEntityId(system.id) && (
+        <SystemSignoffPanel systemId={system.id} riskClass={system.riskClass} role={me.data?.role} />
+      )}
+
       {activeTab === "frameworks" && (
         <div className="space-y-6">
           <SystemExportsPanel systemId={system.id} />
@@ -427,6 +446,9 @@ export function ContractDetailsSheet({ contract, isOpen, onClose, driftEvents, s
   const { acknowledgeDrift, resolveDrift } = useDashboard();
   const linkedSystem = systems.find((s) => s.id === contract.systemId);
   const openEvents = driftEvents.filter((e) => e.contractId === contract.id && e.status !== "RESOLVED");
+  const resolvedEvents = driftEvents.filter((e) => e.contractId === contract.id && e.status === "RESOLVED");
+  // Sample columns describe the demo contracts only; a real contract's schema lives in your pipeline.
+  const showSampleColumns = !isLiveEntityId(contract.id);
 
   // Mock Schemas based on Name
   const getMockFields = (name: string) => {
@@ -524,25 +546,13 @@ export function ContractDetailsSheet({ contract, isOpen, onClose, driftEvents, s
                 </div>
                 <p className="text-muted-foreground leading-normal text-[11px]">{event.description}</p>
 
-                {/* Action buttons */}
-                <div className="flex justify-end gap-2 pt-1">
-                  {event.status === "OPEN" && (
-                    <button
-                      onClick={() => acknowledgeDrift(event.id)}
-                      className="px-2 py-1 bg-muted hover:bg-muted-foreground/10 border border-border text-[9px] font-medium rounded-md cursor-pointer transition-colors text-foreground"
-                    >
-                      Acknowledge
-                    </button>
-                  )}
-                  {event.status !== "RESOLVED" && (
-                    <button
-                      onClick={() => resolveDrift(event.id)}
-                      className="px-2.5 py-1 bg-primary hover:bg-primary/95 text-[9px] font-medium text-primary-foreground rounded-md cursor-pointer transition-colors shadow-xs"
-                    >
-                      Resolve
-                    </button>
-                  )}
-                </div>
+                {event.resolutionNote && (
+                  <p className="text-[10px] text-muted-foreground italic">Acknowledged: “{event.resolutionNote}”</p>
+                )}
+                <DriftEventActions
+                  event={event}
+                  onAct={(status, note) => (status === "RESOLVED" ? resolveDrift(event.id, note) : acknowledgeDrift(event.id, note))}
+                />
 
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border mt-1">
                   <span suppressHydrationWarning>Logged: {formatDate(event.createdAt)}</span>
@@ -554,7 +564,28 @@ export function ContractDetailsSheet({ contract, isOpen, onClose, driftEvents, s
         )}
       </div>
 
+      {resolvedEvents.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+            Resolved drift
+          </h4>
+          <div className="space-y-2">
+            {resolvedEvents.map((event) => (
+              <div key={event.id} className="border border-border rounded-lg p-3 text-[11px] space-y-1">
+                <p><span className="font-mono font-semibold">{event.field ?? "global_schema"}</span> · {event.severity}</p>
+                <p className="text-muted-foreground">“{event.resolutionNote ?? "No note recorded"}”</p>
+                {event.resolvedAt && (
+                  <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>Resolved {formatDate(event.resolvedAt)}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Monitored Schema Columns */}
+      {showSampleColumns && (
       <div>
         <h4 className="text-xs font-semibold text-foreground uppercase tracking-widest flex items-center gap-1.5 mb-2.5">
           <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />
@@ -572,6 +603,7 @@ export function ContractDetailsSheet({ contract, isOpen, onClose, driftEvents, s
           ))}
         </div>
       </div>
+      )}
     </Sheet>
   );
 }
