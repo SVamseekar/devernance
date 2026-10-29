@@ -59,4 +59,25 @@ class DjlSentenceEmbeddingProviderTest {
       provider.close();
     }
   }
+
+  /** A batch is padded to its longest text; the attention mask must keep each embedding as it is alone. */
+  @Test
+  @EnabledIfEnvironmentVariable(named = "RUN_DJL_TESTS", matches = "1")
+  void embedsTheSameInABatchAsAlone() throws Exception {
+    Path dir = Path.of(System.getenv().getOrDefault("DJL_MODEL_DIR", "target/djl-model"));
+    DjlSentenceEmbeddingProvider provider = new DjlSentenceEmbeddingProvider(dir);
+    try {
+      java.util.List<String> texts = java.util.List.of(
+          "Short.",
+          "Reviewers may override automated claim routing at any time, and every override is logged.",
+          "oversight ".repeat(400));
+      java.util.List<String> batch = provider.embedAll(texts);
+      for (int i = 0; i < texts.size(); i++) {
+        assertThat(provider.similarity(batch.get(i), provider.embed(texts.get(i))))
+            .isCloseTo(1.0, org.assertj.core.data.Offset.offset(1e-4));
+      }
+    } finally {
+      provider.close();
+    }
+  }
 }

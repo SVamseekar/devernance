@@ -76,7 +76,7 @@ Seeded EU AI Act-style control library with per-system status (`PASS` / `REVIEW`
 
 ### Evidence RAG
 
-Retrieves cited answers from policy docs, DPIAs, model cards, vendor docs, incident records, data contracts, and control mappings. Dev embeddings: `local-hash`; postgres default: DJL/ONNX all-MiniLM-L6-v2 + pgvector HNSW.
+Retrieves cited answers from policy docs, DPIAs, model cards, vendor docs, incident records, data contracts, and control mappings. Dev embeddings: `local-hash`; postgres default: DJL/ONNX all-MiniLM-L6-v2, ranked by hybrid search (Postgres BM25 + pgvector cosine, reciprocal rank fusion). PDF citations name the page.
 
 ### Eval Gates
 

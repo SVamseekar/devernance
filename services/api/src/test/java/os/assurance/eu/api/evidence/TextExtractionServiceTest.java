@@ -23,6 +23,35 @@ class TextExtractionServiceTest {
     }
 
     @Test
+    void marksEachPdfPageSoChunksCanCiteIt() throws Exception {
+        java.io.ByteArrayOutputStream pdf = new java.io.ByteArrayOutputStream();
+        try (var document = new org.apache.pdfbox.pdmodel.PDDocument()) {
+            for (String line : new String[] {"Scope of the policy.", "Human oversight duties.", "Logging rules."}) {
+                var page = new org.apache.pdfbox.pdmodel.PDPage();
+                document.addPage(page);
+                try (var content = new org.apache.pdfbox.pdmodel.PDPageContentStream(document, page)) {
+                    content.beginText();
+                    content.setFont(new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                        org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA), 12);
+                    content.newLineAtOffset(72, 700);
+                    content.showText(line);
+                    content.endText();
+                }
+            }
+            document.save(pdf);
+        }
+
+        String text = service.extractFromUpload(new java.io.ByteArrayInputStream(pdf.toByteArray()), "policy.pdf", 10_000);
+
+        String[] pages = text.split(String.valueOf(TextExtractionService.PAGE_BREAK), -1);
+        assertThat(pages).hasSize(3);
+        assertThat(pages[1]).contains("Human oversight duties.");
+        assertThat(new EvidenceChunker().chunk(text))
+            .extracting(EvidenceChunker.ChunkDraft::sectionRef)
+            .containsExactly("p. 1", "p. 2", "p. 3");
+    }
+
+    @Test
     void rejectsLoopbackHost() {
         var request = new CreateEvidenceDocumentRequest(
             java.util.UUID.randomUUID(), "policy", "Test", "https://127.0.0.1/secret", null, null, null);

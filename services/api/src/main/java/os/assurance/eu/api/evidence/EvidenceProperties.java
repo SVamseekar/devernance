@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "assurance.evidence")
 public class EvidenceProperties {
-  private int maxContentCharacters = 200_000;
+  private int maxContentCharacters = 2_000_000;
   private int maxMetadataEntries = 25;
   private int maxMetadataValueCharacters = 1_000;
   private int maxQuestionCharacters = 2_048;
-  private int maxRetrievedChunks = 3;
+  private int maxRetrievedChunks = 4;
   private double minRetrievalScore = 0.20;
   private String embeddingProvider = "local-hash";
   private List<String> allowedSourceSchemes = List.of("memory", "s3", "gs", "https");
