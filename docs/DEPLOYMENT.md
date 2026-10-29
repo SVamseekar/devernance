@@ -189,7 +189,7 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 
 1. Provision Postgres 16+ (prefer same region as API).
 2. Create role/database; store password in a secret manager.
-3. Optionally enable `CREATE EXTENSION vector;` for HNSW (migration skips gracefully if absent).
+3. Prefer an image with pgvector (e.g. `pgvector/pgvector:pg16`) so evidence meaning ranking runs in SQL; without it the `V32_1` migration skips the vector column and the API ranks chunk vectors in memory.
 
 ### B. API
 

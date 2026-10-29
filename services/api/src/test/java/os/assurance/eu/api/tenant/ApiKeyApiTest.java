@@ -236,9 +236,9 @@ class ApiKeyApiTest {
   }
 
   @Test
-  void malformedKeysAreBadRequests() throws Exception {
+  void malformedKeysAreRejectedAsUnauthenticated() throws Exception {
     mockMvc.perform(get("/api/v1/systems").header("X-Api-Key", "dvn_too-short"))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

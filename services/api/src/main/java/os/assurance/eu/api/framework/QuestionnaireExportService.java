@@ -45,6 +45,7 @@ import os.assurance.eu.api.workflow.ApprovalStage;
 import os.assurance.eu.api.workflow.ApprovalWorkflow;
 import os.assurance.eu.api.workflow.ApprovalWorkflowService;
 import os.assurance.eu.api.workflow.StageStatus;
+import os.assurance.eu.api.workflow.WorkflowStatus;
 
 /**
  * Drafts answers to common AI-vendor due-diligence questions for one system. A template is filled only when every
@@ -64,6 +65,7 @@ public class QuestionnaireExportService {
       "affectedUsers");
   private static final Set<String> OTHER_FACTS = Set.of("contracts.names", "contracts.status", "eval.latestOn",
       "eval.dataset", "eval.modelVersion", "eval.decision", "approval.workflowCount", "approval.latestApprovedOn",
+      "approval.latestStatus", "approval.rejectedCount", "approval.overriddenCount",
       "gate.decision", "audit.eventCount", "audit.latestOn", "audit.retainUntil", "nist.covered", "nist.partial",
       "nist.total", "pack.version");
   /** Top-level keys of the exported pack JSON; a {@code pack:} reference must start with one of them. */
@@ -289,6 +291,19 @@ public class QuestionnaireExportService {
     List<ApprovalWorkflow> workflows = approvals.listBySystemId(system.id());
     if (!workflows.isEmpty()) {
       put(facts, "approval.workflowCount", String.valueOf(workflows.size()));
+      // Newest first. A superseded cycle never reached a decision, so the latest live one is what a buyer needs.
+      workflows.stream()
+          .filter(workflow -> workflow.status() != WorkflowStatus.SUPERSEDED)
+          .findFirst()
+          .ifPresent(latest -> put(facts, "approval.latestStatus", latest.status().name()));
+      // Rejections come from the audit trail: an admin override later replaces the rejected stage's status.
+      put(facts, "approval.rejectedCount", String.valueOf(audit.findBySystemId(system.id()).stream()
+          .filter(event -> "WORKFLOW_STAGE_REJECTED".equals(event.eventType()))
+          .count()));
+      put(facts, "approval.overriddenCount", String.valueOf(workflows.stream()
+          .flatMap(workflow -> workflow.stages().stream())
+          .filter(stage -> stage.status() == StageStatus.OVERRIDDEN)
+          .count()));
       workflows.stream().flatMap(workflow -> workflow.stages().stream())
           .filter(stage -> stage.status() == StageStatus.APPROVED)
           .map(ApprovalStage::actedAt)

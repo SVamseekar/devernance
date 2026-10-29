@@ -30,6 +30,7 @@ public class EvalRunCompletionService {
   private final EvalRunMetrics evalRunMetrics;
   private final ApprovalWorkflowService approvalWorkflowService;
   private final GateRecalculator gateRecalculator;
+  private final EvalMetricFloors floors;
 
   public EvalRunCompletionService(
       AiSystemRepository systems,
@@ -38,7 +39,8 @@ public class EvalRunCompletionService {
       AuditService auditService,
       EvalRunMetrics evalRunMetrics,
       ApprovalWorkflowService approvalWorkflowService,
-      GateRecalculator gateRecalculator) {
+      GateRecalculator gateRecalculator,
+      EvalMetricFloors floors) {
     this.systems = systems;
     this.evalRuns = evalRuns;
     this.releaseGateService = releaseGateService;
@@ -46,6 +48,7 @@ public class EvalRunCompletionService {
     this.evalRunMetrics = evalRunMetrics;
     this.approvalWorkflowService = approvalWorkflowService;
     this.gateRecalculator = gateRecalculator;
+    this.floors = floors;
   }
 
   @Transactional
@@ -64,9 +67,10 @@ public class EvalRunCompletionService {
     AiSystem system = systems.findById(existing.systemId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "AI system not found"));
     int evalScore = score(metrics, existing.threshold());
-    ReleaseDecision runDecision = evalScore >= toPercent(existing.threshold())
+    ReleaseDecision runDecision = evalScore >= toPercent(existing.threshold()) && floors.violations(metrics).isEmpty()
         ? ReleaseDecision.PASS
         : ReleaseDecision.BLOCKED;
+    int previousScore = system.evalScore();
     EvalRun completed = evalRuns.save(new EvalRun(
         existing.runId(),
         existing.systemId(),
@@ -100,7 +104,10 @@ public class EvalRunCompletionService {
             "runDecision", completed.releaseDecision(),
             "releaseDecision", updated.releaseDecision()));
     evalRunMetrics.completed(source);
-    approvalWorkflowService.openCycle(updated, WorkflowTrigger.EVAL_REGRESSION);
+    // Only a real regression asks people to review again; an improving run would otherwise reopen sign-off.
+    if (runDecision != ReleaseDecision.PASS || (previousScore > 0 && evalScore < previousScore)) {
+      approvalWorkflowService.openCycle(updated, WorkflowTrigger.EVAL_REGRESSION);
+    }
     return completed;
   }
 

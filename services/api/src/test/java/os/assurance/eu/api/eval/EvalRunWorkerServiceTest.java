@@ -26,7 +26,20 @@ class EvalRunWorkerServiceTest {
       evalRuns,
       mock(EvalRunCompletionService.class),
       mock(AuditService.class),
-      mock(EvalRunMetrics.class));
+      mock(EvalRunMetrics.class),
+      true);
+
+  @Test
+  void syntheticMetricsAreRefusedUnlessEnabled() {
+    EvalRunWorkerService off = new EvalRunWorkerService(
+        mock(EvalDatasetRepository.class), evalRuns, mock(EvalRunCompletionService.class),
+        mock(AuditService.class), mock(EvalRunMetrics.class), false);
+
+    ResponseStatusException refused = assertThrows(ResponseStatusException.class, () -> off.execute(UUID.randomUUID()));
+
+    assertThat(refused.getStatusCode().value()).isEqualTo(409);
+    assertThat(refused.getReason()).contains("signed");
+  }
 
   @Test
   void callbackVerifierFailsFastWhenSecretIsMissing() {

@@ -34,6 +34,10 @@ import org.apache.tika.parser.microsoft.ooxml.OOXMLParser;
 import org.apache.tika.parser.pdf.PDFParser;
 import org.apache.tika.parser.txt.TXTParser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.ToTextContentHandler;
+import org.apache.tika.sax.WriteOutContentHandler;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -129,24 +133,57 @@ public class TextExtractionService {
     /**
      * Tika 4's zip detector throws ArchiveException on non-archives. Fall back to the
      * format parser named by the file extension when that happens.
+     *
+     * <p>PDF pages are separated by {@link #PAGE_BREAK} on a line of its own, so evidence chunks can cite the
+     * page they come from. Reaching {@code maxChars} stops the parse and keeps the text read so far.
      */
     private String readWithTika(byte[] bytes, Metadata metadata, String filename, int maxChars) throws Exception {
         try {
-            return tika.parseToString(new java.io.ByteArrayInputStream(bytes), metadata, maxChars);
+            return parseMarkingPages(tika.getParser(), bytes, metadata, maxChars);
         } catch (Exception e) {
             if (!isArchiveDetectMiss(e)) {
                 throw e;
             }
-            BodyContentHandler handler = new BodyContentHandler(maxChars);
-            try (var in = org.apache.tika.io.TikaInputStream.get(bytes)) {
-                parserFor(filename).parse(in, handler, metadata, new ParseContext());
-            } catch (Exception parse) {
-                // Reaching maxChars stops the parse; keep the text read so far, as Tika.parseToString does.
-                if (!WriteLimitReachedException.isWriteLimitReached(parse)) {
-                    throw parse;
-                }
+            return parseMarkingPages(parserFor(filename), bytes, metadata, maxChars);
+        }
+    }
+
+    private static String parseMarkingPages(Parser parser, byte[] bytes, Metadata metadata, int maxChars)
+            throws Exception {
+        PageMarkingTextHandler text = new PageMarkingTextHandler();
+        ParseContext context = new ParseContext();
+        context.set(Parser.class, parser);
+        try (var in = org.apache.tika.io.TikaInputStream.get(bytes)) {
+            parser.parse(in, new BodyContentHandler(new WriteOutContentHandler(text, maxChars)), metadata, context);
+        } catch (Exception parse) {
+            if (!WriteLimitReachedException.isWriteLimitReached(parse)) {
+                throw parse;
             }
-            return handler.toString();
+        }
+        return text.toString();
+    }
+
+    /** Separates pages in extracted text. Parsers that have no pages (DOCX, TXT) never emit it. */
+    public static final char PAGE_BREAK = '\f';
+
+    /** Tika's PDF parser opens a {@code <div class="page">} per page; mark every page start after the first. */
+    static final class PageMarkingTextHandler extends ToTextContentHandler {
+        private static final char[] MARK = {'\n', PAGE_BREAK, '\n'};
+        private boolean seenPage;
+
+        PageMarkingTextHandler() {
+            super(new java.io.StringWriter());
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+            if ("div".equals(localName) && "page".equals(atts.getValue("class"))) {
+                if (seenPage) {
+                    characters(MARK, 0, MARK.length);
+                }
+                seenPage = true;
+            }
+            super.startElement(uri, localName, qName, atts);
         }
     }
 

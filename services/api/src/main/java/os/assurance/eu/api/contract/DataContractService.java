@@ -10,6 +10,7 @@ import os.assurance.eu.api.system.AiSystemRepository;
 import os.assurance.eu.api.system.DataContractStatus;
 import os.assurance.eu.api.system.ReleaseDecision;
 import os.assurance.eu.api.system.ReleaseGateService;
+import os.assurance.eu.api.tenant.UserRole;
 import os.assurance.eu.api.workflow.ApprovalWorkflowService;
 import os.assurance.eu.api.workflow.WorkflowTrigger;
 import org.springframework.http.HttpStatus;
@@ -149,9 +150,38 @@ public class DataContractService {
 
   @Transactional
   public DriftEvent updateDriftEvent(UUID contractId, UUID eventId, UpdateDriftEventRequest request) {
+    return updateDriftEvent(contractId, eventId, request, UserRole.ADMIN, null);
+  }
+
+  /**
+   * Closing drift is a sign-off. Every acknowledge or resolve needs a note. A breach can only be resolved by
+   * compliance or an admin, so the engineer whose pipeline caused it does not also declare it fixed.
+   */
+  @Transactional
+  public DriftEvent updateDriftEvent(
+      UUID contractId, UUID eventId, UpdateDriftEventRequest request, UserRole actorRole, UUID actorId) {
     DataContract contract = requireContract(contractId);
     DriftEvent existing = driftEvents.findByContractIdAndId(contractId, eventId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Drift event not found"));
+    String note = request.note() == null ? null : request.note().strip();
+    boolean closing = request.status() != DriftStatus.OPEN;
+    if (closing && (note == null || note.isEmpty())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "A note is required to acknowledge or resolve drift: say what was done about it");
+    }
+    boolean signOffRole = actorRole == UserRole.ADMIN || actorRole == UserRole.COMPLIANCE_OFFICER;
+    if (existing.severity() == DriftSeverity.BREACH && !signOffRole) {
+      if (request.status() == DriftStatus.RESOLVED) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Only compliance or an admin can resolve a data contract breach");
+      }
+      if (existing.status() == DriftStatus.RESOLVED) {
+        // The resolution is compliance's sign-off; nobody else may rewrite or reopen it.
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Only compliance or an admin can change a resolved data contract breach");
+      }
+    }
+    Instant now = Instant.now();
     DriftEvent saved = driftEvents.save(new DriftEvent(
         existing.id(),
         existing.contractId(),
@@ -160,14 +190,23 @@ public class DataContractService {
         existing.description(),
         request.status(),
         existing.createdAt(),
-        Instant.now()));
+        now,
+        closing ? note : existing.resolutionNote(),
+        closing ? actorId : existing.resolvedBy(),
+        closing ? now : existing.resolvedAt()));
     recalculateContractAndSystemStatus(contract.id());
+    Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("contractId", contract.id());
+    payload.put("severity", saved.severity());
+    payload.put("field", saved.field() == null ? "" : saved.field());
+    payload.put("status", saved.status());
+    payload.put("note", note == null ? "" : note);
     auditService.append(
         contract.systemId(),
         "data_contract.drift_updated",
         "drift_event",
         saved.id().toString(),
-        Map.of("contractId", contract.id(), "status", saved.status()));
+        payload);
     return saved;
   }
 
@@ -257,9 +296,10 @@ public class DataContractService {
     return DataContractStatus.HEALTHY;
   }
 
+  /** Acknowledged drift is still drift: only a resolution clears it, so acknowledging cannot unblock a release. */
   private DataContractStatus deriveStatus(List<DriftEvent> events) {
     List<DriftEvent> open = events.stream()
-        .filter(event -> event.status() == DriftStatus.OPEN)
+        .filter(event -> event.status() != DriftStatus.RESOLVED)
         .toList();
     if (open.stream().anyMatch(event -> event.severity() == DriftSeverity.BREACH)) {
       return DataContractStatus.BREACH;

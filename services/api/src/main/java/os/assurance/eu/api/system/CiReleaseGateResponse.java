@@ -14,6 +14,8 @@ public record CiReleaseGateResponse(
     String systemName,
     ReleaseDecision decision,
     List<String> blockers,
+    /** What keeps the system from PASS once nothing blocks it. */
+    List<String> reviewReasons,
     int evalScore,
     int evidenceCoverage,
     DataContractStatus dataContractStatus,
@@ -25,6 +27,7 @@ public record CiReleaseGateResponse(
 
   public CiReleaseGateResponse {
     blockers = blockers == null ? List.of() : List.copyOf(blockers);
+    reviewReasons = reviewReasons == null ? List.of() : List.copyOf(reviewReasons);
   }
 
   public static int exitCodeFor(ReleaseDecision decision) {
@@ -48,11 +51,15 @@ public record CiReleaseGateResponse(
     if (decision != ReleaseDecision.PASS && !gate.blockers().isEmpty()) {
       content = content + " Blockers: " + String.join("; ", gate.blockers());
     }
+    if (decision == ReleaseDecision.REVIEW && !gate.reviewReasons().isEmpty()) {
+      content = content + " Review: " + String.join("; ", gate.reviewReasons());
+    }
     return new CiReleaseGateResponse(
         system.id(),
         system.name(),
         decision,
         gate.blockers(),
+        gate.reviewReasons(),
         system.evalScore(),
         system.evidenceCoverage(),
         system.dataContractStatus(),

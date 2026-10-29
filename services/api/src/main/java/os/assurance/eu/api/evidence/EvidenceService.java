@@ -4,11 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.HexFormat;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.UUID;
 import os.assurance.eu.api.audit.AuditService;
 import os.assurance.eu.api.demo.DemoProperties;
@@ -24,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class EvidenceService {
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EvidenceService.class);
   private final EvidenceRepository repository;
   private final EvidenceQueryJpaRepository queries;
   private final TextExtractionService textExtractionService;
@@ -36,6 +34,7 @@ public class EvidenceService {
   private final EvidenceProperties properties;
   private final GateRecalculator gateRecalculator;
   private final TransactionTemplate transaction;
+  private final EvidenceRetriever retriever;
 
   public EvidenceService(
       EvidenceRepository repository,
@@ -49,7 +48,8 @@ public class EvidenceService {
       TenantContext tenantContext,
       EvidenceProperties properties,
       GateRecalculator gateRecalculator,
-      PlatformTransactionManager transactionManager) {
+      PlatformTransactionManager transactionManager,
+      EvidenceRetriever retriever) {
     this.repository = repository;
     this.queries = queries;
     this.textExtractionService = textExtractionService;
@@ -62,6 +62,7 @@ public class EvidenceService {
     this.properties = properties;
     this.gateRecalculator = gateRecalculator;
     this.transaction = new TransactionTemplate(transactionManager);
+    this.retriever = retriever;
   }
 
   /**
@@ -71,16 +72,28 @@ public class EvidenceService {
   public EvidenceDocumentResponse ingest(CreateEvidenceDocumentRequest request) {
     evidenceGuard.validateDocumentRequest(request);
     String extracted = textExtractionService.extract(request);
+    // Text past the limit is not indexed; the document is marked so nobody mistakes it for fully searchable.
+    boolean truncated = extracted.length() >= properties.maxContentCharacters();
+    if (extracted.length() > properties.maxContentCharacters()) {
+      extracted = extracted.substring(0, properties.maxContentCharacters());
+    }
     SanitizedText sanitized = promptInjectionGuard.sanitizeDocumentText(extracted);
     List<ChunkDraft> chunkDrafts = chunker.chunk(sanitized.text());
-    List<String> embeddings = chunkDrafts.stream().map(draft -> embeddingService.embed(draft.content())).toList();
+    long embedStarted = System.nanoTime();
+    // The title travels with each chunk into the embedding, so "the DPIA says ..." finds the DPIA's chunks.
+    List<String> embeddings = embeddingService.embedAll(chunkDrafts.stream()
+        .map(draft -> request.title() + "\n" + draft.content())
+        .toList());
+    log.info("Embedded {} chunks of a {}-character document in {} ms", chunkDrafts.size(), extracted.length(),
+        (System.nanoTime() - embedStarted) / 1_000_000);
     Map<String, Object> metadata = evidenceGuard.sanitizeMetadata(request.metadata());
-    return transaction.execute(status -> persist(request, sanitized, chunkDrafts, embeddings, metadata));
+    return transaction.execute(status -> persist(request, sanitized, truncated, chunkDrafts, embeddings, metadata));
   }
 
   private EvidenceDocumentResponse persist(
       CreateEvidenceDocumentRequest request,
       SanitizedText sanitized,
+      boolean truncated,
       List<ChunkDraft> chunkDrafts,
       List<String> embeddings,
       Map<String, Object> metadata) {
@@ -97,9 +110,9 @@ public class EvidenceService {
         request.sourceUri(),
         checksum,
         chunkDrafts.size(),
-        sanitized.removedLines().isEmpty() ? "indexed" : "indexed_with_warnings",
+        sanitized.removedLines().isEmpty() && !truncated ? "indexed" : "indexed_with_warnings",
         now));
-    repository.saveChunks(toChunks(saved, chunkDrafts, embeddings, metadata, sanitized.removedLines()));
+    repository.saveChunks(toChunks(saved, chunkDrafts, embeddings, metadata, sanitized.removedLines(), truncated));
     auditService.append(
         saved.systemId(),
         "evidence.document_indexed",
@@ -110,7 +123,8 @@ public class EvidenceService {
             "type", saved.type(),
             "chunkCount", saved.chunkCount(),
             "embeddingProvider", embeddingService.providerName(),
-            "removedPromptInjectionLines", sanitized.removedLines().size()));
+            "removedPromptInjectionLines", sanitized.removedLines().size(),
+            "truncatedAtCharacters", truncated ? properties.maxContentCharacters() : 0));
     gateRecalculator.recalculate(saved.systemId());
     return saved.toResponse();
   }
@@ -125,35 +139,12 @@ public class EvidenceService {
   @Transactional
   public EvidenceQueryResponse answer(AiSystem system, String question) {
     String sanitizedQuestion = evidenceGuard.validateQuestion(promptInjectionGuard.sanitizeQuestion(question));
-    String questionEmbedding = embeddingService.embed(sanitizedQuestion);
-    List<EvidenceDocument> documents = repository.findDocumentsBySystemId(system.id());
-    Map<UUID, EvidenceDocument> documentsById = documents.stream()
-        .collect(Collectors.toMap(EvidenceDocument::id, Function.identity()));
-    // Score on embeddings alone, then load the text of the few chunks that are cited. Chunks embedded by a
-    // different provider (before a provider switch) live in another vector space and cannot be compared.
-    String provider = embeddingService.providerName();
-    Map<UUID, Double> topScores = new LinkedHashMap<>();
-    repository.findChunkVectors(documents.stream().map(EvidenceDocument::id).toList()).stream()
-        .filter(vector -> provider.equals(vector.getEmbeddingProvider()))
-        .map(vector -> Map.entry(vector.getId(), embeddingService.similarity(questionEmbedding, vector.getEmbedding())))
-        .filter(scored -> scored.getValue() >= properties.minRetrievalScore())
-        .sorted(Map.Entry.<UUID, Double>comparingByValue().reversed())
-        .limit(properties.maxRetrievedChunks())
-        .forEach(scored -> topScores.put(scored.getKey(), scored.getValue()));
-    Map<UUID, EvidenceChunk> chunksById = repository.findChunksByIds(List.copyOf(topScores.keySet())).stream()
-        .collect(Collectors.toMap(EvidenceChunk::id, Function.identity()));
-    List<ScoredChunk> scoredChunks = topScores.entrySet().stream()
-        .filter(scored -> chunksById.containsKey(scored.getKey()))
-        .map(scored -> {
-          EvidenceChunk chunk = chunksById.get(scored.getKey());
-          return new ScoredChunk(chunk, documentsById.get(chunk.documentId()), scored.getValue());
-        })
-        .filter(scoredChunk -> scoredChunk.document() != null)
-        .toList();
+    List<EvidenceRetriever.Passage> passages =
+        retriever.retrieve(repository.findDocumentsBySystemId(system.id()), sanitizedQuestion);
 
-    EvidenceQueryResponse response = scoredChunks.isEmpty()
+    EvidenceQueryResponse response = passages.isEmpty()
         ? fallbackAnswer(system)
-        : citedAnswer(system, sanitizedQuestion, scoredChunks);
+        : citedAnswer(system, sanitizedQuestion, passages);
     queries.save(new EvidenceQueryEntity(
         UUID.randomUUID(),
         tenantContext.tenantId(),
@@ -175,7 +166,8 @@ public class EvidenceService {
         Map.of(
             demo ? "questionLength" : "question", demo ? sanitizedQuestion.length() : sanitizedQuestion,
             "confidence", response.confidence(),
-            "citationCount", response.citations().size()));
+            "citationCount", response.citations().size(),
+            "search", retriever.searchDescription()));
     return response;
   }
 
@@ -184,7 +176,8 @@ public class EvidenceService {
       List<ChunkDraft> chunkDrafts,
       List<String> embeddings,
       Map<String, Object> requestMetadata,
-      List<String> removedLines) {
+      List<String> removedLines,
+      boolean truncated) {
     Map<String, Object> metadata = requestMetadata == null ? Map.of() : requestMetadata;
     return java.util.stream.IntStream.range(0, chunkDrafts.size())
         .mapToObj(index -> {
@@ -198,40 +191,45 @@ public class EvidenceService {
               checksum(draft.content()),
               embeddings.get(index),
               embeddingService.providerName(),
-              metadataWithGuard(metadata, removedLines));
+              metadataWithGuard(metadata, removedLines, truncated));
         })
         .toList();
   }
 
-  private Map<String, Object> metadataWithGuard(Map<String, Object> metadata, List<String> removedLines) {
+  private Map<String, Object> metadataWithGuard(
+      Map<String, Object> metadata, List<String> removedLines, boolean truncated) {
     java.util.LinkedHashMap<String, Object> guarded = new java.util.LinkedHashMap<>(metadata);
     guarded.put("embeddingProvider", embeddingService.providerName());
-    if (removedLines.isEmpty()) {
-      return guarded;
+    if (!removedLines.isEmpty()) {
+      guarded.put("promptInjectionLinesRemoved", removedLines.size());
     }
-    guarded.put("promptInjectionLinesRemoved", removedLines.size());
+    if (truncated) {
+      guarded.put("truncatedAtCharacters", properties.maxContentCharacters());
+    }
     return guarded;
   }
 
-  private EvidenceQueryResponse citedAnswer(AiSystem system, String question, List<ScoredChunk> scoredChunks) {
-    List<Citation> citations = scoredChunks.stream()
-        .map(scored -> new Citation(
-            scored.document().id().toString(),
-            scored.document().title(),
-            scored.chunk().sectionRef(),
-            snippet(scored.chunk().content())))
+  private EvidenceQueryResponse citedAnswer(
+      AiSystem system, String question, List<EvidenceRetriever.Passage> passages) {
+    List<Citation> citations = passages.stream()
+        .map(passage -> new Citation(
+            passage.document().id().toString(),
+            passage.document().title(),
+            passage.chunk().sectionRef(),
+            passage.quote()))
         .toList();
-    double confidence = Math.max(0.35, Math.min(0.95, scoredChunks.stream()
-        .mapToDouble(ScoredChunk::score)
-        .average()
+    double confidence = Math.max(0.35, Math.min(0.95, passages.stream()
+        .mapToDouble(EvidenceRetriever.Passage::similarity)
+        .max()
         .orElse(0.35)));
-    String strongest = citations.get(0).snippet();
+    EvidenceRetriever.Passage strongest = passages.get(0);
     String answer = """
-        Based on indexed evidence for %s, the strongest cited material says: %s
+        Based on indexed evidence for %s, the strongest cited material (%s, %s) says: %s
 
         For the question "%s", review the cited sections before changing the %s release decision.
         """
-        .formatted(system.name(), strongest, question, system.releaseDecision())
+        .formatted(system.name(), strongest.document().title(), strongest.chunk().sectionRef(), strongest.quote(),
+            question, system.releaseDecision())
         .strip();
     return new EvidenceQueryResponse(answer, confidence, citations);
   }
@@ -246,11 +244,6 @@ public class EvidenceService {
         List.of());
   }
 
-  private String snippet(String content) {
-    String normalized = content.replaceAll("\\s+", " ").strip();
-    return normalized.length() <= 220 ? normalized : normalized.substring(0, 217) + "...";
-  }
-
   private String checksum(String text) {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -260,6 +253,4 @@ public class EvidenceService {
     }
   }
 
-  private record ScoredChunk(EvidenceChunk chunk, EvidenceDocument document, double score) {
-  }
 }

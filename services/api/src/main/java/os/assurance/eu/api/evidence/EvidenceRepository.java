@@ -56,6 +56,14 @@ public class EvidenceRepository {
   }
 
   @Transactional(readOnly = true)
+  public List<EvidenceChunkJpaRepository.ChunkText> findChunkTexts(List<UUID> documentIds) {
+    if (documentIds.isEmpty()) {
+      return List.of();
+    }
+    return chunks.findTextsByDocumentIdIn(documentIds);
+  }
+
+  @Transactional(readOnly = true)
   public List<EvidenceChunk> findChunksByIds(List<UUID> chunkIds) {
     if (chunkIds.isEmpty()) {
       return List.of();

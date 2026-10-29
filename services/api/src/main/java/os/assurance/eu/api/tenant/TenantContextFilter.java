@@ -120,7 +120,8 @@ public class TenantContextFilter extends OncePerRequestFilter {
         // dvn_ since the Devernance rename; aos_ keys issued before it stay valid.
         boolean modern = apiKeyHeader.matches("^(dvn|aos)_[A-Za-z0-9_-]{43}$");
         if (!legacy && !modern) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + API_KEY_HEADER);
+            // A key that cannot be one of ours is a failed credential, like an unknown key (RFC 9110 401).
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid " + API_KEY_HEADER);
             return;
         }
         ApiKeyEntity key = apiKeys.findByKeyHash(ApiKeyHasher.sha256Hex(apiKeyHeader)).orElse(null);

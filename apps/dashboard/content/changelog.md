@@ -2,6 +2,16 @@
 
 Newest first. One entry per release of the hosted product.
 
+## 2026-10-28 — Sign-off is part of the release gate
+
+- Approvals now count. A rejected approval cycle blocks the release until a later cycle is approved or an admin overrides the rejected stage, and a high-risk system waits in REVIEW while any cycle is open.
+- Separation of duties: the engineering lead can raise a control to REVIEW or BLOCKED, but only compliance or an admin can mark it PASS or lift a block. Only compliance or an admin can resolve a data contract breach, and every drift closure needs a note.
+- Eval runs hold the release to their own threshold and to per-metric floors for safety refusal (0.90) and bias-slice pass rate (0.80), so a strong average can no longer hide a failing slice.
+- Devernance never makes up eval results: runs wait for your harness to report measured metrics through the signed callback, and the Evals page shows the call to make.
+- The gate explains a REVIEW: missing Annex IV sections, an unrecorded FRIA, pending approvals, low coverage. Compliance and legal can complete the Annex IV dossier and FRIA record from the new Sign-off tab.
+- Vendor documents that describe "system prompts" now count as evidence; only lines that try to instruct the AI are left out of answers.
+- Evidence packs (version 1.2) seal the list of indexed documents with their checksums and the recent eval runs with their versions and metrics.
+
 ## 2026-10-18 — EU AI Assurance OS is now Devernance
 
 - New name, same product: development and governance, hand in hand. Workspaces, data and release gates are unchanged.

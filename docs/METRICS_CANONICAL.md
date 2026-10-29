@@ -42,7 +42,7 @@ ls services/api/src/main/resources/db/postgresql/
 | Frontend | Next.js **16.2.9** · React **19.2.4** · TypeScript | `apps/dashboard/package.json` |
 | Embeddings | DJL + ONNX Runtime · `sentence-transformers/all-MiniLM-L6-v2` | Postgres profile default `djl-sentence` |
 | Embeddings (dev) | `local-hash` deterministic provider | H2 / default profile |
-| Vector store | pgvector HNSW | Postgres path (`V4` postgresql migration) |
+| Evidence search | Hybrid: Postgres full-text BM25 + pgvector cosine, fused by reciprocal rank | Postgres path (`V32_1` postgresql migration); in-memory on H2 |
 | Auth | JWT access + refresh · API keys (`X-Api-Key`) · JWKS | Cookie session via Next BFF |
 | OAuth | Google + Microsoft **implemented** | Unit/integration tests green; **prod smoke pending** — do not claim “production SSO verified” until `docs/oauth-production-smoke-test.md` is signed off |
 | Release decisions | **PASS · REVIEW · BLOCKED** | `ReleaseGateService` |
@@ -114,7 +114,7 @@ Recommended scale line (measured):
 | Topic | Correct phrase |
 |-------|----------------|
 | Embeddings | DJL + ONNX Runtime · all-MiniLM-L6-v2 (postgres); local-hash (dev) |
-| Vector index | pgvector HNSW |
+| Evidence search | Hybrid BM25 + pgvector search (reciprocal rank fusion) |
 | Audit | Hash-chained append-only audit ledger |
 | Eval integrity | HMAC-SHA-256 signed eval-result callbacks |
 | Frontend | Next.js 16 |
@@ -152,7 +152,7 @@ Recommended scale line (measured):
 ## Paste-ready short stack line
 
 ```text
-Spring Boot 4.1.1 · Java 17 · Tika 4.0.0 · Next.js 16 · pgvector HNSW · DJL/ONNX embeddings · Multi-tenant
+Spring Boot 4.1.1 · Java 17 · Tika 4.0.0 · Next.js 16 · Hybrid BM25 + pgvector search · DJL/ONNX embeddings · Multi-tenant
 JWT + API keys · Google/Microsoft OAuth (implemented; prod smoke pending)
 Flyway V1–V20 · Hash-chained audit · HMAC eval callbacks · Evidence Pack JSON+PDF · pinned evgraph-cli 0.1.3
 ```

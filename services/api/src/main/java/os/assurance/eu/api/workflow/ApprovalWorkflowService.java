@@ -9,11 +9,13 @@ import java.util.UUID;
 import os.assurance.eu.api.audit.AuditService;
 import os.assurance.eu.api.system.AiSystem;
 import os.assurance.eu.api.system.ReleaseDecision;
+import os.assurance.eu.api.system.ReleaseInputsChanged;
 import os.assurance.eu.api.system.RiskClass;
 import os.assurance.eu.api.tenant.TenantContext;
 import os.assurance.eu.api.tenant.UserEntity;
 import os.assurance.eu.api.tenant.UserJpaRepository;
 import os.assurance.eu.api.tenant.UserRole;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,18 +29,21 @@ public class ApprovalWorkflowService {
   private final UserJpaRepository users;
   private final AuditService auditService;
   private final TenantContext tenantContext;
+  private final ApplicationEventPublisher events;
 
   public ApprovalWorkflowService(
       ApprovalWorkflowRepository repository,
       WorkflowNotificationRepository notifications,
       UserJpaRepository users,
       AuditService auditService,
-      TenantContext tenantContext) {
+      TenantContext tenantContext,
+      ApplicationEventPublisher events) {
     this.repository = repository;
     this.notifications = notifications;
     this.users = users;
     this.auditService = auditService;
     this.tenantContext = tenantContext;
+    this.events = events;
   }
 
   /**
@@ -109,6 +114,7 @@ public class ApprovalWorkflowService {
       createdStages.add(savedStage);
     }
     notifyNextPendingReviewer(saved, createdStages);
+    events.publishEvent(new ReleaseInputsChanged(system.id()));
   }
 
   /**
@@ -154,6 +160,7 @@ public class ApprovalWorkflowService {
     }
 
     notifyNextPendingReviewer(workflow, updatedStages);
+    events.publishEvent(new ReleaseInputsChanged(workflow.systemId()));
     return new ApprovalWorkflow(workflow.id(), workflow.systemId(), workflow.trigger(),
         WorkflowStatus.OPEN, updatedStages, workflow.openedAt(), null, workflow.createdAt());
   }
@@ -236,8 +243,14 @@ public class ApprovalWorkflowService {
     }
 
     notifyNextPendingReviewer(workflow, updatedStages);
-    return new ApprovalWorkflow(workflow.id(), workflow.systemId(), workflow.trigger(),
+    ApprovalWorkflow reopened = new ApprovalWorkflow(workflow.id(), workflow.systemId(), workflow.trigger(),
         WorkflowStatus.OPEN, updatedStages, workflow.openedAt(), null, workflow.createdAt());
+    if (workflow.status() != WorkflowStatus.OPEN) {
+      // Overriding the stage that rejected a cycle reopens it for the stages after it.
+      repository.saveWorkflow(reopened);
+    }
+    events.publishEvent(new ReleaseInputsChanged(workflow.systemId()));
+    return reopened;
   }
 
   @Transactional(readOnly = true)
@@ -411,6 +424,7 @@ public class ApprovalWorkflowService {
     auditService.append(workflow.systemId(), "WORKFLOW_CLOSED",
         "ApprovalWorkflow", workflow.id().toString(),
         Map.of("finalStatus", finalStatus.name()));
+    events.publishEvent(new ReleaseInputsChanged(workflow.systemId()));
 
     return closed;
   }

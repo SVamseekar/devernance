@@ -36,7 +36,7 @@ Status: **Complete** (production-hardened foundation).
 - Text extraction pipeline: Apache Tika 4.0.0 for uploaded files, with metadata fallback for provided text.
 - Chunking and embedding: implemented with deterministic local embeddings (`local-hash`).
 - Embedding provider seam: implemented; postgres profile default `djl-sentence` (DJL + ONNX all-MiniLM-L6-v2).
-- pgvector similarity search: local cosine search + PostgreSQL HNSW migration path (`db/postgresql/V4`).
+- Hybrid search: BM25 keywords + embedding similarity fused by reciprocal rank; in SQL on Postgres (`db/postgresql/V32_1`, pgvector optional), in memory on H2. Sentence-aligned chunks; PDF chunks cite their page.
 - Citation-required answer generation: implemented.
 - Prompt injection safeguards and upload/query guardrails: implemented.
 - Dashboard evidence upload/list/query flow: Next.js production UI.

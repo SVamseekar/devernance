@@ -337,8 +337,15 @@ export default function EvidencePage() {
                       <p className="text-xs text-muted-foreground mt-0.5" suppressHydrationWarning>
                         {doc.type} · {doc.chunkCount} chunk{doc.chunkCount !== 1 ? "s" : ""} · {formatDate(doc.createdAt)}
                       </p>
+                      {doc.ingestionStatus === "indexed_with_warnings" && (
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                          Lines that tried to instruct the AI were left out of answers. The document still counts as evidence.
+                        </p>
+                      )}
                     </div>
-                    <span className="text-xs text-muted-foreground uppercase font-semibold text-[10px] tracking-wider">{doc.ingestionStatus}</span>
+                    <span className="text-xs text-muted-foreground uppercase font-semibold text-[10px] tracking-wider">
+                      {doc.ingestionStatus === "indexed_with_warnings" ? "indexed, lines removed" : doc.ingestionStatus}
+                    </span>
                   </div>
                 ))}
               </div>

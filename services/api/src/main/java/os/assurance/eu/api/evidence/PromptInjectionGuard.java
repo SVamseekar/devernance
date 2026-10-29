@@ -4,20 +4,27 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
+/**
+ * Drops document lines that try to instruct the model (OWASP LLM01 indirect injection). Patterns match commands,
+ * not topics: vendor transparency notes and model cards talk about "system prompts" and "developer messages" as
+ * concepts, and dropping those lines would also drop legitimate evidence. Filtering is a backstop only; answers
+ * quote retrieved text and never follow it.
+ */
 @Component
 public class PromptInjectionGuard {
-  private static final List<String> DOCUMENT_INJECTION_PATTERNS = List.of(
-      "ignore previous",
-      "ignore all previous",
-      "system prompt",
-      "developer message",
-      "reveal secret",
-      "disable citation",
-      "do not cite",
-      "bypass policy",
-      "override instruction");
+  private static final List<Pattern> DOCUMENT_INJECTION_PATTERNS = List.of(
+      Pattern.compile("\\bignore (all |any |the )?(previous|prior|above|earlier)\\b"),
+      Pattern.compile("\\bdisregard (all |any |the )?(previous|prior|above|earlier) (instructions|rules|messages)\\b"),
+      Pattern.compile("\\b(reveal|print|show|repeat|output|leak) (me )?(the |your )?(hidden |secret |full )?(system prompt|developer message|instructions)\\b"),
+      Pattern.compile("\\b(you are|you're) now (in |a |an )?(developer|god|jailbreak|dan) mode\\b"),
+      Pattern.compile("\\breveal secret"),
+      Pattern.compile("\\bdisable citation"),
+      Pattern.compile("\\bdo not cite (any |the |your )?(sources|documents|evidence|citations)\\b"),
+      Pattern.compile("\\bbypass (the |any |all )?(policy|policies|safety|guardrails)\\b"),
+      Pattern.compile("\\boverride (the |your |all |any )?(previous |prior )?instruction"));
 
   private static final String ZERO_WIDTH_CHARACTERS = "[\\u200B-\\u200F\\uFEFF]";
 
@@ -70,7 +77,7 @@ public class PromptInjectionGuard {
   }
 
   private boolean looksLikeInjection(String normalizedLowercaseText) {
-    return DOCUMENT_INJECTION_PATTERNS.stream().anyMatch(normalizedLowercaseText::contains);
+    return DOCUMENT_INJECTION_PATTERNS.stream().anyMatch(pattern -> pattern.matcher(normalizedLowercaseText).find());
   }
 
   private boolean pairIntroducesNewPattern(String line, String next) {
@@ -83,8 +90,9 @@ public class PromptInjectionGuard {
     if (!looksLikeInjection(normalizedLine) && !looksLikeInjection(normalizedNext)) {
       return true;
     }
-    for (String pattern : DOCUMENT_INJECTION_PATTERNS) {
-      if (pair.contains(pattern) && !normalizedLine.contains(pattern) && !normalizedNext.contains(pattern)) {
+    for (Pattern pattern : DOCUMENT_INJECTION_PATTERNS) {
+      if (pattern.matcher(pair).find() && !pattern.matcher(normalizedLine).find()
+          && !pattern.matcher(normalizedNext).find()) {
         return true;
       }
     }

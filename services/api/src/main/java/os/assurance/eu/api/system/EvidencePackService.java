@@ -17,6 +17,10 @@ import os.assurance.eu.api.contract.DataContractService;
 import os.assurance.eu.api.contract.DriftEvent;
 import os.assurance.eu.api.contract.DriftStatus;
 import os.assurance.eu.api.determination.DeterminationService;
+import os.assurance.eu.api.eval.EvalRun;
+import os.assurance.eu.api.eval.EvalRunRepository;
+import os.assurance.eu.api.evidence.EvidenceDocument;
+import os.assurance.eu.api.evidence.EvidenceRepository;
 import os.assurance.eu.api.framework.CrosswalkService;
 import os.assurance.eu.api.proposal.MappingProposalService;
 import os.assurance.eu.api.publicclaims.PublicClaimsCatalog;
@@ -29,7 +33,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EvidencePackService {
-  public static final String PACK_VERSION = "1.1";
+  public static final String PACK_VERSION = "1.2";
 
   private final AiSystemRepository repository;
   private final ReleaseGateService releaseGateService;
@@ -46,6 +50,8 @@ public class EvidencePackService {
   private final JwtService jwtService;
   private final CrosswalkService crosswalks;
   private final EntitlementService entitlements;
+  private final EvidenceRepository evidenceDocuments;
+  private final EvalRunRepository evalRunHistory;
   private final String generator;
 
   public EvidencePackService(
@@ -64,6 +70,8 @@ public class EvidencePackService {
       JwtService jwtService,
       CrosswalkService crosswalks,
       EntitlementService entitlements,
+      EvidenceRepository evidenceDocuments,
+      EvalRunRepository evalRunHistory,
       @Value("${assurance.evidence-pack.generator:devernance-api/0.1.0}") String generator) {
     this.repository = repository;
     this.releaseGateService = releaseGateService;
@@ -80,6 +88,8 @@ public class EvidencePackService {
     this.jwtService = jwtService;
     this.crosswalks = crosswalks;
     this.entitlements = entitlements;
+    this.evidenceDocuments = evidenceDocuments;
+    this.evalRunHistory = evalRunHistory;
     this.generator = generator;
   }
 
@@ -119,12 +129,20 @@ public class EvidencePackService {
     Map<String, Integer> evidenceCounts = assessment.counts(system.id());
     Map<String, Object> monitoringPlan = MonitoringPlan.standIn();
     Map<String, Object> riskClassification = riskClassification(system);
+    // Inside the seal: which documents back the coverage figure (with their checksums) and which eval runs back
+    // the score, so a buyer can check both without trusting an unsigned index.
     List<Map<String, Object>> evidence = List.of(Map.of(
         "coverage", system.evidenceCoverage(),
-        "openGaps", system.openGaps()));
+        "openGaps", system.openGaps(),
+        "documents", evidenceDocuments.findDocumentsBySystemId(system.id()).stream()
+            .map(EvidencePackService::documentRow)
+            .toList()));
     List<Map<String, Object>> evalRuns = List.of(Map.of(
         "latestScore", system.evalScore(),
-        "releaseDecision", system.releaseDecision()));
+        "releaseDecision", system.releaseDecision(),
+        "runs", evalRunHistory.findRecentCompleted(system.id()).stream()
+            .map(EvidencePackService::evalRunRow)
+            .toList()));
 
     Map<String, Object> sealPayload = EvidencePackSealer.sealPayload(
         PACK_VERSION,
@@ -429,5 +447,30 @@ public class EvidencePackService {
     drift.put("createdAt", event.createdAt());
     drift.put("updatedAt", event.updatedAt());
     return drift;
+  }
+
+  static Map<String, Object> documentRow(EvidenceDocument document) {
+    Map<String, Object> row = new LinkedHashMap<>();
+    row.put("documentId", document.id().toString());
+    row.put("type", document.type());
+    row.put("title", document.title());
+    row.put("sha256", document.checksum());
+    row.put("ingestionStatus", document.ingestionStatus());
+    row.put("indexedAt", document.createdAt() == null ? null : document.createdAt().toString());
+    return row;
+  }
+
+  static Map<String, Object> evalRunRow(EvalRun run) {
+    Map<String, Object> row = new LinkedHashMap<>();
+    row.put("runId", run.runId().toString());
+    row.put("dataset", run.dataset());
+    row.put("modelVersion", run.modelVersion());
+    row.put("promptVersion", run.promptVersion());
+    row.put("threshold", run.threshold());
+    row.put("metrics", run.metrics() == null ? Map.of() : run.metrics());
+    row.put("runDecision", run.releaseDecision() == null ? null : run.releaseDecision().name());
+    row.put("synthetic", run.metrics() != null && Boolean.TRUE.equals(run.metrics().get("synthetic")));
+    row.put("completedAt", run.completedAt() == null ? null : run.completedAt().toString());
+    return row;
   }
 }

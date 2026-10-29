@@ -19,6 +19,7 @@ import os.assurance.eu.api.system.ReleaseDecision;
 import os.assurance.eu.api.system.ReleaseGateService;
 import os.assurance.eu.api.system.RiskClass;
 import os.assurance.eu.api.tenant.TenantContext;
+import os.assurance.eu.api.tenant.UserRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -207,10 +208,29 @@ public class ControlService {
   @Transactional
   public SystemControl updateSystemControl(
       UUID systemId, UUID controlId, UpdateSystemControlRequest request) {
+    return updateSystemControl(systemId, controlId, request, UserRole.ADMIN);
+  }
+
+  /**
+   * Separation of duties: the engineering lead who ships the system may raise a control to REVIEW or BLOCKED,
+   * but only compliance (or an admin) can mark it PASS or lift a block, so nobody attests their own release.
+   */
+  public SystemControl updateSystemControl(
+      UUID systemId, UUID controlId, UpdateSystemControlRequest request, UserRole actorRole) {
     requireSystem(systemId);
     SystemControlEntity existing = systemControls
         .findByTenantIdAndSystemIdAndControlId(tenantContext.tenantId(), systemId, controlId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "System control not found"));
+    if (actorRole == UserRole.AI_ENGINEERING_LEAD) {
+      if (request.status() == ControlStatus.PASS) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Only compliance or an admin can mark a control PASS");
+      }
+      if (existing.status() == ControlStatus.BLOCKED && request.status() != ControlStatus.BLOCKED) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Only compliance or an admin can lift a BLOCKED control");
+      }
+    }
     SystemControlEntity updated = new SystemControlEntity(
         tenantContext.tenantId(),
         existing.id(),

@@ -12,6 +12,16 @@ public interface EvidenceChunkJpaRepository extends JpaRepository<EvidenceChunkE
       + "c.embeddingProvider as embeddingProvider from EvidenceChunkEntity c where c.documentId in :documentIds")
   List<ChunkVector> findVectorsByDocumentIdIn(@Param("documentIds") List<UUID> documentIds);
 
+  /** Chunk text for the in-memory keyword index (H2 and local runs only; Postgres ranks in SQL). */
+  @Query("select c.id as id, c.content as content from EvidenceChunkEntity c where c.documentId in :documentIds")
+  List<ChunkText> findTextsByDocumentIdIn(@Param("documentIds") List<UUID> documentIds);
+
+  interface ChunkText {
+    UUID getId();
+
+    String getContent();
+  }
+
   interface ChunkVector {
     UUID getId();
 
