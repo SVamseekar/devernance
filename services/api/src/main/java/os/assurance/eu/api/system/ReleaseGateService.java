@@ -29,6 +29,7 @@ public class ReleaseGateService {
   private static final int EVIDENCE_PASS_THRESHOLD = 82;
   private static final int EVAL_PASS_THRESHOLD = 85;
   private static final int EVAL_HARD_BLOCK_THRESHOLD = 78;
+  private static final String ANNEX_IV_FLAG = "ANNEX_IV_INCOMPLETE:";
 
   private final SystemControlJpaRepository systemControls;
   private final ControlJpaRepository controls;
@@ -136,8 +137,15 @@ public class ReleaseGateService {
       addOnce(signal.level() == ReleaseGateSignals.Level.BLOCK ? blockers : reviewReasons, signal.message());
     }
 
-    if (system.evidenceCoverage() < EVIDENCE_PASS_THRESHOLD) {
-      reviewReasons.add("Evidence coverage " + system.evidenceCoverage() + "% is below " + EVIDENCE_PASS_THRESHOLD + "%");
+    // Each open gap is said once: a gap that a blocker or the coverage line already names is folded into it.
+    List<String> missingEvidence = system.openGaps().stream()
+        .filter(gap -> gap.startsWith(GateInputService.GAP_PREFIX))
+        .map(gap -> gap.substring(GateInputService.GAP_PREFIX.length()))
+        .toList();
+    boolean coverageShort = system.evidenceCoverage() < EVIDENCE_PASS_THRESHOLD;
+    if (coverageShort) {
+      reviewReasons.add("Evidence coverage " + system.evidenceCoverage() + "% is below " + EVIDENCE_PASS_THRESHOLD + "%"
+          + (missingEvidence.isEmpty() ? "" : " (missing: " + String.join(", ", missingEvidence) + ")"));
     }
     if (!noEvalYet && system.evalScore() >= EVAL_HARD_BLOCK_THRESHOLD && system.evalScore() < EVAL_PASS_THRESHOLD) {
       reviewReasons.add("Eval score " + system.evalScore() + " is below " + EVAL_PASS_THRESHOLD);
@@ -146,15 +154,17 @@ public class ReleaseGateService {
       reviewReasons.add("Data contract has an open warning, or no data contract is recorded");
     }
     for (String gap : system.openGaps()) {
-      if (oversightAnswered && gap.toLowerCase(Locale.ROOT).contains("oversight")) {
-        continue;
+      boolean oversightGap = gap.toLowerCase(Locale.ROOT).contains("oversight");
+      boolean statedElsewhere = (oversightGap && (oversightAnswered || system.riskClass() == RiskClass.HIGH))
+          || (coverageShort && gap.startsWith(GateInputService.GAP_PREFIX))
+          || (GateInputService.NO_EVAL_GAP.equals(gap) && noEvalYet && system.riskClass() == RiskClass.HIGH);
+      if (!statedElsewhere) {
+        addOnce(reviewReasons, "Open gap: " + gap);
       }
-      addOnce(reviewReasons, "Open gap: " + gap);
     }
     if (system.riskClass() == RiskClass.HIGH) {
-      for (String flag : loadConformityReviewFlags(system.id(), system.riskClass())) {
-        addOnce(reviewReasons, describeConformityFlag(flag));
-      }
+      describeConformityFlags(loadConformityReviewFlags(system.id(), system.riskClass()))
+          .forEach(reason -> addOnce(reviewReasons, reason));
     }
 
     if (!blockers.isEmpty()) {
@@ -202,15 +212,27 @@ public class ReleaseGateService {
     }
   }
 
-  static String describeConformityFlag(String flag) {
-    if (flag.startsWith("ANNEX_IV_INCOMPLETE:")) {
-      return "Annex IV section " + flag.substring("ANNEX_IV_INCOMPLETE:".length())
-          + " is missing from the conformity dossier";
+  /** Missing Annex IV sections become one line, so a new dossier does not list nine near-identical reasons. */
+  static List<String> describeConformityFlags(List<String> flags) {
+    List<String> sections = flags.stream()
+        .filter(flag -> flag.startsWith(ANNEX_IV_FLAG))
+        .map(flag -> flag.substring(ANNEX_IV_FLAG.length()))
+        .toList();
+    List<String> out = new ArrayList<>();
+    if (sections.size() == 1) {
+      out.add("Annex IV section " + sections.get(0) + " is missing from the conformity dossier");
+    } else if (!sections.isEmpty()) {
+      out.add("Annex IV sections " + String.join(", ", sections) + " are missing from the conformity dossier");
     }
-    if ("FRIA_NOT_RECORDED".equals(flag)) {
-      return "Fundamental rights impact assessment (FRIA) is not recorded or waived";
+    for (String flag : flags) {
+      if (flag.startsWith(ANNEX_IV_FLAG)) {
+        continue;
+      }
+      out.add("FRIA_NOT_RECORDED".equals(flag)
+          ? "Fundamental rights impact assessment (FRIA) is not recorded or waived"
+          : flag);
     }
-    return flag;
+    return out;
   }
 
   private List<String> loadControlBlockers(UUID systemId) {

@@ -52,7 +52,7 @@ test("sign-off, eval reporting and drift closure follow separation of duties", a
   await page.getByRole("button", { name: "Sign-off", exact: true }).click();
   await expect(page.getByText("High-risk system is missing required human oversight evidence")).toBeVisible();
   await expect(page.getByText(/^Approval pending: ENG_LEAD_REVIEW \(\w+ cycle\)$/)).toBeVisible();
-  await expect(page.getByText("Annex IV section IV.1 is missing from the conformity dossier")).toBeVisible();
+  await expect(page.getByText(/^Annex IV sections IV\.1, .* are missing from the conformity dossier$/)).toBeVisible();
   const oversight = page.getByLabel("Status for Human oversight", { exact: false }).first();
   await expect(oversight.locator("option", { hasText: "PASS" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Save dossier" })).toHaveCount(0);

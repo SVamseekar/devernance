@@ -267,10 +267,14 @@ class GovernanceSignOffApiTest {
   void aHighRiskReviewSaysWhichConformityItemsAreMissing() throws Exception {
     String systemId = create("HIGH");
     gate(systemId)
-        .andExpect(jsonPath("$.reviewReasons", hasItem("Annex IV section IV.1 is missing from the conformity dossier")))
+        .andExpect(jsonPath("$.reviewReasons", hasItem(
+            "Annex IV sections IV.1, IV.2, IV.3, IV.4, IV.5, IV.6, IV.7, IV.8, IV.9 are missing from the conformity dossier")))
         .andExpect(jsonPath("$.reviewReasons",
             hasItem("Fundamental rights impact assessment (FRIA) is not recorded or waived")))
-        .andExpect(jsonPath("$.reviewReasons", hasItem("Evidence coverage 0% is below 82%")));
+        .andExpect(jsonPath("$.reviewReasons", hasItem(org.hamcrest.Matchers.startsWith("Evidence coverage 0% is below 82%"))))
+        // Gaps the blockers and the coverage line already state are not repeated as "Open gap" lines.
+        .andExpect(jsonPath("$.reviewReasons", not(hasItem(org.hamcrest.Matchers.startsWith("Open gap: Missing evidence")))))
+        .andExpect(jsonPath("$.reviewReasons", not(hasItem("Open gap: Human oversight evidence required"))));
   }
 
   @Test
