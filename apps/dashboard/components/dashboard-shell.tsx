@@ -24,6 +24,10 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: "AI System Registry",
     subtitle: "Inventory of providers, deployers, risk classifications, and EU Act obligations.",
   },
+  "/governance": {
+    title: "Governance Runtime",
+    subtitle: "Policies applied as code, runtime decisions for agents, human approvals of high-impact actions, and drift.",
+  },
   "/approvals": {
     title: "Approval Workflows",
     subtitle: "Review and sign off AI system releases. Staged approvals for engineering, compliance, and legal.",

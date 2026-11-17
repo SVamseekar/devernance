@@ -25,6 +25,12 @@ import type {
   CorpusView,
   EvidenceQueryResponse,
   ProposalList,
+  GovernanceApproval,
+  GovernanceApprovalStatus,
+  GovernanceDecision,
+  GovernanceDecisionStatus,
+  GovernanceDriftReport,
+  GovernanceSystemStatus,
   MappingProposal,
   RegItem,
   RegMonitorFeed,
@@ -477,6 +483,31 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ documents }),
       }),
+  },
+  /** Governance runtime: policies applied with the CLI, runtime decisions, human approvals, drift. */
+  governance: {
+    status: () => request<GovernanceSystemStatus[]>("/governance/status"),
+    approvals: (status?: GovernanceApprovalStatus, limit = 50) =>
+      request<GovernanceApproval[]>(
+        `/governance/approvals?limit=${limit}${status ? `&status=${status}` : ""}`
+      ),
+    /** Approving needs a signed-in person with a role the policy names; an API key never can. */
+    approve: (approvalId: string, rationale: string) =>
+      request<GovernanceApproval>(`/governance/approvals/${approvalId}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ rationale }),
+      }),
+    /** The API refuses a rejection without a rationale. */
+    reject: (approvalId: string, rationale: string) =>
+      request<GovernanceApproval>(`/governance/approvals/${approvalId}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ rationale }),
+      }),
+    decisions: (status?: GovernanceDecisionStatus, limit = 50) =>
+      request<GovernanceDecision[]>(
+        `/governance/decisions?limit=${limit}${status ? `&status=${status}` : ""}`
+      ),
+    drift: () => request<GovernanceDriftReport[]>("/governance/drift"),
   },
   sectorPacks: {
     list: () => request<SectorPacksResponse>("/sector-packs"),
