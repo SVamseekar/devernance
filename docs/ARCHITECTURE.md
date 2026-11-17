@@ -18,6 +18,10 @@ flowchart LR
   API --> Readiness["Certification Readiness"]
   API --> RegMonitor["Reg Monitor Feed"]
   API --> Sector["Sector Packs + SPI"]
+  API --> Governance["Governance Runtime<br/>policy decisions, approvals, drift, signed evidence"]
+  Agent["AI agent (Python SDK)"] --> API
+  CLI["devernance CLI / CI"] --> API
+  Governance --> DB
   Evidence --> Vector["pgvector / local-hash Index"]
   Evidence --> ObjectStore["Optional S3/MinIO"]
   Eval --> Queue["DB Worker Queue"]
@@ -52,12 +56,20 @@ Single deployable Spring Boot app under `os.assurance.eu.api`. Domain packages m
 | `readiness` | Certification readiness score + gaps (not legal cert) |
 | `regmonitor` | Polled regulatory change feed + impact hints |
 | `sector` | Sector packs SPI + insurance connector stubs |
+| `governance` | Policy-as-code manifests, runtime authorization (ALLOW / DENY / REVIEW), action approvals, drift reconciliation, signed evidence bundles; see [GOVERNANCE_PLATFORM.md](GOVERNANCE_PLATFORM.md) |
 
 ### Dashboard (Next.js)
 
 - Route group `app/(dashboard)/` with shared sidebar/header.
 - Public marketing: `/`, `/product`, `/how-it-works`, `/who-its-for`, `/pricing`, `/method`, `/faq`, login, request-demo, privacy, terms, refunds, disclaimer, DPA/MSA/order-form templates.
-- Product routes: command, systems, approvals, evidence, evals, contracts, audit, readiness, reg-monitor.
+- Product routes: command, systems, governance, approvals, evidence, evals, contracts, audit, readiness, reg-monitor.
+
+### Governance runtime, CLI and SDK
+
+Release-time governance (the release gate) answers "may this version ship?". The governance runtime answers "may
+this agent take this action now?" and "is what runs still what was approved?". Policies live as YAML in the
+application repository, are applied with the `devernance` CLI (`sdk/python`), evaluated by the API at runtime
+through the Python SDK, and exported as signed evidence bundles. Full design: [GOVERNANCE_PLATFORM.md](GOVERNANCE_PLATFORM.md).
 - BFF-style proxy to Spring API; session via httpOnly cookies; browser never trusts client-supplied tenant headers.
 
 ### Evidence Service

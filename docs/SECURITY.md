@@ -133,6 +133,8 @@ Primary risks:
 - Data-contract drift causing unvalidated model behavior.
 - OAuth state CSRF / token confusion if misconfigured.
 - Overclaiming certification or legal determination via product UI copy.
+- A prompt-injected or compromised AI agent taking a high-impact action (governance runtime).
+- An agent approving its own request, or a code path skipping runtime authorization.
 
 Mitigations:
 
@@ -151,6 +153,14 @@ Mitigations:
 - Outbound fetches (evidence URLs, regulatory feeds) connect only to globally routable addresses: private, loopback, link-local (cloud metadata), carrier-grade NAT, benchmark, documentation and reserved ranges are refused, including IPv6 forms that embed them. Fetched documents are capped at 25 MB and parsed under a 30 s timeout.
 - Auth emails are sent off the request thread, so response time does not reveal whether an address has an account.
 - Post-login and OAuth return paths must resolve to the same origin (`/\host` and control-character tricks are refused).
+- Governance runtime ([GOVERNANCE_PLATFORM.md](GOVERNANCE_PLATFORM.md#8-security-model)): policies are evaluated
+  outside the model and fail closed (missing facts deny, an uncovered action is denied by default, the SDK refuses
+  to run an action when the server cannot be reached). Agents use `RUNTIME` keys that can only ask for decisions and
+  report outcomes and state. Approvals need a signed-in session, a role the policy names, and a different person
+  from the requester and from the creator of the requesting API key. Authorization tokens are handed only to the
+  caller that made the request. Authorized actions carry a signed, single-use token bound to the exact request, which the
+  protected service verifies. The agent identity on a decision is the authenticated key's name, never a value from
+  the request body.
 
 ## Remaining residual risks (honest)
 
@@ -162,6 +172,15 @@ Mitigations:
 - The dashboard CSP allows `'unsafe-inline'` scripts: Next.js inlines its RSC payload, and a nonce-based policy would make every page dynamic. XSS defence rests on React escaping and on never rendering user HTML.
 - Rate limits, the demo question cap and the JWKS and chain-verification caches are in memory, so they hold per API instance. Production runs one instance; a second one would need a shared store (or Cloudflare edge rules) for the limits.
 - The per-account login limit (10 attempts in 15 minutes, across all addresses, against distributed guessing) also lets anyone who knows an address delay that user's password sign-in for up to 15 minutes. Google and Microsoft sign-in are not affected.
+- The governance runtime cannot see an action that never asks for authorization. Coverage depends on placing the SDK
+  check (and token verification in the protected service) at every execution path; the evidence bundle states this
+  limitation in its signed manifest. Every decision is a network call to the API (no local decision point yet).
+- The authorization token can be verified offline against the JWKS, but only `POST /authorizations/verify` redeems
+  it and knows whether it was already used. A service that only checks the signature offline accepts a replay within
+  the token's lifetime (default 5 minutes).
+- Drift is what deployments report. A RUNTIME key can report observations, so an agent that holds one could report
+  itself in sync. Report state from a separate credential (the deploy pipeline or a cluster job) and treat agent
+  self-reports as a hint, not proof.
 - A document that hangs the PDF or Office parser past its 30 s timeout keeps one of two parser threads busy until it finishes; parsing is not isolated in a separate process.
 
 ## EU Context

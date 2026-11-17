@@ -28,6 +28,7 @@ export const ANALYTICS_EXCLUDED_PREFIXES = [
   "/corpus",
   "/evals",
   "/evidence",
+  "/governance",
   "/onboarding",
   "/proposals",
   "/public-claims",

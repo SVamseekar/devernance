@@ -1,0 +1,55 @@
+# The company rules for the claims agent, as rules software can evaluate:
+#   1. The agent reads only the customer of its authorised claim.
+#   2. Refunds above 50,000 need human approval.
+#   3. Customer data is never exported externally.
+#   4. Only approved model versions run.
+#   5. Every payment action is recorded (every decision is, always).
+apiVersion: devernance.io/v1
+kind: GovernancePolicy
+metadata:
+  name: insurance-claims-policy
+spec:
+  target:
+    system: claims-agent
+
+  models:
+    approved:
+      - gpt-4.1@2025-04-14
+
+  # Which action each tool performs. A tool that is missing here fails `devernance validate`.
+  tools:
+    claim_search: claim.search
+    customer_database: customer.read
+    process_refund: payment.refund
+
+  # An action no rule covers is denied.
+  rules:
+    - action: claim.search
+      decision: allow
+
+    - action: customer.read
+      decision: allow
+      requirement: The agent reads only the customer of its authorised claim
+      require:
+        - {field: resource.customer_id, op: eq, valueFrom: context.authorized_customer_id}
+
+    - action: payment.refund
+      decision: allow
+      requirement: Refunds above 50,000 need approval by a compliance officer
+      require:
+        - {field: resource.customer_id, op: eq, valueFrom: context.authorized_customer_id}
+      review:
+        - when:
+            - {field: context.amount, op: gt, value: 50000}
+          approverRoles: [COMPLIANCE_OFFICER]
+          reason: High-value refund
+          expiresAfterMinutes: 240
+
+    - action: customer.export
+      decision: deny
+      reason: External customer-data export is prohibited
+
+  enforcement:
+    deployment: blocking
+    runtime: enforce
+    onDrift: continue

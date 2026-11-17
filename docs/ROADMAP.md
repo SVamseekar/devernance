@@ -111,6 +111,29 @@ Status: **Complete** (assisted naming forever — never final legal authority).
 | Polled regulatory change monitoring feed | **Complete** | Part 14 · PR #32 · Flyway V16 · not an official legal bulletin |
 | Sector packs: insurance, HR, finance + SPI | **Complete** | Part 15 · PR #34 · stubs only; see `docs/SECTOR_PACKS.md` |
 
+## Phase 8: Governance runtime (policy-as-code, runtime enforcement, reconciliation)
+
+Status: **Built and tested** (API, CLI, SDK, dashboard, end-to-end script in CI). Not yet deployed to the hosted API.
+Design: `docs/GOVERNANCE_PLATFORM.md`.
+
+| Item | Status | Evidence |
+|---|---|---|
+| Versioned `AISystem` / `GovernancePolicy` manifests, declarative apply | **Built** | Flyway V33 · `GovernanceApplyService` |
+| Validation (ungoverned / prohibited tools, unapproved model) and policy tests | **Built** | `GovernanceValidator`, `POST /governance/simulate` |
+| Runtime decisions ALLOW / DENY / REVIEW, fail closed | **Built** | `PolicyEvaluator`, `POST /governance/authorize` |
+| Action approvals (session only, policy roles, no self-approval, expiry) | **Built** | `GovernanceAuthorizationService` · dashboard `/governance` |
+| Signed, single-use, request-bound authorization tokens | **Built** | `POST /governance/authorizations/verify` |
+| `RUNTIME` API key scope for agents | **Built** | `ApiKeyScope` |
+| Drift reconciliation (model, prompt, tools, policy version) | **Built** | `GovernanceDriftService` |
+| Release check combining gate, validation and drift | **Built** | `GET /governance/release-check` |
+| Signed evidence bundle + offline verifier; evidence closure report | **Built** | `GovernanceEvidenceService`, `sdk/python/devernance/verify.py` |
+| `devernance` CLI and Python SDK (`guard`, `governed`) | **Built** | `sdk/python` |
+| Runnable insurance claims example + end-to-end script in CI | **Built** | `examples/claims-agent`, `scripts/governance-e2e.sh` |
+| Local decision point (sidecar) with signed policy distribution | **Planned** | see GOVERNANCE_PLATFORM.md §10 |
+| Kubernetes operator for drift observation | **Planned** | |
+| OPA / Cedar adapter, MCP gateway, Java and TypeScript SDKs | **Planned** | |
+| Trusted timestamps on bundles, N-of-M approvals | **Planned** | |
+
 ## Cross-cutting delivery (Wave F and docs)
 
 | Item | Status | Evidence |
@@ -127,3 +150,5 @@ Status: **Complete** (assisted naming forever — never final legal authority).
 - Production OAuth smoke verified until smoke runbook is executed.
 - Live proprietary vendor connectors (Workday, Guidewire, core banking, …).
 - Customer counts, ARR, or invented commercial metrics.
+- That the governance runtime sees every action of an agent: it governs only actions that ask for authorization.
+- Kubernetes-native enforcement, OPA/Cedar integration or a local decision point (all planned, none built).
