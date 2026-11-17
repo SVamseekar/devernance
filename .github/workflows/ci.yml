@@ -359,11 +359,16 @@ jobs:
           terraform validate
 
   sdk-test:
-    name: Python SDK and CLI
+    name: Python SDK and CLI (${{ matrix.python }})
     needs: changes
     if: needs.changes.outputs.sdk == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest supported version (pyproject requires-python) and the newest release.
+        python: ["3.10", "3.15"]
     defaults:
       run:
         working-directory: sdk/python
@@ -371,7 +376,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python }}
       - name: Install the package (also proves pyproject.toml builds)
         run: python -m pip install .
       - name: Unit tests

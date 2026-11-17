@@ -6,7 +6,7 @@ Governance for AI agents, enforced where the agent acts.
   inspect decisions and drift, export and verify signed evidence.
 - **SDK** `devernance.GovernanceClient`: ask before every sensitive action; run it only when authorized.
 
-Needs Python 3.9+ and PyYAML. Talks to a Devernance API (`services/api` in this repository).
+Needs Python 3.10+ and PyYAML. Talks to a Devernance API (`services/api` in this repository).
 
 ```bash
 pip install ./sdk/python
