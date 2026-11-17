@@ -1,0 +1,66 @@
+# Policy unit tests: `devernance test -f governance/`. They run before anything is applied.
+apiVersion: devernance.io/v1
+kind: PolicyTests
+cases:
+  - name: searching claims is allowed
+    system: claims-agent
+    action: claim.search
+    expect: ALLOW
+
+  - name: a 20,000 refund for the authorised customer is allowed
+    system: claims-agent
+    action: payment.refund
+    resource: {customer_id: CUST-102}
+    context: {authorized_customer_id: CUST-102, amount: 20000, currency: INR}
+    expect: ALLOW
+
+  - name: a refund of exactly 50,000 is allowed
+    system: claims-agent
+    action: payment.refund
+    resource: {customer_id: CUST-102}
+    context: {authorized_customer_id: CUST-102, amount: 50000, currency: INR}
+    expect: ALLOW
+
+  - name: a 75,000 refund needs approval
+    system: claims-agent
+    action: payment.refund
+    resource: {customer_id: CUST-102}
+    context: {authorized_customer_id: CUST-102, amount: 75000, currency: INR}
+    expect: REVIEW
+
+  - name: a refund without an amount is denied, not waved through
+    system: claims-agent
+    action: payment.refund
+    resource: {customer_id: CUST-102}
+    context: {authorized_customer_id: CUST-102}
+    expect: DENY
+
+  - name: a refund to another customer is denied
+    system: claims-agent
+    action: payment.refund
+    resource: {customer_id: CUST-999}
+    context: {authorized_customer_id: CUST-102, amount: 100, currency: INR}
+    expect: DENY
+
+  - name: reading another customer's record is denied
+    system: claims-agent
+    action: customer.read
+    resource: {customer_id: CUST-999}
+    context: {authorized_customer_id: CUST-102}
+    expect: DENY
+
+  - name: exporting customer data is denied
+    system: claims-agent
+    action: customer.export
+    expect: DENY
+
+  - name: an action nobody wrote a rule for is denied
+    system: claims-agent
+    action: claim.delete
+    expect: DENY
+
+  - name: an unapproved model is denied even for an allowed action
+    system: claims-agent
+    action: claim.search
+    model: gpt-4.1@2026-01-15
+    expect: DENY

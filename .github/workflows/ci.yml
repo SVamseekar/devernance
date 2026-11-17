@@ -63,6 +63,7 @@ jobs:
       api: ${{ steps.filter.outputs.api }}
       dashboard: ${{ steps.filter.outputs.dashboard }}
       terraform: ${{ steps.filter.outputs.terraform }}
+      sdk: ${{ steps.filter.outputs.sdk }}
       infra: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v7
@@ -76,6 +77,11 @@ jobs:
               - '.github/workflows/ci.yml'
             dashboard:
               - 'apps/dashboard/**'
+              - '.github/workflows/ci.yml'
+            sdk:
+              - 'sdk/**'
+              - 'examples/**'
+              - 'scripts/governance-e2e.sh'
               - '.github/workflows/ci.yml'
             terraform:
               - 'infra/terraform/**'
@@ -352,10 +358,31 @@ jobs:
           terraform init -backend=false -input=false
           terraform validate
 
+  sdk-test:
+    name: Python SDK and CLI
+    needs: changes
+    if: needs.changes.outputs.sdk == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sdk/python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.9"
+      - name: Install the package (also proves pyproject.toml builds)
+        run: python -m pip install .
+      - name: Unit tests
+        run: python -m unittest discover -s tests -t . -v
+      - name: CLI entry point
+        run: devernance --version
+
   e2e:
     name: E2E (login → register → evidence)
     needs: changes
-    if: needs.changes.outputs.api == 'true' || needs.changes.outputs.dashboard == 'true' || github.event_name != 'pull_request'
+    if: needs.changes.outputs.api == 'true' || needs.changes.outputs.dashboard == 'true' || needs.changes.outputs.sdk == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -408,6 +435,12 @@ jobs:
       - name: Run E2E
         working-directory: apps/dashboard
         run: npm run e2e
+      - name: Governance E2E (CLI and Python SDK against the running API)
+        env:
+          DEVERNANCE_E2E_SERVER: http://localhost:8080
+        run: |
+          python -m pip install pyyaml
+          scripts/governance-e2e.sh
       - name: Upload logs
         if: failure()
         uses: actions/upload-artifact@v7
