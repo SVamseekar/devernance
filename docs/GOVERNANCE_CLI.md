@@ -1,6 +1,6 @@
 # `devernance` CLI and Python SDK
 
-The command line and the Python library ship in one package: `sdk/python`. They need Python 3.9+ and PyYAML,
+The command line and the Python library ship in one package: `sdk/python`. They need Python 3.10+ and PyYAML,
 nothing else. Concepts: [GOVERNANCE_PLATFORM.md](GOVERNANCE_PLATFORM.md). Manifest fields:
 [GOVERNANCE_POLICY_REFERENCE.md](GOVERNANCE_POLICY_REFERENCE.md).
 
