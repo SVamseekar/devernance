@@ -334,7 +334,7 @@ export interface Me {
   demo: boolean;
 }
 
-export type ApiKeyScope = "RELEASE_GATE" | "FULL";
+export type ApiKeyScope = "RELEASE_GATE" | "RUNTIME" | "FULL";
 
 export interface ApiKeyView {
   id: string;
@@ -670,4 +670,103 @@ export interface ConformityDossier {
   annexIv: { disclaimer?: string; legalRef?: string; sections: ConformitySection[] } & Record<string, unknown>;
   fria: { status: string; disclaimer?: string; notes?: string } & Record<string, unknown>;
   [key: string]: unknown;
+}
+
+// ---- Governance runtime (docs/GOVERNANCE_PLATFORM.md) --------------------------------------------------
+
+export type GovernanceDecisionStatus = "ALLOW" | "DENY" | "REVIEW";
+export type GovernanceApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
+
+export interface GovernancePolicyRef {
+  name: string;
+  version: number;
+}
+
+export interface GovernanceFinding {
+  code: string;
+  severity: "ERROR" | "WARNING";
+  system: string;
+  subject: string;
+  message: string;
+}
+
+export interface GovernanceValidation {
+  valid: boolean;
+  errors: number;
+  warnings: number;
+  findings: GovernanceFinding[];
+}
+
+export interface GovernanceDriftDifference {
+  property: string;
+  approved: string;
+  observed: string;
+}
+
+export interface GovernanceDriftReport {
+  system: string;
+  systemId: string;
+  environment: string;
+  observed: boolean;
+  inSync: boolean;
+  differences: GovernanceDriftDifference[];
+  reassessment: { required: boolean; modelApproved: boolean | null; notes: string[] };
+  observedState: Record<string, unknown>;
+  observedAt: string | null;
+  source: string | null;
+}
+
+export interface GovernanceSystemStatus {
+  system: string;
+  systemId: string;
+  systemVersion: number;
+  model: string | null;
+  tools: string[];
+  policy: GovernancePolicyRef | null;
+  runtimeEnforcement: "enforce" | "monitor" | "none";
+  validation: GovernanceValidation;
+  drift: GovernanceDriftReport[];
+  pendingApprovals: number;
+  decisionsLast24h: Record<GovernanceDecisionStatus, number>;
+}
+
+export interface GovernanceApproval {
+  id: string;
+  decisionId: string;
+  systemId: string;
+  system: string;
+  action: string;
+  agent: string;
+  resource: Record<string, unknown>;
+  context: Record<string, unknown>;
+  status: GovernanceApprovalStatus;
+  approverRoles: string[];
+  reason: string;
+  decidedBy: string | null;
+  rationale: string | null;
+  requestedAt: string;
+  expiresAt: string;
+  decidedAt: string | null;
+}
+
+export interface GovernanceDecision {
+  id: string | null;
+  system: string;
+  systemId: string;
+  systemVersion: number;
+  action: string;
+  resource: Record<string, unknown>;
+  context: Record<string, unknown>;
+  model: string | null;
+  environment: string;
+  agent: string;
+  status: GovernanceDecisionStatus;
+  enforced: boolean;
+  authorized: boolean;
+  rule: string;
+  reason: string;
+  policy: GovernancePolicyRef | null;
+  approval: GovernanceApproval | null;
+  execution: { status: "EXECUTED" | "FAILED"; detail: string | null; reference: string | null; recordedAt: string } | null;
+  createdAt: string;
 }
