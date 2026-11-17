@@ -161,6 +161,28 @@ public class JwtService {
     }
 
     /**
+     * Claims of a JWS made by {@link #signEvidence}, if its signature verifies against one of the published
+     * keys. Checks the signature and the token type only: expiry and meaning are the caller's to check.
+     */
+    public Optional<Map<String, Object>> verifyEvidence(String serialized) {
+        try {
+            JWSObject jws = JWSObject.parse(serialized);
+            if (!JWSAlgorithm.RS256.equals(jws.getHeader().getAlgorithm())
+                || jws.getHeader().getType() == null
+                || !"aos-evidence+jws".equals(jws.getHeader().getType().getType())) {
+                return Optional.empty();
+            }
+            JWK jwk = currentPublicJwks().getKeyByKeyId(jws.getHeader().getKeyID());
+            if (!(jwk instanceof RSAKey rsa) || !jws.verify(new RSASSAVerifier(rsa.toRSAPublicKey()))) {
+                return Optional.empty();
+            }
+            return Optional.of(jws.getPayload().toJSONObject());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Public keys for verifying tokens and evidence packs. Served to anyone, so the set is cached for a few
      * minutes instead of reading and decrypting every stored key on each request.
      */
