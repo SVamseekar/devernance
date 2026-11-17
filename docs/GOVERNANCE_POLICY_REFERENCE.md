@@ -171,7 +171,7 @@ At most 20 reviews per rule and 20 conditions per list.
 | `runtime` | `enforce` (default) | DENY and unapproved REVIEW are not authorized |
 | | `monitor` | Every decision is recorded but `authorized` is always true; no approvals are created |
 | `onDrift` | `continue` (default) | Drift is reported; runtime decisions are unaffected |
-| | `block` | While the requesting environment has drifted, every runtime decision is DENY |
+| | `block` | While any environment of the system has drifted, every runtime decision is DENY (the environment named in the request does not matter: it comes from the agent) |
 
 ## PolicyTests
 

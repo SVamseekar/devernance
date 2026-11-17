@@ -7,16 +7,21 @@ exactly this refund. So a code path that skips the SDK wrapper still cannot pay 
 
 
 class PaymentService:
-    def __init__(self, governance):
+    def __init__(self, governance, protected_system=None):
         self._governance = governance
+        # The system whose refunds this service carries out: the service's own configuration, never something the
+        # caller says. A token issued under another system's policy is refused.
+        self._protected_system = protected_system or governance.system
         self.payments = []
 
     def refund(self, customer_id, amount, currency, authorized_customer_id, authorization):
+        # Verifying redeems the token, so a replayed or copied token cannot pay twice.
         check = self._governance.verify_authorization(
             authorization,
             "payment.refund",
             resource={"type": "customer_payment", "customer_id": customer_id},
             context={"amount": amount, "currency": currency, "authorized_customer_id": authorized_customer_id},
+            system=self._protected_system,
         )
         if not check["valid"]:
             raise PermissionError("Payment service refused the refund: %s" % check["reason"])

@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -168,22 +167,29 @@ public class GovernanceDriftService {
         ? registry.systems() : List.of(registry.requireSystem(systemNameOrId));
     List<DriftReport> reports = new ArrayList<>();
     for (GovernanceResourceEntity system : systems) {
-      Set<String> environments = new LinkedHashSet<>();
-      observations.findByTenantIdAndSystemIdOrderByCreatedAtDesc(
-              tenantContext.tenantId(), system.systemId(), Limit.of(200))
-          .forEach(o -> environments.add(o.environment()));
-      for (String environment : environments) {
+      for (String environment : observations.findEnvironments(tenantContext.tenantId(), system.systemId())) {
         reports.add(report(system, environment));
       }
     }
     return reports;
   }
 
-  /** True when the environment has reported and what it reported differs from the approved state. */
+  /**
+   * The first environment of the system whose latest report differs from the approved state, if any.
+   *
+   * <p>Used by {@code enforcement.onDrift: block}. It looks at every environment on purpose: the environment named
+   * in an authorize request comes from the agent, so it is a label for the record, never a way to step around drift
+   * reported somewhere else.
+   */
   @Transactional(readOnly = true)
-  public boolean hasDrift(GovernanceResourceEntity system, String environment) {
-    DriftReport report = report(system, environment);
-    return report.observed() && !report.inSync();
+  public Optional<String> driftedEnvironment(GovernanceResourceEntity system) {
+    for (String environment : observations.findEnvironments(tenantContext.tenantId(), system.systemId())) {
+      DriftReport report = report(system, environment);
+      if (report.observed() && !report.inSync()) {
+        return Optional.of(environment);
+      }
+    }
+    return Optional.empty();
   }
 
   static String environment(String raw) {

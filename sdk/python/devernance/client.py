@@ -146,11 +146,16 @@ class GovernanceClient:
             body["reference"] = str(reference)[:256]
         return Decision(self.request("POST", _PREFIX + "/decisions/%s/execution" % decision_id, body))
 
-    def verify_authorization(self, token, action, resource=None, context=None):
+    def verify_authorization(self, token, action, resource=None, context=None, system=None):
         """For the service that carries an action out: is `token` a valid, unused authorization for exactly
-        this request? Returns a dict with `valid` (bool) and `reason`."""
+        this request on `system` (the system this service protects; default: the client's system)?
+        Returns a dict with `valid` (bool) and `reason`.
+
+        A valid token is redeemed by this call: it works once. Check it right before acting, then act.
+        Send values with the same types the agent sent (a number stays a number)."""
         return self.request("POST", _PREFIX + "/authorizations/verify", {
-            "token": token, "action": action, "resource": resource or {}, "context": context or {}})
+            "token": token, "system": self._system(system), "action": action,
+            "resource": resource or {}, "context": context or {}})
 
     @contextlib.contextmanager
     def guard(self, action, resource=None, context=None, system=None, model=None, wait_for_approval=0.0,

@@ -138,8 +138,10 @@ public class GovernanceController {
   }
 
   @PostMapping("/decisions/{decisionId}/execution")
-  public DecisionView recordExecution(@PathVariable UUID decisionId, @RequestBody ExecutionRequest request) {
-    return authorizationService.recordExecution(decisionId, request);
+  public DecisionView recordExecution(
+      HttpServletRequest http, @PathVariable UUID decisionId, @RequestBody ExecutionRequest request) {
+    return authorizationService.recordExecution(
+        decisionId, request, GovernanceCaller.from(http, tenantContext.actorId()));
   }
 
   @PostMapping("/authorizations/verify")

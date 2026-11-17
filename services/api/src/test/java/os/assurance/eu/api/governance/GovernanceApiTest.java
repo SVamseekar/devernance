@@ -275,22 +275,45 @@ class GovernanceApiTest {
     String id = decision.get("id").asText();
     String token = decision.get("authorizationToken").asText();
 
-    // The payment service checks the token against exactly the request it is about to carry out.
+    // The payment service checks the token against exactly the request it is about to carry out, on the system
+    // it protects.
     String verify = """
-        {"token": "%s", "action": "payment.refund",
+        {"token": "%s", "system": "%s", "action": "payment.refund",
          "resource": {"customer_id": "CUST-102", "type": "customer_payment"},
-         "context": {"currency": "INR", "amount": 20000.0}}""".formatted(token);
-    JsonNode verified = body(postJson("/api/v1/governance/authorizations/verify", agentKey, verify));
-    assertThat(verified.get("valid").asBoolean()).as(verified.toString()).isTrue();
+         "context": {"currency": "INR", "amount": 20000.0}}""".formatted(token, system);
     // A different amount is a different request.
     assertThat(body(postJson("/api/v1/governance/authorizations/verify", agentKey,
         verify.replace("20000.0", "49000"))).get("valid").asBoolean()).isFalse();
+    // The same amount sent as a string is a different request too: the policy judged a number.
+    assertThat(body(postJson("/api/v1/governance/authorizations/verify", agentKey,
+        verify.replace("20000.0", "\"20000\""))).get("valid").asBoolean()).isFalse();
     assertThat(body(postJson("/api/v1/governance/authorizations/verify", agentKey,
         verify.replace(token, token.substring(0, token.length() - 4) + "AAAA"))).get("valid").asBoolean()).isFalse();
     // Another workspace cannot use it.
     assertThat(body(postJson("/api/v1/governance/authorizations/verify", otherAdmin(), verify))
         .get("valid").asBoolean()).isFalse();
+    // Nor can a service that protects another system: its policy did not decide this.
+    String otherSystem = claimsAgent();
+    JsonNode wrongSystem = body(postJson("/api/v1/governance/authorizations/verify", agentKey,
+        verify.replace("\"system\": \"" + system + "\"", "\"system\": \"" + otherSystem + "\"")));
+    assertThat(wrongSystem.get("valid").asBoolean()).isFalse();
+    assertThat(wrongSystem.get("reason").asText()).contains("not issued for this system");
+    postJson("/api/v1/governance/authorizations/verify", agentKey, verify.replace("\"system\": \"" + system + "\",", ""))
+        .andExpect(status().isBadRequest());
 
+    JsonNode verified = body(postJson("/api/v1/governance/authorizations/verify", agentKey, verify));
+    assertThat(verified.get("valid").asBoolean()).as(verified.toString()).isTrue();
+    // The first successful check redeems the token: replaying it fails even before the outcome is recorded.
+    JsonNode replayed = body(postJson("/api/v1/governance/authorizations/verify", agentKey, verify));
+    assertThat(replayed.get("valid").asBoolean()).isFalse();
+    assertThat(replayed.get("reason").asText()).contains("already used");
+    assertThat(body(getAs("/api/v1/governance/decisions/" + id, agentKey)).get("authorizationToken").isNull()).isTrue();
+
+    // Only the requester records the outcome, so nobody else can claim the refund ran.
+    for (String other : List.of(apiKey("other-agent", ApiKeyScope.RUNTIME), engineer(), admin())) {
+      postJson("/api/v1/governance/decisions/" + id + "/execution", other, "{\"status\": \"EXECUTED\"}")
+          .andExpect(status().isForbidden());
+    }
     JsonNode executed = body(postJson("/api/v1/governance/decisions/" + id + "/execution", agentKey,
         "{\"status\": \"EXECUTED\", \"reference\": \"payment-1001\"}").andExpect(status().isOk()));
     assertThat(executed.get("execution").get("status").asText()).isEqualTo("EXECUTED");
@@ -647,7 +670,20 @@ class GovernanceApiTest {
     JsonNode blocked = authorize(engineer(), "{\"system\": \"%s\", \"action\": \"claim.search\"}".formatted(name));
     assertThat(blocked.get("status").asText()).isEqualTo("DENY");
     assertThat(blocked.get("rule").asText()).isEqualTo("enforcement.onDrift");
-    // Staging has not drifted, so staging keeps working.
+
+    // The environment in the request comes from the agent. Naming another one, even one that reports in sync,
+    // does not step around drift reported in production.
+    postJson("/api/v1/governance/observations", engineer(),
+        "{\"system\": \"%s\", \"environment\": \"staging\", \"model\": \"%s\"}".formatted(name, MODEL))
+        .andExpect(status().isOk());
+    JsonNode staging = authorize(engineer(),
+        "{\"system\": \"%s\", \"action\": \"claim.search\", \"environment\": \"staging\"}".formatted(name));
+    assertThat(staging.get("status").asText()).isEqualTo("DENY");
+    assertThat(staging.get("reason").asText()).contains("production");
+
+    // Fixed in production: everything works again.
+    postJson("/api/v1/governance/observations", engineer(),
+        "{\"system\": \"%s\", \"model\": \"%s\"}".formatted(name, MODEL)).andExpect(status().isOk());
     assertThat(authorize(engineer(),
         "{\"system\": \"%s\", \"action\": \"claim.search\", \"environment\": \"staging\"}".formatted(name))
         .get("status").asText()).isEqualTo("ALLOW");

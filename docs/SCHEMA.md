@@ -474,6 +474,7 @@ create table governance_decisions (
   execution_detail         varchar(1024),
   execution_reference      varchar(256),
   execution_recorded_at    timestamp with time zone,
+  token_redeemed_at        timestamp with time zone,  -- first successful /authorizations/verify (single use)
   created_at               timestamp with time zone not null
 );
 
@@ -515,6 +516,8 @@ create table governance_observations (
 
 create index idx_governance_observations_system_time
   on governance_observations(tenant_id, system_id, created_at);
+create index idx_governance_observations_environment
+  on governance_observations(tenant_id, system_id, environment, created_at);
 ```
 
 `spec_json`, `resource_json`, `context_json` and `observed_json` hold JSON text (`JsonMapConverter`).
