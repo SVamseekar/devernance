@@ -175,9 +175,12 @@ Mitigations:
 - The governance runtime cannot see an action that never asks for authorization. Coverage depends on placing the SDK
   check (and token verification in the protected service) at every execution path; the evidence bundle states this
   limitation in its signed manifest. Every decision is a network call to the API (no local decision point yet).
-- The authorization token can be verified offline against the JWKS, but only `POST /authorizations/verify` knows
-  whether it was already used. A service that only checks the signature offline accepts a replay within the token's
-  lifetime (default 5 minutes).
+- The authorization token can be verified offline against the JWKS, but only `POST /authorizations/verify` redeems
+  it and knows whether it was already used. A service that only checks the signature offline accepts a replay within
+  the token's lifetime (default 5 minutes).
+- Drift is what deployments report. A RUNTIME key can report observations, so an agent that holds one could report
+  itself in sync. Report state from a separate credential (the deploy pipeline or a cluster job) and treat agent
+  self-reports as a hint, not proof.
 - A document that hangs the PDF or Office parser past its 30 s timeout keeps one of two parser threads busy until it finishes; parsing is not isolated in a separate process.
 
 ## EU Context

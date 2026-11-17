@@ -191,7 +191,9 @@ sequenceDiagram
 6. Otherwise → **ALLOW**.
 
 Before the evaluator runs, the service also denies when the system has no policy, and when the policy has
-`enforcement.onDrift: block` and the requesting environment has drifted (rule `enforcement.onDrift`).
+`enforcement.onDrift: block` and any environment of the system has drifted (rule `enforcement.onDrift`). The
+`environment` in an authorize request is recorded but never used to pick which drift counts: the agent chooses it,
+so trusting it would let an agent name a clean environment and step around drift reported in production.
 
 The most specific rule wins: an exact action (`payment.refund`) beats a prefix (`payment.*`), a longer prefix beats
 a shorter one, and `*` is last.
@@ -216,14 +218,28 @@ to `enforce`.
 The SDK wrapper protects the agent's own code path. Another code path could still call the payment service
 directly. So an authorized decision comes with `authorizationToken`: a JWS signed with the same RS256 keys as
 evidence packs (`/.well-known/jwks.json`). It binds the decision id, the tenant, the action and a SHA-256 of the
-exact request (action + resource + context). Because the token is a bearer credential for the protected service, it
-is only handed to the caller that made the request (the same API key, or the same person in a session); anyone else
-who reads the decision sees it without a token. The protected service calls `POST /authorizations/verify` with the
-token and the request it is about to execute. It is valid only if the signature verifies, it has not expired
-(default 300 s, `assurance.governance.authorization-ttl-seconds`), the request is the same one, the decision still
-authorizes it, and its outcome was not already reported (one use).
+exact request (action + resource + context), plus the system whose policy decided it. Because the token is a bearer
+credential for the protected service, it is only handed to the caller that made the request (the same API key, or
+the same person in a session); anyone else who reads the decision sees it without a token. The protected service
+calls `POST /authorizations/verify` with the token, the system it protects, and the request it is about to execute.
+It is valid only if:
 
-Numbers are compared by value in the request hash, so `75000` and `75000.0` match.
+1. the signature verifies and the token is for this workspace;
+2. it was issued for the named system (a token decided under a permissive system's policy cannot be spent at a
+   service that protects a stricter one);
+3. it has not expired (default 300 s, `assurance.governance.authorization-ttl-seconds`);
+4. the request is the same one;
+5. the decision still authorizes it;
+6. it was not used before.
+
+**One use.** The first successful verify redeems the token (`token_redeemed_at`, audit event
+`governance.authorization_redeemed`) under a row lock, so a replay fails even before the agent reports the outcome,
+and two services presenting the same token at once cannot both succeed. If the action then fails, the agent asks
+for a new authorization.
+
+The request hash compares numbers by value, so `75000` and `75000.0` match. Every string and number is tagged with
+its type before hashing, so the string `"75000"` never matches the number `75000`: the policy judged the request
+with its real types, and the protected service must present the same ones.
 
 ### 5.5 Approvals
 
@@ -239,7 +255,8 @@ Numbers are compared by value in the request hash, so `75000` and `75000.0` matc
 ### 5.6 Execution outcomes
 
 After an authorized action, the caller reports `EXECUTED` or `FAILED` once (`POST /decisions/{id}/execution`).
-Reporting an outcome for a decision that does not authorize the action is refused with 409, and the refusal itself
+Only the caller that requested the decision (the same API key, or the same person in a session) may report it, so
+another agent in the workspace cannot burn the authorization or claim the action ran (403). Reporting an outcome for a decision that does not authorize the action is refused with 409, and the refusal itself
 is written to the audit chain (`governance.execution_refused`), because it means something tried to act without
 permission.
 
@@ -263,8 +280,10 @@ What drift does:
 
 - `devernance release-check` returns BLOCKED (or REVIEW with `enforcement.deployment: advisory`).
 - The drift report includes a reassessment: whether the new model is on the approved list, and what to do.
-- With `enforcement.onDrift: block`, runtime decisions in the drifted environment are denied until it is fixed.
-  The default (`continue`) keeps serving while the change is reassessed.
+- With `enforcement.onDrift: block`, every runtime decision for the system is denied while any environment has
+  drifted, until it is fixed. The default (`continue`) keeps serving while the change is reassessed.
+- Every environment that ever reported is checked (`findEnvironments`), not a window of recent reports, so many
+  reports from one environment cannot hide another environment's drift.
 - Audit events `governance.drift_detected` and `governance.drift_resolved`.
 
 Where to report from: the agent at startup and on a timer (SDK), a CI deploy step (CLI), or a Kubernetes job that
@@ -373,6 +392,8 @@ This section is for contributors, human or AI. Follow it literally.
 6. **Agent identity comes from the credential** (`GovernanceCaller`: the API key's name), never from the request body.
 7. **Every state change appends an audit event** (`governance.*`). Every query filters by `tenantId`.
 8. **Never claim more than is proven.** Evidence closure marks rules OPEN when unexercised or unreported; drift is "not reported" until a deployment reports.
+9. **Nothing the agent sends may weaken enforcement.** Request fields (`environment`, `model`, `resource`, `context`) are facts to judge, never switches that pick which checks apply. Example: `onDrift: block` checks every environment, not the one the request names.
+10. **An authorization is spent once, by its owner, for one system.** `verify` redeems the token under a row lock and checks the system; only the requester records the outcome; the request hash tags every string and number with its type. Keep all three when touching tokens.
 
 ### 11.2 How to add things (step by step)
 

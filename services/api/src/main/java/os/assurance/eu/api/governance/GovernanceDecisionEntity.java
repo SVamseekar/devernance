@@ -85,6 +85,7 @@ public class GovernanceDecisionEntity {
   private String executionDetail;
   private String executionReference;
   private Instant executionRecordedAt;
+  private Instant tokenRedeemedAt;
 
   @Column(nullable = false)
   private Instant createdAt;
@@ -223,8 +224,20 @@ public class GovernanceDecisionEntity {
     return executionRecordedAt;
   }
 
+  public Instant tokenRedeemedAt() {
+    return tokenRedeemedAt;
+  }
+
   public Instant createdAt() {
     return createdAt;
+  }
+
+  /**
+   * True once the authorization was acted on: a protected service redeemed the token, or the outcome was recorded.
+   * From then on no new token is minted and the approval is history (it no longer lapses).
+   */
+  public boolean authorizationUsed() {
+    return tokenRedeemedAt != null || executionStatus != null;
   }
 
   public void recordExecution(ExecutionStatus outcome, String detail, String reference, Instant at) {
@@ -232,5 +245,9 @@ public class GovernanceDecisionEntity {
     this.executionDetail = detail;
     this.executionReference = reference;
     this.executionRecordedAt = at;
+  }
+
+  public void redeemToken(Instant at) {
+    this.tokenRedeemedAt = at;
   }
 }

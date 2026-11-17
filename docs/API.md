@@ -1176,12 +1176,14 @@ X-Api-Key: dvn_…   (a RUNTIME key named claims-agent)
 ```
 
 - `action`: lowercase words joined by dots. `resource` and `context`: JSON objects, at most 16 KB each.
-- `environment`: default `production`; lowercase letters, digits, `_`, `-`.
+- `environment`: default `production`; lowercase letters, digits, `_`, `-`. Recorded on the decision only: with
+  `onDrift: block`, drift in any environment of the system denies, whatever the request names.
 - `dryRun: true`: decides without storing anything (`id` is null) and creates no approval.
 - Act only on `authorized`. When true, `authorizationToken` (JWS, RS256, `typ` `aos-evidence+jws`) carries
   `purpose=governance-authorization`, `decisionId`, `tenantId`, `systemId`, `action`, `requestSha256`, `iat`, `exp`.
   It is minted on `POST /authorize`, and on `GET /decisions/{id}` only for the caller that made the request (the same
-  API key, or the same person in a session). Never in lists, and not after an outcome is recorded.
+  API key, or the same person in a session). Never in lists, and not after the token was redeemed or an outcome
+  was recorded.
 - Always 200 for a decision, including DENY. 400 for a malformed request, 403 for a role or key scope that may
   not authorize, 404 for an unknown system.
 
@@ -1190,13 +1192,19 @@ X-Api-Key: dvn_…   (a RUNTIME key named claims-agent)
 ```http
 GET  /api/v1/governance/decisions/{id}               # same shape as authorize; fresh token for the requester if still authorized
 POST /api/v1/governance/decisions/{id}/execution     {"status": "EXECUTED"|"FAILED", "detail": "…", "reference": "payment-1002"}
-POST /api/v1/governance/authorizations/verify        {"token": "…", "action": "payment.refund", "resource": {…}, "context": {…}}
+POST /api/v1/governance/authorizations/verify        {"token": "…", "system": "claims-agent", "action": "payment.refund", "resource": {…}, "context": {…}}
 ```
 
-- Execution: once per decision (second report → 409). A decision that does not authorize the action → 409, and
-  `governance.execution_refused` is written to the audit chain. `detail` ≤ 1024, `reference` ≤ 256 characters.
+- Execution: only the caller that requested the decision (same API key, or same person in a session) may report
+  it; anyone else → 403. Once per decision (second report → 409). A decision that does not authorize the action →
+  409, and `governance.execution_refused` is written to the audit chain. `detail` ≤ 1024, `reference` ≤ 256
+  characters.
+- Verify: `token`, `system` (the system the calling service protects) and `action` are required (400 otherwise).
+  A valid token is **redeemed** by the call (`governance.authorization_redeemed`): a second verify of the same token
+  fails with "already used", even before the outcome is recorded.
 - Verify → `{"valid": true|false, "reason": "…", "decisionId": "…", "action": "…", "expiresAt": "…"}`. Reasons
-  when invalid: bad signature, not an authorization token, another workspace, expired, a different request, the
+  when invalid: bad signature, not an authorization token, another workspace, not issued for this system, expired,
+  a different request (including the same value sent with another type, such as `"75000"` for `75000`), the
   decision no longer exists, already used, no longer authorizes.
 
 ### Approvals
@@ -1280,6 +1288,7 @@ to, relation}]}` with node types `system`, `model`, `policy`, `tool`, `action`, 
 ### Audit events
 
 `governance.resource_applied`, `governance.decision`, `governance.approval_approved`,
-`governance.approval_rejected`, `governance.execution_recorded`, `governance.execution_refused`,
+`governance.approval_rejected`, `governance.authorization_redeemed`, `governance.execution_recorded`,
+`governance.execution_refused`,
 `governance.drift_detected`, `governance.drift_resolved`, `governance.release_check`,
 `governance.evidence_bundle_exported`.

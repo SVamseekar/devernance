@@ -153,12 +153,15 @@ Works for any plain function: a LangGraph node, a LangChain tool, an MCP tool ha
 ### In the protected service
 
 ```python
-check = governance.verify_authorization(token, "payment.refund", resource=..., context=...)
+check = governance.verify_authorization(token, "payment.refund", resource=..., context=...,
+                                       system="claims-agent")   # the system this service protects
 if not check["valid"]:
     raise PermissionError(check["reason"])
 ```
 
-Send exactly the `resource` and `context` the agent sent. The token is single-use and expires after 5 minutes.
+Send exactly the `resource` and `context` the agent sent, with the same types (a number stays a number). The check
+redeems the token: it works once, so verify right before acting. A token issued for another system is refused. The
+token expires after 5 minutes.
 
 ### Other calls
 

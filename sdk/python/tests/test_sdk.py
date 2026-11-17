@@ -103,6 +103,14 @@ class GuardTest(unittest.TestCase):
             with client.guard("payment.refund", context={"amount": 999}, resume="d-1"):
                 self.fail("must not run")
 
+    def test_verify_names_the_protected_system(self):
+        client = FakeClient([{"valid": True}, {"valid": False}])
+        client.verify_authorization("tok", "payment.refund", context={"amount": 1})
+        self.assertEqual(client.calls[0][1], "/api/v1/governance/authorizations/verify")
+        self.assertEqual(client.calls[0][2]["system"], "claims-agent")
+        client.verify_authorization("tok", "payment.refund", system="payments")
+        self.assertEqual(client.calls[1][2]["system"], "payments")
+
     def test_a_client_without_server_or_key_refuses_to_start(self):
         old = {k: os.environ.pop(k, None) for k in ("DEVERNANCE_SERVER", "DEVERNANCE_API_KEY")}
         os.environ["DEVERNANCE_CONFIG"] = os.path.join(tempfile.mkdtemp(), "none.json")

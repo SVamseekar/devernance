@@ -42,8 +42,9 @@ import os.assurance.eu.api.tenant.UserRole;
  * <ol>
  *   <li>{@link #authorize}: decide and record. REVIEW opens an approval request.</li>
  *   <li>{@link #decideApproval}: a person with one of the policy's approver roles approves or rejects.</li>
- *   <li>{@link #verify}: the protected service checks the signed authorization token before acting.</li>
- *   <li>{@link #recordExecution}: the caller reports that the action ran or failed. Once only.</li>
+ *   <li>{@link #verify}: the protected service checks, and so redeems, the signed authorization token before
+ *       acting. Once only.</li>
+ *   <li>{@link #recordExecution}: the requester reports that the action ran or failed. Once only.</li>
  * </ol>
  */
 @Service
@@ -65,8 +66,9 @@ public class GovernanceAuthorizationService {
   public record ExecutionRequest(ExecutionStatus status, String detail, String reference) {
   }
 
+  /** {@code system}: the system whose actions the calling service protects. A token for another system fails. */
   public record VerifyRequest(
-      String token, String action, Map<String, Object> resource, Map<String, Object> context) {
+      String token, String system, String action, Map<String, Object> resource, Map<String, Object> context) {
   }
 
   public record DecisionQuery(
@@ -136,9 +138,12 @@ public class GovernanceAuthorizationService {
     } else {
       PolicySpec policy = GovernanceRegistry.policySpec(policyResource);
       enforced = policy.runtimeEnforced();
-      if (policy.driftBlocks() && drift.hasDrift(system, environment)) {
+      // Any drifted environment blocks: the request's environment comes from the agent, so it cannot be trusted
+      // to pick which drift counts.
+      Optional<String> drifted = policy.driftBlocks() ? drift.driftedEnvironment(system) : Optional.empty();
+      if (drifted.isPresent()) {
         evaluation = PolicyEvaluator.Evaluation.of(DecisionStatus.DENY, "enforcement.onDrift",
-            "Governance drift in " + environment + ": the running system differs from the approved state");
+            "Governance drift in " + drifted.get() + ": the running system differs from the approved state");
       } else {
         evaluation = PolicyEvaluator.evaluate(policy, new PolicyEvaluator.Request(action, resource, context, model));
       }
@@ -304,11 +309,12 @@ public class GovernanceAuthorizationService {
   }
 
   /**
-   * Records, once, what happened to an authorized action. A denied or unapproved action cannot be reported run;
-   * the attempt is refused, and the refusal itself is committed to the audit chain.
+   * Records, once, what happened to an authorized action. Only the caller that requested the decision may do it,
+   * so nobody else can burn its authorization or claim it ran. A denied or unapproved action cannot be reported
+   * run; the attempt is refused, and the refusal itself is committed to the audit chain.
    */
   @Transactional(noRollbackFor = UnauthorizedExecutionException.class)
-  public DecisionView recordExecution(UUID decisionId, ExecutionRequest request) {
+  public DecisionView recordExecution(UUID decisionId, ExecutionRequest request, GovernanceCaller caller) {
     authorization.requireAnyRole(UserRole.ADMIN, UserRole.AI_ENGINEERING_LEAD);
     if (request == null || request.status() == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "status: must be EXECUTED or FAILED");
@@ -318,6 +324,10 @@ public class GovernanceAuthorizationService {
     UUID tenantId = tenantContext.tenantId();
     GovernanceDecisionEntity decision = decisions.findForUpdate(decisionId, tenantId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Decision not found"));
+    if (!isRequester(decision, caller)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "Only the API key or person that requested this decision can record its outcome");
+    }
     if (decision.executionStatus() != null) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "The outcome of this decision is already recorded");
     }
@@ -347,14 +357,16 @@ public class GovernanceAuthorizationService {
   }
 
   /**
-   * For the protected service: is this token a real, unexpired, unused authorization for exactly this request?
-   * The token can also be checked offline against {@code /.well-known/jwks.json}; only this call knows whether
-   * it was already used.
+   * For the protected service: is this token a real, unexpired, unused authorization for exactly this request on
+   * the system the service protects? A valid token is redeemed by this call, so it works once: a second call with
+   * the same token fails, even before the agent records the outcome. The token can also be checked offline against
+   * {@code /.well-known/jwks.json}; only this call knows whether it was already used.
    */
-  @Transactional(readOnly = true)
+  @Transactional
   public TokenVerification verify(VerifyRequest request) {
-    if (request == null || request.token() == null || request.token().isBlank() || request.action() == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "token and action are required");
+    if (request == null || request.token() == null || request.token().isBlank() || request.action() == null
+        || request.system() == null || request.system().isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "token, system and action are required");
     }
     Optional<Map<String, Object>> verified = jwt.verifyEvidence(request.token().trim());
     if (verified.isEmpty()) {
@@ -376,6 +388,13 @@ public class GovernanceAuthorizationService {
     } catch (RuntimeException malformed) {
       return invalid("The token is malformed");
     }
+    // A token is only good for the system whose policy decided it. Without this, an agent could ask under a
+    // permissive system's policy and present the token to a service that protects a stricter one.
+    UUID protectedSystemId = registry.findSystem(request.system().trim())
+        .map(GovernanceResourceEntity::systemId).orElse(null);
+    if (protectedSystemId == null || !protectedSystemId.toString().equals(claims.get("systemId"))) {
+      return invalid("The token was not issued for this system");
+    }
     String action = request.action().trim();
     Instant now = clock.instant();
     if (!now.isBefore(expiresAt)) {
@@ -386,11 +405,12 @@ public class GovernanceAuthorizationService {
       return new TokenVerification(false, "The request differs from the one that was authorized", decisionId,
           action, expiresAt);
     }
-    GovernanceDecisionEntity decision = decisions.findByIdAndTenantId(decisionId, tenantId).orElse(null);
-    if (decision == null) {
+    // Locked, so two services presenting the same token at once cannot both redeem it.
+    GovernanceDecisionEntity decision = decisions.findForUpdate(decisionId, tenantId).orElse(null);
+    if (decision == null || !decision.systemId().equals(protectedSystemId)) {
       return new TokenVerification(false, "The decision no longer exists", decisionId, action, expiresAt);
     }
-    if (decision.executionStatus() != null) {
+    if (decision.authorizationUsed()) {
       return new TokenVerification(false, "The authorization was already used", decisionId, action, expiresAt);
     }
     GovernanceApprovalEntity approval = approvals.findByDecisionIdAndTenantId(decisionId, tenantId).orElse(null);
@@ -398,6 +418,10 @@ public class GovernanceAuthorizationService {
       return new TokenVerification(false, "The decision no longer authorizes the action", decisionId, action,
           expiresAt);
     }
+    decision.redeemToken(now);
+    decisions.save(decision);
+    audit.append(decision.systemId(), "governance.authorization_redeemed", "governance_decision",
+        decision.id().toString(), Map.of("action", decision.action(), "requestSha256", decision.requestSha256()));
     return new TokenVerification(true, "Authorized", decisionId, action, expiresAt);
   }
 
@@ -407,7 +431,9 @@ public class GovernanceAuthorizationService {
 
   /**
    * SHA-256 of what was asked: the action, the resource and the context. Numbers are compared by value, so
-   * 75000 and 75000.0 give the same hash and a service that re-serializes the request still matches.
+   * 75000 and 75000.0 give the same hash and a service that re-serializes the request still matches. Every string
+   * and number is tagged with its type ("s:" or "n:"), so the string "75000" never hashes like the number 75000:
+   * the policy judged the request with its real types, and the protected service must present the same ones.
    */
   static String requestSha256(String action, Map<String, Object> resource, Map<String, Object> context) {
     Map<String, Object> request = new LinkedHashMap<>();
@@ -427,7 +453,10 @@ public class GovernanceAuthorizationService {
       return list.stream().map(GovernanceAuthorizationService::normalize).toList();
     }
     if (value instanceof Number number) {
-      return "number:" + new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+      return "n:" + new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+    }
+    if (value instanceof String text) {
+      return "s:" + text;
     }
     return value;
   }
@@ -441,7 +470,7 @@ public class GovernanceAuthorizationService {
       case ALLOW -> true;
       case DENY -> false;
       case REVIEW -> approval != null
-          && (decision.executionStatus() != null
+          && (decision.authorizationUsed()
               ? approval.status() == ApprovalStatus.APPROVED
               : approval.statusAt(now) == ApprovalStatus.APPROVED);
     };
@@ -479,7 +508,7 @@ public class GovernanceAuthorizationService {
     boolean authorized = authorized(d, approval, now);
     String token = null;
     Instant tokenExpiry = null;
-    if (withToken && authorized && d.id() != null && d.executionStatus() == null) {
+    if (withToken && authorized && d.id() != null && !d.authorizationUsed()) {
       Instant expiry = approval != null
           ? min(now.plus(tokenTtl), approval.expiresAt())
           : d.createdAt().plus(tokenTtl);
@@ -510,8 +539,8 @@ public class GovernanceAuthorizationService {
 
   private static ApprovalView approvalView(
       GovernanceApprovalEntity a, GovernanceDecisionEntity d, String systemName, Instant now) {
-    // Once the action has run, the approval is history: show what was decided, not that it has since lapsed.
-    ApprovalStatus status = d.executionStatus() != null ? a.status() : a.statusAt(now);
+    // Once the action was carried out, the approval is history: show what was decided, not that it has since lapsed.
+    ApprovalStatus status = d.authorizationUsed() ? a.status() : a.statusAt(now);
     return new ApprovalView(a.id(), a.decisionId(), a.systemId(), systemName, d.action(), d.agent(), d.resource(),
         d.context(), status, a.approverRoles(), a.reason(), a.decidedBy(), a.rationale(), a.requestedAt(),
         a.expiresAt(), a.decidedAt());
