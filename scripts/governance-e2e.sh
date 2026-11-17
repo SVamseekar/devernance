@@ -27,10 +27,30 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/devernance-e2e.XXXXXX")"
 API_PID=""
 PASSWORD="dev-local-password-only"   # seeded local H2 demo users only (DemoCredentialGuard)
 
+# kill_tree <pid>: stops a process and everything it started. `mvn spring-boot:run` forks the API into its own
+# JVM, so killing mvn alone leaves the API running on the port, and the next run would test that stale server.
+kill_tree() {
+  local child
+  for child in $(pgrep -P "$1" 2>/dev/null); do
+    kill_tree "$child"
+  done
+  kill "$1" 2>/dev/null || true
+}
+
 cleanup() {
+  local status=$?
   if [[ -n "$API_PID" ]]; then
-    kill "$API_PID" 2>/dev/null || true
+    kill_tree "$API_PID"
     wait "$API_PID" 2>/dev/null || true
+  fi
+  if [[ "$status" != 0 ]]; then
+    # Keep what is needed to find out why: the API log and the manifests the steps used.
+    if [[ -f "$WORK/api.log" ]]; then
+      printf '\nLast API log lines:\n' >&2
+      grep -E 'ERROR|WARN|Exception|Caused by' "$WORK/api.log" | tail -20 >&2 || true
+    fi
+    printf '\nKept for inspection: %s\n' "$WORK" >&2
+    return
   fi
   rm -rf "$WORK"
 }
@@ -58,6 +78,10 @@ expect_exit() {
 json_get() { python3 -c 'import json,sys; print(json.load(sys.stdin)[sys.argv[1]])' "$1"; }
 
 if [[ -z "$SERVER" ]]; then
+  # Something already answering on the port would be tested instead of the API this script starts.
+  if curl -fsS -m 2 "http://localhost:$PORT/actuator/health" >/dev/null 2>&1; then
+    fail "port $PORT is already in use (a leftover API?). Stop it, or set DEVERNANCE_E2E_PORT to a free port."
+  fi
   step "Starting the API (H2, port $PORT); log: $WORK/api.log"
   # The API needs the evgraph CLI at startup (evidence-pack scans). Without EVGRAPH_BIN or evgraph on PATH,
   # let it install its pinned copy, as the test suite does.
