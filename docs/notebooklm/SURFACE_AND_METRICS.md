@@ -114,5 +114,5 @@ assurance.sector.packs=insurance,hr,finance               # Active sector packs
 
 ## 5. Documentation & Verification Gaps
 
-- **Production Deploy Environment**: The live demo URL (`https://euassuranceai.souravamseekar.com`) is hosted on Vercel (frontend) and external container hosting (API). Exact commit sync on live environments cannot be validated purely from reading git repository state.
+- **Production Deploy Environment**: The live demo URL (`https://devernance.space`) is hosted on Cloudflare Workers (frontend) and external container hosting (API). Exact commit sync on live environments cannot be validated purely from reading git repository state.
 - **Generative Synthesis Seam**: The evidence RAG implementation handles document chunking, embedding, vector similarity search, and source-citation assembly in-process. Downstream generative text synthesis over retrieved chunks relies on pluggable model interfaces without requiring external LLM API calls by default.
