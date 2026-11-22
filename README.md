@@ -3,7 +3,7 @@
 [![CI](https://github.com/SVamseekar/devernance/actions/workflows/ci.yml/badge.svg)](https://github.com/SVamseekar/devernance/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-**Live product:** [https://euassuranceai.souravamseekar.com](https://euassuranceai.souravamseekar.com)
+**Live product:** [https://devernance.space](https://devernance.space)
 **Repo:** [github.com/SVamseekar/devernance](https://github.com/SVamseekar/devernance)
 
 Devernance (formerly EU AI Assurance OS) is a multi-tenant **governance control plane** for teams shipping AI systems into the EU market. Development and governance, hand in hand. Production surface:
@@ -35,7 +35,7 @@ It helps teams validate AI releases against EU AI Act–oriented controls by com
 
 > This product assists governance and release readiness. It is **not** a notified body, does **not** issue legal certifications, and does **not** replace qualified legal counsel.
 
-**Commercial path:** scoped readiness work for one named AI system after a demo — no public list price. See [`/pricing`](https://euassuranceai.souravamseekar.com/pricing). Evgraph is a **separate** PyPI library — this repo exports the files it already reads.
+**Commercial path:** scoped readiness work for one named AI system after a demo — no public list price. See [`/pricing`](https://devernance.space/pricing). Evgraph is a **separate** PyPI library — this repo exports the files it already reads.
 
 ## Governance runtime
 
@@ -192,7 +192,8 @@ See [`docs/ROADMAP.md`](./docs/ROADMAP.md) and [`docs/superpowers/plans/2026-07-
 ## Documentation
 
 - [`docs/METRICS_CANONICAL.md`](./docs/METRICS_CANONICAL.md) — **authoritative** measured platform numbers
-- [`docs/BRAND.md`](./docs/BRAND.md) — name rules, identifiers that keep the old name, domain-day checklist
+- [`docs/BRAND.md`](./docs/BRAND.md) — name rules, identifiers that keep the old name, the domain
+- [`docs/DOMAIN_MIGRATION.md`](./docs/DOMAIN_MIGRATION.md) — move to devernance.space on Cloudflare, step by step
 - [`docs/PRD.md`](./docs/PRD.md) — product requirements
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) — phased delivery and honesty matrix
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — system design

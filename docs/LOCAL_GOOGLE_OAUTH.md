@@ -103,4 +103,4 @@ Next BFF →  POST localhost:8080/auth/oauth/google/callback
 
 ## 6. Production later
 
-Production self-serve uses `OAUTH_AUTO_PROVISION=true` (the `postgres` default; each new user gets their own workspace). Set secrets on the **API host**, set `OAUTH_REDIRECT_BASE_URL=https://euassuranceai.souravamseekar.com`, and register that callback URI. See `docs/oauth-production-smoke-test.md`.
+Production self-serve uses `OAUTH_AUTO_PROVISION=true` (the `postgres` default; each new user gets their own workspace). Set secrets on the **API host**, set `OAUTH_REDIRECT_BASE_URL=https://devernance.space`, and register that callback URI. See `docs/oauth-production-smoke-test.md`.

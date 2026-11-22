@@ -117,7 +117,7 @@ for emergency hotfixes — prefer a follow-up PR the same day.
 
 ## Repo settings (maintainers)
 
-- Homepage URL: `https://euassuranceai.souravamseekar.com`
+- Homepage URL: `https://devernance.space`
 - License: MIT
 - Topics: keep AI Act / Spring Boot / Next.js topics accurate
 

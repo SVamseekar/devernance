@@ -1,7 +1,7 @@
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://euassuranceai.souravamseekar.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://devernance.space";
 
-/** Contact mailbox on the live site. Support and security share it until devernance.com and its mailbox are live (Plan 10). */
-const contactEmail = "euassuranceai@souravamseekar.com";
+/** Contact mailbox, an Email Routing forward on devernance.space. Support and security share it. */
+const contactEmail = "hello@devernance.space";
 
 export const siteConfig = {
   name: "Devernance",

@@ -36,7 +36,7 @@ ls services/api/src/main/resources/db/postgresql/
 | Metric | Value | Notes |
 |--------|-------|--------|
 | Product | Devernance (formerly EU AI Assurance OS, renamed 2026-10-18) | Governance control plane for EU AI Act release governance |
-| Live URL | https://euassuranceai.souravamseekar.com | Landing + dashboard shell |
+| Live URL | https://devernance.space | Landing + dashboard shell |
 | Repo | https://github.com/SVamseekar/devernance | Public |
 | Backend | Java **17** · Spring Boot **4.1.1** · Tika **4.0.0** | `services/api/pom.xml` |
 | Frontend | Next.js **16.2.9** · React **19.2.4** · TypeScript | `apps/dashboard/package.json` |

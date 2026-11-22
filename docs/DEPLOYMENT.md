@@ -159,7 +159,7 @@ Terraform under `infra/terraform/` is a **skeleton** (validate/fmt only) and is 
 5. `cd /opt/aos && docker compose -f docker-compose.prod.yml --env-file .env up -d`, then wait for `docker compose ps`
    to show `api` healthy (first boot downloads the embedding model; allow 3 minutes).
 6. `sudo mv /tmp/aos-update.* /etc/systemd/system/ && chmod +x /opt/aos/aos-update.sh && sudo systemctl daemon-reload && sudo systemctl enable --now aos-update.timer`
-7. Verify: `https://app.devernance.com/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
+7. Verify: `https://app.devernance.space/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
 
 ---
 
@@ -206,7 +206,7 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 
 **Production project (canonical):** `eu-ai-assurance`
 
-**Live domains:** `https://euassuranceai.souravamseekar.com`, `https://eu-ai-assurance.vercel.app`
+**Live domains:** `https://devernance.space`, `https://eu-ai-assurance.vercel.app`. The old `euassuranceai.souravamseekar.com` redirects to the new domain ([DOMAIN_MIGRATION.md](./DOMAIN_MIGRATION.md)).
 
 **Git root directory:** `apps/dashboard` (monorepo `SVamseekar/devernance`, production branch `main`)
 
@@ -218,11 +218,11 @@ There is a second Vercel project `eu-ai-assurance-os` linked to the same GitHub 
 2. Project **eu-ai-assurance-os** (stub): set Ignore Build Step to `exit 1`, or disconnect Git entirely.
 3. Env on **eu-ai-assurance** (Production + Preview as needed):
    - `ASSURANCE_API_BASE_URL=https://api.example.com` (server-side only)
-   - `NEXT_PUBLIC_SITE_URL=https://euassuranceai.souravamseekar.com`
+   - `NEXT_PUBLIC_SITE_URL=https://devernance.space`
    - Optional `NEXT_PUBLIC_GA_MEASUREMENT_ID`
    - Optional `DISCORD_DEMO_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL` for `/request-demo`
    - OAuth client ids/secrets + `OAUTH_REDIRECT_BASE_URL` (see `docs/oauth-production-smoke-test.md`)
-4. Domains: attach `euassuranceai.souravamseekar.com` to **eu-ai-assurance** only.
+4. Domains: attach `devernance.space` to **eu-ai-assurance** only.
 
 #### Deploy
 
@@ -237,7 +237,7 @@ vercel --prod --yes
 
 #### Verify
 
-1. Login UI: `https://euassuranceai.souravamseekar.com/login` (brand panel + Google/Microsoft + work email).
+1. Login UI: `https://devernance.space/login` (brand panel + Google/Microsoft + work email).
 2. Dashboard BFF: sign-in + `/api/proxy` against the API.
 3. Marketing: `/privacy`, `/terms`, `/refunds`, `/request-demo` return 200.
 
@@ -256,12 +256,13 @@ API_KEY=... SYSTEM_ID=... ./scripts/ci-release-gate.sh
 
 ### E. Cutover from Vercel and the Dell lab (owner)
 
-Product domain: `devernance.com`, chosen on 18 October 2026 and not registered yet. The full switch checklist is in
-[BRAND.md](./BRAND.md#domain-day-checklist).
+Product domain: `devernance.space`, with DNS on Cloudflare. The ordered runbook is
+[DOMAIN_MIGRATION.md](./DOMAIN_MIGRATION.md).
 
 1. With production healthy on Oracle, add OAuth redirect URIs
-   `https://app.devernance.com/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
-2. Redirect `euassuranceai.souravamseekar.com/*` → `https://devernance.com/$1` (301, path and query kept).
+   `https://app.devernance.space/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
+2. Route `app.devernance.space` to the VM through a Cloudflare Tunnel, and keep `https://devernance.space` as the
+   marketing address. The old `euassuranceai.souravamseekar.com` already redirects to it (DOMAIN_MIGRATION.md, step 5).
 3. Start production with a fresh database unless a real customer used the old system (the Dell database holds demo
    data). To migrate: `pg_dump` the Dell Postgres and restore with the [OPS.md](./OPS.md#restore-from-backup) runbook.
 4. After 7 days of clean redirects, remove both Vercel projects and stop the Dell lab tunnel.

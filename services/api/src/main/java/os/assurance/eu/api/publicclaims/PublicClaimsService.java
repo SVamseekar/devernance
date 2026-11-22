@@ -111,7 +111,7 @@ public class PublicClaimsService {
 
   public String firstSourceUri(PublicClaimsSystemSpec spec) {
     if (spec.sources().isEmpty() || spec.sources().get(0).url() == null) {
-      return "https://euassuranceai.souravamseekar.com/disclaimer";
+      return "https://devernance.space/disclaimer";
     }
     return spec.sources().get(0).url();
   }
