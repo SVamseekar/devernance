@@ -11,4 +11,6 @@ regexes = [
   # Webhook signature test key: a fixed throwaway key so the verifier test can sign its own messages.
   '''0123456789abcdef0123456789abcdef''',
   '''whsec_MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=''',
+  # Placeholder text in infra/.env.example and an old plan doc. A full-history scan flagged it.
+  '''replace-with-at-least-32-char-secret''',
 ]
