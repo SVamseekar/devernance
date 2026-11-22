@@ -33,9 +33,18 @@ Source of truth for RBAC enforcement via `TenantAuthorizationService.requireAnyR
 | Workflow override | ✓ | — | — | — | — |
 | Audit list / chain verify | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Manual audit event append | ✓ | ✓ | ✓ | — | — |
+| Governance: apply manifests | ✓ | ✓ | ✓ | — | — |
+| Governance: validate, simulate, release check, status, graph, drift, resources | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Governance: authorize, report execution, report observations | ✓ | ✓ | — | — | — |
+| Governance: read decisions and approvals, verify a token | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Governance: approve / reject an action² | policy | policy | policy | policy | — |
+| Governance: evidence bundle, closure | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ¹ The engineering lead who ships a system may raise a control to REVIEW or BLOCKED, but only compliance or an admin can
 mark it PASS or lift a BLOCKED control (`ControlService.updateSystemControl`). Nobody attests their own release.
+
+² Only the roles the policy lists in `approverRoles` (default ADMIN and COMPLIANCE_OFFICER; AUDITOR can never be
+listed), only from a signed-in session (never an API key), and never for a request the same person made, in a session or through an API key they created.
 
 ## Notes
 
@@ -58,5 +67,7 @@ mark it PASS or lift a BLOCKED control (`ControlService.updateSystemControl`). N
 | `EvalRunController` create + privileged ops | `TenantAuthorizationService` |
 | `AuditController` POST | `TenantAuthorizationService` |
 | `ApprovalWorkflowService` stage actions | role + Admin override rules |
+| `GovernanceApplyService`, `GovernanceAuthorizationService`, `GovernanceDriftService`, `GovernanceEvidenceService` | `TenantAuthorizationService`; approvals also `SessionOnly` and the policy's `approverRoles` |
+| API key scopes (`ApiKeyScope`) | `RELEASE_GATE` and `RUNTIME` keys are limited to fixed routes in `TenantContextFilter` before any role check |
 
 When adding a new mutator, extend this matrix and add a FORBIDDEN regression test (typically as `AUDITOR`).

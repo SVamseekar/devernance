@@ -1,0 +1,21 @@
+# The approved state of the claims agent. Any deployment that runs something else has drifted.
+apiVersion: devernance.io/v1
+kind: AISystem
+metadata:
+  name: claims-agent
+spec:
+  owner: Claims Engineering
+  purpose: Reads insurance claims, looks up the claimant and proposes or issues refunds
+  riskClass: limited
+  riskBasis: Customer-facing assistant; decisions above the refund threshold are made by a person
+  deploymentRegion: EU
+  sector: insurance
+  model:
+    provider: openai
+    name: gpt-4.1
+    version: "2025-04-14"
+  promptHash: sha256:claims-prompt-v1
+  tools:
+    - claim_search
+    - customer_database
+    - process_refund
