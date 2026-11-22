@@ -1,6 +1,6 @@
 # Deployment runbook (Part 9)
 
-How to run Devernance locally with Docker and how to deploy the production split: **Vercel dashboard** + **hosted Spring API** + **Postgres**.
+How to run Devernance locally with Docker and how to deploy the production split: **site and dashboard on Cloudflare Workers** + **hosted Spring API** + **Postgres**. Vercel is no longer used.
 
 Related: [NFR.md](./NFR.md) (secrets/encryption), [OPS.md](./OPS.md) (CI gate + metrics), [SECURITY.md](./SECURITY.md), root [`.env.example`](../.env.example), [`infra/README.md`](../infra/README.md).
 
@@ -39,7 +39,7 @@ Default stack always starts **postgres + api** (API is no longer behind a Compos
 ### Optional profiles
 
 ```bash
-# Self-hosted Next.js dashboard (Vercel remains primary for production)
+# Self-hosted Next.js dashboard (production runs on Cloudflare Workers, section 4.C)
 docker compose -f infra/docker-compose.yml --env-file .env.example --profile dashboard up --build
 
 # MinIO for S3-compatible evidence storage
@@ -112,7 +112,9 @@ Smoke (API up, password login):
 
 ## 2. Production topology (Oracle A1 + Cloudflare)
 
-Target topology from the launch plan. Until the cutover (section 4.E) the live site still runs on Vercel (section 4.C).
+Target topology for the API, from the launch plan. Today `devernance.space` runs on Cloudflare Workers without an API
+(section 4.C). When the VM is live, `app.devernance.space` serves the dashboard container below through the tunnel
+(section 4.E), and the marketing site can stay on Workers.
 
 ```text
 [ Browser / CI bots ]
@@ -159,13 +161,13 @@ Terraform under `infra/terraform/` is a **skeleton** (validate/fmt only) and is 
 5. `cd /opt/aos && docker compose -f docker-compose.prod.yml --env-file .env up -d`, then wait for `docker compose ps`
    to show `api` healthy (first boot downloads the embedding model; allow 3 minutes).
 6. `sudo mv /tmp/aos-update.* /etc/systemd/system/ && chmod +x /opt/aos/aos-update.sh && sudo systemctl daemon-reload && sudo systemctl enable --now aos-update.timer`
-7. Verify: `https://app.devernance.com/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
+7. Verify: `https://app.devernance.space/api/health` returns 200, sign-in works, `systemctl list-timers` lists `aos-update.timer`.
 
 ---
 
 ## 3. Environment matrix
 
-| Variable | API | Dashboard (Vercel) | Notes |
+| Variable | API | Dashboard (Cloudflare Workers) | Notes |
 |---|---|---|---|
 | `EVAL_CALLBACK_SECRET` | **Required** | — | Fail closed if empty in shared envs |
 | `AUDIT_CHAIN_SECRET` | **Required** (prod) | — | Hash-chain HMAC; rotate with care |
@@ -202,48 +204,81 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 5. **Migrations:** Flyway runs automatically on application startup. Do not run ad-hoc SQL that races the API.
 6. Confirm `GET /actuator/health` is UP before pointing the dashboard at the API.
 
-### C. Dashboard (Vercel — current, until the cutover in E)
+### C. Site on Cloudflare Workers
 
-**Production project (canonical):** `eu-ai-assurance`
+The Next.js app in `apps/dashboard` (marketing pages, login and dashboard) runs as a Cloudflare Worker named
+`devernance-site`, built with the OpenNext adapter (`@opennextjs/cloudflare`). Config: `apps/dashboard/wrangler.jsonc`
+and `apps/dashboard/open-next.config.ts`. It costs nothing on the Workers Free plan.
 
-**Live domains:** `https://euassuranceai.souravamseekar.com`, `https://eu-ai-assurance.vercel.app`
+Without `ASSURANCE_API_BASE_URL` the site still serves every marketing page and the demo form. Sign-in and the
+dashboard need the API; `/api/health` returns 503 until one is configured.
 
-**Git root directory:** `apps/dashboard` (monorepo `SVamseekar/devernance`, production branch `main`)
+Limits to watch on the Free plan:
 
-There is a second Vercel project `eu-ai-assurance-os` linked to the same GitHub repo for historical monorepo hooks. It is configured with **Ignore Build Step = `exit 1`** so it never builds (avoids burning Hobby build quota / rate limits on every PR). Do **not** use it for production.
+- Worker size: 3 MiB compressed. The build is about 2.6 MiB (`npx wrangler deploy --dry-run --outdir /tmp/cf` prints
+  `Total Upload: ... / gzip: ...`). A heavy new dependency can push it over; the paid plan allows 10 MiB.
+- 100,000 requests a day.
+- `next/image` is served without resizing (no Cloudflare Images binding). Keep files in `public/marketing` small.
 
-#### One-time project setup
+#### Deploy only through Workers Builds
 
-1. Project **eu-ai-assurance** → Git: connect `SVamseekar/devernance` → Root Directory **`apps/dashboard`** → Framework Next.js.
-2. Project **eu-ai-assurance-os** (stub): set Ignore Build Step to `exit 1`, or disconnect Git entirely.
-3. Env on **eu-ai-assurance** (Production + Preview as needed):
-   - `ASSURANCE_API_BASE_URL=https://api.example.com` (server-side only)
-   - `NEXT_PUBLIC_SITE_URL=https://euassuranceai.souravamseekar.com`
-   - Optional `NEXT_PUBLIC_GA_MEASUREMENT_ID`
-   - Optional `DISCORD_DEMO_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL` for `/request-demo`
-   - OAuth client ids/secrets + `OAUTH_REDIRECT_BASE_URL` (see `docs/oauth-production-smoke-test.md`)
-4. Domains: attach `euassuranceai.souravamseekar.com` to **eu-ai-assurance** only.
+OpenNext copies `.env.local` into the worker it builds. A build on a developer machine would therefore ship
+`localhost` URLs, so production is built only by Cloudflare from a clean checkout. `npm run cf:preview` runs the worker
+locally for testing and never deploys.
+
+#### One-time setup (owner)
+
+1. Cloudflare dashboard, **Workers & Pages**, **Create**, **Import a repository**, choose `SVamseekar/devernance`.
+2. Settings:
+   - Project name: `devernance-site` (must match `name` in `wrangler.jsonc`)
+   - Production branch: `main`
+   - Root directory: `apps/dashboard`
+   - Build command: `npx opennextjs-cloudflare build`
+   - Deploy command: `npx wrangler deploy`
+3. **Settings, Build, Variables and secrets** (build time, because `NEXT_PUBLIC_*` values are fixed at build):
+   - `NEXT_PUBLIC_SITE_URL=https://devernance.space`
+   - Optional `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_CF_BEACON_TOKEN`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+4. **Settings, Variables and Secrets** (runtime, type **Secret**):
+   - `DISCORD_DEMO_WEBHOOK_URL` or `DISCORD_WEBHOOK_URL`, needed for `/request-demo` to deliver
+   - Later, with the API: `ASSURANCE_API_BASE_URL`, `TURNSTILE_SECRET_KEY`, OAuth client ids and secrets,
+     `OAUTH_REDIRECT_BASE_URL` (see `docs/oauth-production-smoke-test.md`)
+5. Deploy once. `wrangler.jsonc` routes `devernance.space` and `www.devernance.space` to the worker as custom
+   domains, so Cloudflare creates the DNS records and certificates. Neither name may have another `A`, `AAAA` or
+   `CNAME` record. `www` answers with a 308 to the apex (`redirects()` in `next.config.ts`).
+
+#### Deploying from the CLI (until Workers Builds is connected)
+
+First deployed this way on 23 November 2026. Build from a copy without `.env*` files so no local value reaches the
+worker:
+
+```bash
+D=$(mktemp -d)
+rsync -a --exclude node_modules --exclude .next --exclude .open-next --exclude '.env*' --exclude .wrangler \
+  apps/dashboard/ "$D/"
+cd "$D" && npm ci
+NEXT_PUBLIC_SITE_URL=https://devernance.space npx opennextjs-cloudflare build
+cat .open-next/cloudflare/next-env.mjs   # must show empty objects: {}
+npx wrangler login                       # once per machine
+npx wrangler deploy
+```
 
 #### Deploy
 
-**Automatic:** push/merge to `main` triggers production on `eu-ai-assurance` (root `apps/dashboard`).
-
-**Manual (when git hooks lag or quota recovered):**
-
-```bash
-cd apps/dashboard
-vercel --prod --yes
-```
+A merge to `main` builds and deploys. Every other branch gets a preview build that does not touch production.
 
 #### Verify
 
-1. Login UI: `https://euassuranceai.souravamseekar.com/login` (brand panel + Google/Microsoft + work email).
-2. Dashboard BFF: sign-in + `/api/proxy` against the API.
-3. Marketing: `/privacy`, `/terms`, `/refunds`, `/request-demo` return 200.
+```bash
+curl -sI https://devernance.space | head -1                     # HTTP/2 200
+curl -sI https://www.devernance.space | grep -i '^location'     # https://devernance.space/
+curl -s https://devernance.space/sitemap.xml | grep -m1 '<loc>' # https://devernance.space, not localhost
+```
 
-#### Rate limits / failed Vercel checks on GitHub PRs
+Then open `/`, `/pricing`, `/contact` and `/request-demo`, and send one demo request to check the Discord delivery.
 
-Hobby accounts can hit **build rate limits** when many Dependabot/preview deploys fire. Required GitHub status checks for this repo are **CI jobs only** (API tests, Dashboard, Secret scan, Acceptance) — not Vercel. If Vercel shows “Deployment rate limited”, re-run `vercel --prod` later or wait for the window; do not treat that as a merge blocker.
+#### Rollback
+
+Cloudflare dashboard, `devernance-site`, **Deployments**, pick the previous deployment, **Rollback**.
 
 ### D. Post-deploy checks
 
@@ -254,17 +289,18 @@ ASSURANCE_API_BASE=https://api.example.com \
 API_KEY=... SYSTEM_ID=... ./scripts/ci-release-gate.sh
 ```
 
-### E. Cutover from Vercel and the Dell lab (owner)
+### E. API cutover to Oracle and retiring the Dell lab (owner)
 
-Product domain: `devernance.com`, chosen on 18 October 2026 and not registered yet. The full switch checklist is in
-[BRAND.md](./BRAND.md#domain-day-checklist).
+Product domain: `devernance.space`, with DNS on Cloudflare. The ordered runbook is
+[DOMAIN_MIGRATION.md](./DOMAIN_MIGRATION.md).
 
 1. With production healthy on Oracle, add OAuth redirect URIs
-   `https://app.devernance.com/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
-2. Redirect `euassuranceai.souravamseekar.com/*` → `https://devernance.com/$1` (301, path and query kept).
+   `https://app.devernance.space/api/auth/oauth/{google|microsoft}/callback` (keep the old ones until step 2).
+2. Route `app.devernance.space` to the VM through a Cloudflare Tunnel, and keep `https://devernance.space` as the
+   marketing address. The old `euassuranceai.souravamseekar.com` already redirects to it (DOMAIN_MIGRATION.md, step 5).
 3. Start production with a fresh database unless a real customer used the old system (the Dell database holds demo
    data). To migrate: `pg_dump` the Dell Postgres and restore with the [OPS.md](./OPS.md#restore-from-backup) runbook.
-4. After 7 days of clean redirects, remove both Vercel projects and stop the Dell lab tunnel.
+4. Stop the Dell lab tunnel. (The Vercel projects are removed in DOMAIN_MIGRATION.md, step 7.)
 5. Update the README "Live product" link.
 
 ---

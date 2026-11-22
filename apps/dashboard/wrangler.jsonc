@@ -1,0 +1,23 @@
+// Cloudflare Workers deployment for the marketing site and dashboard (OpenNext adapter).
+// Production deploys only through the Workers Builds Git integration (docs/DEPLOYMENT.md, section C):
+// OpenNext inlines .env.local into the worker, so a build on a developer machine would ship local values.
+// `npm run cf:preview` runs the worker locally. Secrets (Discord webhook, Turnstile secret) are set in the
+// Cloudflare dashboard or with `npx wrangler secret put <NAME>`, never in this file.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "devernance-site",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Cloudflare creates the DNS records and certificates for both names on deploy.
+  // www answers with a permanent redirect to the apex (redirects() in next.config.ts).
+  "routes": [
+    { "pattern": "devernance.space", "custom_domain": true },
+    { "pattern": "www.devernance.space", "custom_domain": true }
+  ],
+  "observability": { "enabled": true }
+}

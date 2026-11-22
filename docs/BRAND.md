@@ -32,13 +32,11 @@ would break something.
 | Calendar UIDs `…@assurance-os` | `apps/dashboard/lib/ics.ts` | Calendar apps match re-imported events by UID, so a new UID duplicates every event. |
 | Browser storage key `eu-ai-theme` | `apps/dashboard/app/layout.tsx` | A new key resets every visitor's theme choice. |
 | The Dell checkout `D:/Projects/eu-ai-assurance-os`, and checkout paths in the plans under `docs/superpowers/` | Dell scripts, plans | The Dell's services run from that folder. The plans record where commands ran at the time. The Mac checkout is `~/Projects/devernance`, and the Evgraph files in `public-claims/` point there. |
-| Live addresses: `euassuranceai.souravamseekar.com`, `euassuranceai@souravamseekar.com`, Vercel projects `eu-ai-assurance` and `eu-ai-assurance-os` | site config, CI, docs | They are still the live addresses. They change on domain day (below). |
 
 ## GitHub repo
 
 On 18 October 2026 the repo was renamed from `SVamseekar/eu-ai-assurance-os` to `SVamseekar/devernance`.
-GitHub redirects the old web, API and git URLs. The Vercel projects stay connected because Vercel tracks the repo by
-its numeric ID, which a rename does not change.
+GitHub redirects the old web, API and git URLs.
 
 - Never create a new repo named `eu-ai-assurance-os` under this account. GitHub drops the redirect once the old name
   is reused.
@@ -49,24 +47,20 @@ its numeric ID, which a rename does not change.
   `uses: SVamseekar/devernance-release-gate@v1`. Never rename that repo: GitHub does not redirect `uses:` references
   to a renamed repo, so every workflow that uses the old name would fail.
 
-## Domain day checklist
+## Domain
 
-`devernance.com` is the chosen domain. On 18 October 2026 it was unregistered and Vercel listed it at the standard
-price of $11.25 a year. Nothing has been bought yet.
+`devernance.space` is the product domain. It was registered at Porkbun on 16 November 2026 and its DNS and hosting
+moved to Cloudflare; Vercel is retired. `devernance.com` was the first choice and was not bought. The full ordered runbook, with the checks for each
+step, is [DOMAIN_MIGRATION.md](./DOMAIN_MIGRATION.md). In short:
 
-1. Register `devernance.com`. Optional: `devernence.com` to catch the misspelling, redirected to the main domain.
-2. In Vercel, add the domain to the `eu-ai-assurance` project. Redirect `euassuranceai.souravamseekar.com` to it with a
-   permanent redirect that keeps the path and query.
-3. Create the mailbox (for example `hello@devernance.com`) and set SPF, DKIM and DMARC records.
-4. Change the code defaults:
-   - `apps/dashboard/lib/site-config.ts`: `siteUrl` and `contactEmail`. `security.txt` and the legal pages read these.
-   - `.github/workflows/ci.yml`: the `NEXT_PUBLIC_SITE_URL` build value.
-   - `services/api/.../publicclaims/PublicClaimsService.java`: the fallback disclaimer URL.
-   - README, CONTRIBUTING and the docs that link the live site.
-5. Set the environment on each host: `NEXT_PUBLIC_SITE_URL` (and `NEXT_PUBLIC_APP_URL` if the app moves to
-   `app.devernance.com`), `ASSURANCE_APP_BASE_URL`, `OAUTH_REDIRECT_BASE_URL`, and
-   `ASSURANCE_EMAIL_FROM=Devernance <no-reply@devernance.com>`.
-6. Add the new OAuth redirect URIs in Google and Microsoft. Keep the old ones until the redirect is live
-   ([DEPLOYMENT.md](./DEPLOYMENT.md), section E).
-7. In Google Search Console, add the new domain, submit the sitemap and file a change of address.
+1. Add the zone in Cloudflare and switch the Porkbun nameservers to Cloudflare.
+2. Deploy the site to Cloudflare Workers (`devernance-site`, custom domain `devernance.space`) and redirect `www`.
+3. Set up the Zoho mailboxes and aliases ([EMAIL.md](./EMAIL.md)) and, with the API, the sending domain in Brevo.
+4. Redirect `euassuranceai.souravamseekar.com` to `devernance.space` with a Porkbun URL forward (301).
+5. When the API goes live, add the new OAuth redirect URIs in Google and Microsoft.
+6. Merge the code change: `siteUrl` and `contactEmails` in `apps/dashboard/lib/site-config.ts`, the
+   `NEXT_PUBLIC_SITE_URL` build value in `.github/workflows/ci.yml`, the fallback disclaimer URL in
+   `PublicClaimsService`, and the links in the README and docs.
+7. In Google Search Console, add the new domain, submit the sitemap and file a change of address. Then delete the
+   Vercel projects.
 8. Trademark: get a clearance search from a trademark lawyer, then file with the EUIPO and the USPTO in classes 9 and 42.

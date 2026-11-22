@@ -4,7 +4,7 @@ import {
   LegalPageShell,
   legalWebPageJsonLd,
 } from "@/components/landing/legal-page-shell";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 const title = "Disclaimer";
 const description =
@@ -89,10 +89,10 @@ export default function DisclaimerPage() {
           <p className="mt-2">
             Questions about this disclaimer:{" "}
             <a
-              href={`mailto:${siteConfig.supportEmail}`}
+              href={`mailto:${contactEmails.legal}`}
               className="text-primary underline underline-offset-2"
             >
-              {siteConfig.supportEmail}
+              {contactEmails.legal}
             </a>
             .
           </p>

@@ -156,7 +156,7 @@ export const footerColumns: FooterColumn[] = [
     title: "Company",
     links: [
       { href: "/request-demo", label: "Request demo" },
-      { href: `mailto:${siteConfig.supportEmail}`, label: "Contact", external: true },
+      { href: "/contact", label: "Contact" },
       { href: "/security", label: "Security" },
       { href: "/subprocessors", label: "Subprocessors" },
       ...(siteConfig.statusUrl ? [{ href: siteConfig.statusUrl, label: "Status", external: true }] : []),

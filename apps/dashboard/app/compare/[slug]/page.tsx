@@ -7,7 +7,7 @@ import { CtaBand } from "@/components/marketing/sections";
 import { COMPARE_PAGES, getComparePage, type CompareSource } from "@/content/compare";
 import { formatDeadlineDate } from "@/lib/deadlines";
 import { marketingMetadata, webPageJsonLd } from "@/lib/seo";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -108,8 +108,8 @@ export default async function ComparePage({ params }: Params) {
             <p className="mt-4">
               Last checked {checked}. Facts about other products come only from their own public pages and may have
               changed since. Tell us at{" "}
-              <a href={`mailto:${siteConfig.supportEmail}`} className="text-brand underline underline-offset-2">
-                {siteConfig.supportEmail}
+              <a href={`mailto:${contactEmails.sales}`} className="text-brand underline underline-offset-2">
+                {contactEmails.sales}
               </a>{" "}
               if something is out of date. Devernance provides evidence and readiness tooling, not legal advice.
             </p>

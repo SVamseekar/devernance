@@ -112,7 +112,7 @@ docker compose -f infra/docker-compose.yml --env-file .env.example up --build
 
 - Health: `GET /actuator/health` (and liveness/readiness under `/actuator/health/*`)
 - Secrets template: root `.env.example` (`EVAL_CALLBACK_SECRET`, `AUDIT_CHAIN_SECRET`, DB, storage)
-- Deploy / rollback / Vercel matrix: `docs/DEPLOYMENT.md`
+- Deploy / rollback / environment matrix: `docs/DEPLOYMENT.md`
 - Terraform skeleton validate (no cloud creds): `./scripts/terraform-validate.sh`
 
 ## Production backups (RPO 24 h, RTO 4 h target)

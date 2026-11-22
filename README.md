@@ -3,7 +3,7 @@
 [![CI](https://github.com/SVamseekar/devernance/actions/workflows/ci.yml/badge.svg)](https://github.com/SVamseekar/devernance/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-**Live product:** [https://euassuranceai.souravamseekar.com](https://euassuranceai.souravamseekar.com)
+**Live product:** [https://devernance.space](https://devernance.space)
 **Repo:** [github.com/SVamseekar/devernance](https://github.com/SVamseekar/devernance)
 
 Devernance (formerly EU AI Assurance OS) is a multi-tenant **governance control plane** for teams shipping AI systems into the EU market. Development and governance, hand in hand. Production surface:
@@ -12,7 +12,7 @@ Devernance (formerly EU AI Assurance OS) is a multi-tenant **governance control 
 |---|---|
 | **Next.js dashboard + landing** | Authenticated product shell + public marketing/legal pages |
 | **Spring Boot API** | Registry, evidence RAG, evals, contracts, workflows, audit, release gates |
-| **Live URL** | Landing + dashboard shell on Vercel (API may be hosted separately) |
+| **Live URL** | [devernance.space](https://devernance.space): landing + dashboard shell on Cloudflare Workers (API hosted separately) |
 
 It helps teams validate AI releases against EU AI Act–oriented controls by combining:
 
@@ -35,7 +35,7 @@ It helps teams validate AI releases against EU AI Act–oriented controls by com
 
 > This product assists governance and release readiness. It is **not** a notified body, does **not** issue legal certifications, and does **not** replace qualified legal counsel.
 
-**Commercial path:** scoped readiness work for one named AI system after a demo — no public list price. See [`/pricing`](https://euassuranceai.souravamseekar.com/pricing). Evgraph is a **separate** PyPI library — this repo exports the files it already reads.
+**Commercial path:** scoped readiness work for one named AI system after a demo — no public list price. See [`/pricing`](https://devernance.space/pricing). Evgraph is a **separate** PyPI library — this repo exports the files it already reads.
 
 ## Governance runtime
 
@@ -87,7 +87,7 @@ Prove it end to end against a real API: `scripts/governance-e2e.sh`. Read
 | API | **Spring Boot 4.1.1**, Java 17, **Tika 4.0.0**, Flyway **V1–V20** (+ postgres V4), Spring Data JPA |
 | Auth | Password JWT + refresh · API keys (`X-Api-Key`) · JWKS · Google/Microsoft OAuth **implemented** (prod smoke pending) |
 | Data | H2 (local default) or PostgreSQL (full-text BM25 + optional pgvector) |
-| Deploy | Dashboard on Vercel; API via Docker Compose or host (Flyway on boot); Terraform skeleton in `infra/terraform/` |
+| Deploy | Site and dashboard on Cloudflare Workers; API via Docker Compose or host (Flyway on boot); Terraform skeleton in `infra/terraform/` |
 
 ## Repository layout
 
@@ -192,7 +192,8 @@ See [`docs/ROADMAP.md`](./docs/ROADMAP.md) and [`docs/superpowers/plans/2026-07-
 ## Documentation
 
 - [`docs/METRICS_CANONICAL.md`](./docs/METRICS_CANONICAL.md) — **authoritative** measured platform numbers
-- [`docs/BRAND.md`](./docs/BRAND.md) — name rules, identifiers that keep the old name, domain-day checklist
+- [`docs/BRAND.md`](./docs/BRAND.md) — name rules, identifiers that keep the old name, the domain
+- [`docs/DOMAIN_MIGRATION.md`](./docs/DOMAIN_MIGRATION.md) — move to devernance.space on Cloudflare, step by step
 - [`docs/PRD.md`](./docs/PRD.md) — product requirements
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) — phased delivery and honesty matrix
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — system design
@@ -202,7 +203,7 @@ See [`docs/ROADMAP.md`](./docs/ROADMAP.md) and [`docs/superpowers/plans/2026-07-
 - [`docs/API.md`](./docs/API.md) — HTTP contract
 - [`docs/SCHEMA.md`](./docs/SCHEMA.md) — SQL tables (Flyway V1–V20)
 - [`docs/SECURITY.md`](./docs/SECURITY.md) — threat model
-- [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — Docker, Vercel + API host, migrations, rollback
+- [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — Docker, Cloudflare Workers + API host, migrations, rollback
 - [`docs/OPS.md`](./docs/OPS.md) — CI release gate + observability
 - [`docs/NFR.md`](./docs/NFR.md) — latency/uptime targets and secrets
 - [`docs/SECTOR_PACKS.md`](./docs/SECTOR_PACKS.md) — sector pack claims

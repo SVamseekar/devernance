@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { CoverTable, LegalPage, LegalSection } from "@/components/landing/legal-page-shell";
 import { COMMON_PAPER, LEGAL } from "@/lib/legal";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 const title = "Terms of Service";
 const description = `The terms for using ${siteConfig.shortName}: a Cover Page on the Common Paper Cloud Service Agreement Standard Terms.`;
@@ -88,7 +88,7 @@ export default function TermsPage() {
 
       <LegalSection title="Contact">
         <p>
-          Questions about these Terms: <a href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>.
+          Questions about these Terms: <a href={`mailto:${contactEmails.legal}`}>{contactEmails.legal}</a>.
         </p>
       </LegalSection>
     </LegalPage>

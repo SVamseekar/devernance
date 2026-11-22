@@ -6,7 +6,7 @@ import { AlertCircle, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 
 import { mkButton } from "@/components/marketing/primitives";
 import { DEMO_ROLES, submitDemoRequest, type DemoRequestInput } from "@/lib/demo-request";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 const EMPTY_FORM: DemoRequestInput = {
@@ -201,8 +201,8 @@ export function DemoRequestForm() {
       </button>
       <p className="text-center text-xs text-ink-muted">
         Prefer email?{" "}
-        <a href={`mailto:${siteConfig.supportEmail}`} className="font-medium text-brand hover:underline">
-          {siteConfig.supportEmail}
+        <a href={`mailto:${contactEmails.demo}`} className="font-medium text-brand hover:underline">
+          {contactEmails.demo}
         </a>
       </p>
     </form>

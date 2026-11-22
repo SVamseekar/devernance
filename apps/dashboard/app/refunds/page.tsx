@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { LegalPage, LegalSection } from "@/components/landing/legal-page-shell";
 import { LEGAL } from "@/lib/legal";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 const title = "Refund policy";
 const description = `Refunds within ${LEGAL.refundDays} days of your first payment on any ${siteConfig.shortName} plan.`;
@@ -16,7 +16,7 @@ export default function RefundsPage() {
       <LegalSection title="First payment">
         <p>
           Refunds within {LEGAL.refundDays} days of your first payment for any plan, no questions asked. Email{" "}
-          <a href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a> or use the customer portal.
+          <a href={`mailto:${contactEmails.refunds}`}>{contactEmails.refunds}</a> or use the customer portal.
         </p>
       </LegalSection>
       <LegalSection title="Renewals">

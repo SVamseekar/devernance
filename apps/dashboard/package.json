@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "test": "node --import tsx --test \"lib/**/*.test.ts\" \"app/**/*.test.ts\" \"app/.well-known/**/*.test.ts\" \"components/**/*.test.ts\"",
     "e2e": "playwright test"
   },
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",
+    "@opennextjs/cloudflare": "^1.20.18",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^26",
@@ -36,6 +39,7 @@
     "shadcn": "^4.22.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.166.0"
   }
 }

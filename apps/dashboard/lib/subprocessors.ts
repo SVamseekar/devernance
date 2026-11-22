@@ -20,17 +20,19 @@ export const SUBPROCESSORS: Subprocessor[] = [
   },
   {
     name: "Cloudflare",
-    purpose: "CDN, TLS, tunnel, bot protection (Turnstile), cookieless web analytics, encrypted backups (R2, EU jurisdiction)",
+    purpose:
+      "Hosting for the web app and its API proxy (Workers), DNS, CDN, TLS, tunnel, bot protection (Turnstile), cookieless web analytics, encrypted backups (R2, EU jurisdiction)",
     location: "Global edge; R2 in the EU",
-    dataCategories: "Traffic metadata; encrypted backups",
+    dataCategories:
+      "Traffic metadata (IP address, request headers); workspace data in transit through the proxy; encrypted backups",
     link: "https://www.cloudflare.com/",
   },
   {
-    name: "Vercel",
-    purpose: "Hosting for the web app and its API proxy",
-    location: "Global edge; see provider",
-    dataCategories: "Traffic metadata (IP address, request headers); workspace data in transit through the proxy",
-    link: "https://vercel.com/legal/privacy-policy",
+    name: "Zoho Mail",
+    purpose: "Mailboxes for messages sent to @devernance.space addresses",
+    location: "India",
+    dataCategories: "Name, email address and content of messages you send us",
+    link: "https://www.zoho.com/privacy.html",
   },
   {
     name: "Google Analytics",
@@ -47,11 +49,11 @@ export const SUBPROCESSORS: Subprocessor[] = [
     link: "https://dodopayments.com/",
   },
   {
-    name: "Resend",
-    purpose: "Transactional email",
-    location: "See provider",
+    name: "Brevo",
+    purpose: "Transactional email (sign-up verification, password reset, invites)",
+    location: "EU",
     dataCategories: "Email address, email content",
-    link: "https://resend.com/",
+    link: "https://www.brevo.com/legal/privacypolicy/",
   },
   {
     name: "Sentry",

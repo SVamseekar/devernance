@@ -10,7 +10,7 @@ Related: root [`.env.example`](../.env.example), [DEPLOYMENT.md](./DEPLOYMENT.md
    - `OAUTH_GOOGLE_CLIENT_ID` / `OAUTH_GOOGLE_CLIENT_SECRET`
    - `OAUTH_MICROSOFT_CLIENT_ID` / `OAUTH_MICROSOFT_CLIENT_SECRET`
    - `OAUTH_REDIRECT_BASE_URL` = public dashboard origin (no trailing slash), e.g.
-     `https://euassuranceai.souravamseekar.com` or `http://localhost:3000`
+     `https://devernance.space` or `http://localhost:3000`
    - `OAUTH_AUTO_PROVISION`: `true` by default under the `postgres` profile (self-serve sign-up: only provider-verified emails are provisioned, each into its own workspace); set `false` for invite-only
    - Optional: `OAUTH_STATE_SECRET` (defaults to `AUDIT_CHAIN_SECRET` if unset)
 2. **Dashboard env** (Vercel / Next):
@@ -18,10 +18,10 @@ Related: root [`.env.example`](../.env.example), [DEPLOYMENT.md](./DEPLOYMENT.md
    - Same public origin as `OAUTH_REDIRECT_BASE_URL`
 3. **Google Cloud OAuth client** authorized redirect URIs (exact match):
    - `http://localhost:3000/api/auth/oauth/google/callback`
-   - `https://euassuranceai.souravamseekar.com/api/auth/oauth/google/callback`
+   - `https://devernance.space/api/auth/oauth/google/callback`
 4. **Azure AD / Entra app registration** redirect URIs:
    - `http://localhost:3000/api/auth/oauth/microsoft/callback`
-   - `https://euassuranceai.souravamseekar.com/api/auth/oauth/microsoft/callback`
+   - `https://devernance.space/api/auth/oauth/microsoft/callback`
 5. API restarted after env change; dashboard redeployed.
 
 ## Redirect URI design

@@ -231,7 +231,7 @@ jobs:
       run:
         working-directory: apps/dashboard
     env:
-      NEXT_PUBLIC_SITE_URL: https://euassuranceai.souravamseekar.com
+      NEXT_PUBLIC_SITE_URL: https://devernance.space
       # Build must not require a live API
       ASSURANCE_API_BASE_URL: http://localhost:8080
     steps:

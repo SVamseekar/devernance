@@ -19,7 +19,7 @@ const configText = [
 
 /** Providers the app can be configured to send personal data to, and how each is recognised. */
 const configuredProviders: [string, RegExp][] = [
-  ["Resend", /smtp\.resend\.com/],
+  ["Brevo", /smtp-relay\.brevo\.com/],
   ["Oracle Cloud Infrastructure", /oci\.oraclecloud\.com/],
   ["Dodo Payments", /dodopayments\.com/],
   ["Cloudflare", /TURNSTILE|CF_BEACON/],

@@ -35,7 +35,7 @@ infra/terraform/
 | `secrets` | `EVAL_CALLBACK_SECRET`, `AUDIT_CHAIN_SECRET`, DB password, OAuth client secrets |
 | `compute` | Run `infra/Dockerfile` image; inject env from secrets; health `/actuator/health` |
 
-Dashboard remains on **Vercel** unless you deliberately self-host (`infra/Dockerfile.dashboard`).
+Dashboard runs on **Cloudflare Workers** (`docs/DEPLOYMENT.md` section C) unless you deliberately self-host (`infra/Dockerfile.dashboard`).
 
 ## Validation without cloud credentials
 
@@ -53,6 +53,6 @@ CI runs the same commands (see `.github/workflows/ci.yml` job `terraform-validat
 2. Configure a **remote backend** with encryption and state locking.
 3. Copy `terraform.tfvars.example` → private `terraform.tfvars` (never commit secrets).
 4. `terraform plan` → review → `terraform apply` only with change control.
-5. Run Flyway via API boot against the new DB; then point Vercel `ASSURANCE_API_BASE_URL` at the service URL.
+5. Run Flyway via API boot against the new DB; then point the worker's `ASSURANCE_API_BASE_URL` secret at the service URL.
 
 See `docs/DEPLOYMENT.md` for the full runbook and env matrix.

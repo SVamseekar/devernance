@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { clientIp } from "@/lib/client-ip";
 import { readLimitedText } from "@/lib/read-limited-body";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 export const runtime = "nodejs";
 
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
     console.error("Demo request notification failed:", error);
     return NextResponse.json(
       {
-        error: `Unable to send your request right now. Please email ${siteConfig.supportEmail} directly.`,
+        error: `Unable to send your request right now. Please email ${contactEmails.demo} directly.`,
       },
       { status: 503 },
     );

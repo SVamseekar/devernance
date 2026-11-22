@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 /**
  * Shared legal values used by the Terms, DPA, MSA and order form pages, so a change (a company is formed,
@@ -28,7 +28,7 @@ export const LEGAL = {
   liabilityCap:
     "The fees paid or payable by Customer for the Cloud Service in the 12 months before the event giving rise to the claim. Neither party is liable for indirect or consequential damages.",
   merchantOfRecord: "Dodo Payments is the merchant of record for purchases; its terms apply to the payment transaction.",
-  noticeEmail: siteConfig.supportEmail,
+  noticeEmail: contactEmails.legal,
   exportDays: 30,
   priceChangeNoticeDays: 30,
   refundDays: 14,
