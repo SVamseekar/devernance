@@ -62,6 +62,29 @@ and fairly.
 All community leaders are obligated to respect the privacy and security of the
 reporter of any incident.
 
+### Enforcement Guidelines
+
+Community leaders follow these guidelines in deciding the consequences for any
+action they deem in violation of this Code of Conduct:
+
+1. **Correction.** For use of inappropriate language or other behavior judged
+   unprofessional or unwelcome. Consequence: a private, written warning that
+   explains why the behavior was inappropriate. A public apology may be
+   requested.
+2. **Warning.** For a violation through a single incident or a series of
+   actions. Consequence: a warning with consequences for continued behavior. No
+   interaction with the people involved, including unsolicited interaction with
+   those enforcing this Code of Conduct, for a specified period. Violating these
+   terms may lead to a temporary or permanent ban.
+3. **Temporary ban.** For a serious violation of community standards, including
+   sustained inappropriate behavior. Consequence: a temporary ban from any
+   interaction or public communication with the community for a specified
+   period. Violating these terms may lead to a permanent ban.
+4. **Permanent ban.** For a pattern of violation of community standards,
+   including sustained inappropriate behavior, harassment of an individual, or
+   aggression toward or disparagement of classes of individuals. Consequence: a
+   permanent ban from any public interaction within the community.
+
 ## Attribution
 
 This Code of Conduct is adapted from the
