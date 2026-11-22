@@ -220,33 +220,44 @@ Limits to watch on the Free plan:
 - 100,000 requests a day.
 - `next/image` is served without resizing (no Cloudflare Images binding). Keep files in `public/marketing` small.
 
-#### Deploy only through Workers Builds
+#### Deploy only from a clean checkout
 
 OpenNext copies `.env.local` into the worker it builds. A build on a developer machine would therefore ship
-`localhost` URLs, so production is built only by Cloudflare from a clean checkout. `npm run cf:preview` runs the worker
-locally for testing and never deploys.
+`localhost` URLs, so production is built by GitHub Actions (`.github/workflows/deploy-site.yml`) from a clean
+checkout. `npm run cf:preview` runs the worker locally for testing and never deploys.
 
-#### One-time setup (owner)
+#### Automatic deploys (GitHub Actions)
 
-1. Cloudflare dashboard, **Workers & Pages**, **Create**, **Import a repository**, choose `SVamseekar/devernance`.
-2. Settings:
-   - Project name: `devernance-site` (must match `name` in `wrangler.jsonc`)
-   - Production branch: `main`
-   - Root directory: `apps/dashboard`
-   - Build command: `npx opennextjs-cloudflare build`
-   - Deploy command: `npx wrangler deploy`
-3. **Settings, Build, Variables and secrets** (build time, because `NEXT_PUBLIC_*` values are fixed at build):
-   - `NEXT_PUBLIC_SITE_URL=https://devernance.space`
-   - Optional `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_CF_BEACON_TOKEN`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
-4. **Settings, Variables and Secrets** (runtime, type **Secret**):
-   - `DISCORD_DEMO_WEBHOOK_URL` or `DISCORD_WEBHOOK_URL`, needed for `/request-demo` to deliver
+`deploy-site.yml` runs after the CI workflow passes on a push to `main`: `npm ci`, `opennextjs-cloudflare build`
+with `NEXT_PUBLIC_SITE_URL=https://devernance.space`, a check that no `localhost` value reached the worker,
+`wrangler deploy`, and a smoke test of the home page and sitemap. Run it by hand from the Actions tab
+(**Deploy site**, **Run workflow**).
+
+It needs, under repository **Settings, Secrets and variables, Actions**:
+
+- Variable `CLOUDFLARE_ACCOUNT_ID` = `46928ed900c04f48f64d89683afb7d24`
+- Secret `CLOUDFLARE_API_TOKEN`: Cloudflare dashboard, **My Profile, API Tokens, Create Token**, template
+  **Edit Cloudflare Workers**, account and zone `devernance.space` only. Set it with
+  `gh secret set CLOUDFLARE_API_TOKEN` (prompts for the value).
+
+Without them the job skips with a warning.
+
+#### Worker settings (owner, once)
+
+1. Name: `devernance-site` (`name` in `wrangler.jsonc`).
+2. Build-time public values (`NEXT_PUBLIC_*`) go in the workflow's build step: `NEXT_PUBLIC_SITE_URL` today;
+   add `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_CF_BEACON_TOKEN` or `NEXT_PUBLIC_TURNSTILE_SITE_KEY` there when
+   needed.
+3. Runtime secrets, set with `npx wrangler secret put <NAME>` (prompts) or in the Cloudflare dashboard
+   (`devernance-site`, **Settings, Variables and Secrets**, type **Secret**):
+   - `DISCORD_DEMO_WEBHOOK_URL`, needed for `/request-demo` to deliver (set 23 November 2026)
    - Later, with the API: `ASSURANCE_API_BASE_URL`, `TURNSTILE_SECRET_KEY`, OAuth client ids and secrets,
      `OAUTH_REDIRECT_BASE_URL` (see `docs/oauth-production-smoke-test.md`)
-5. Deploy once. `wrangler.jsonc` routes `devernance.space` and `www.devernance.space` to the worker as custom
-   domains, so Cloudflare creates the DNS records and certificates. Neither name may have another `A`, `AAAA` or
-   `CNAME` record. `www` answers with a 308 to the apex (`redirects()` in `next.config.ts`).
+4. `wrangler.jsonc` routes `devernance.space` and `www.devernance.space` to the worker as custom domains, so
+   Cloudflare creates the DNS records and certificates. Neither name may have another `A`, `AAAA` or `CNAME` record.
+   `www` answers with a 308 to the apex (`redirects()` in `next.config.ts`).
 
-#### Deploying from the CLI (until Workers Builds is connected)
+#### Deploying from the CLI (emergency only)
 
 First deployed this way on 23 November 2026. Build from a copy without `.env*` files so no local value reaches the
 worker:
@@ -261,10 +272,6 @@ cat .open-next/cloudflare/next-env.mjs   # must show empty objects: {}
 npx wrangler login                       # once per machine
 npx wrangler deploy
 ```
-
-#### Deploy
-
-A merge to `main` builds and deploys. Every other branch gets a preview build that does not touch production.
 
 #### Verify
 

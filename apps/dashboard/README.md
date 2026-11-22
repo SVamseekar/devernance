@@ -31,6 +31,6 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy
 
-Production runs on Cloudflare Workers through the OpenNext adapter (`wrangler.jsonc`). Cloudflare builds and deploys
-`main` automatically; never deploy from a developer machine, because OpenNext bakes `.env.local` into the worker.
+Production runs on Cloudflare Workers through the OpenNext adapter (`wrangler.jsonc`). GitHub Actions (`deploy-site.yml`)
+deploys `main` after CI passes; never deploy from a developer machine, because OpenNext bakes `.env.local` into the worker.
 `npm run cf:preview` runs the worker locally. Full steps: [`docs/DEPLOYMENT.md`](../../docs/DEPLOYMENT.md#c-site-on-cloudflare-workers).

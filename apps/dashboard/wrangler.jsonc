@@ -1,5 +1,5 @@
 // Cloudflare Workers deployment for the marketing site and dashboard (OpenNext adapter).
-// Production deploys only through the Workers Builds Git integration (docs/DEPLOYMENT.md, section C):
+// Production deploys only through .github/workflows/deploy-site.yml (docs/DEPLOYMENT.md, section C):
 // OpenNext inlines .env.local into the worker, so a build on a developer machine would ship local values.
 // `npm run cf:preview` runs the worker locally. Secrets (Discord webhook, Turnstile secret) are set in the
 // Cloudflare dashboard or with `npx wrangler secret put <NAME>`, never in this file.

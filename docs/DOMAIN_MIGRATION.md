@@ -47,8 +47,8 @@ DMARC `pass` in the headers.
 
 ### 3. Site on Cloudflare Workers — first deployed from the CLI 23 November 2026
 
-Follow [DEPLOYMENT.md, section C](./DEPLOYMENT.md#c-site-on-cloudflare-workers). Still open: the Discord secret for
-the demo form, and connecting the repository in **Workers & Pages** so merges to `main` deploy on their own.
+Follow [DEPLOYMENT.md, section C](./DEPLOYMENT.md#c-site-on-cloudflare-workers). The Discord secret is set; merges to
+`main` deploy through `.github/workflows/deploy-site.yml` once its Cloudflare token is in place.
 
 Check:
 
@@ -84,8 +84,7 @@ curl -sI "https://euassuranceai.souravamseekar.com/pricing?x=1" | grep -iE '^HTT
 ### 6. Merge the code pull request (agent or owner)
 
 The pull request changes the defaults (`siteUrl` and `contactEmails` in `apps/dashboard/lib/site-config.ts`), adds the
-`/contact` page and the Cloudflare Workers config, and updates the docs. A merge to `main` deploys through Workers
-Builds.
+`/contact` page and the Cloudflare Workers config, and updates the docs. Merged 23 November 2026 as #129.
 
 Check after the deploy: `https://devernance.space/.well-known/security.txt` lists `security@devernance.space`, and
 `https://devernance.space/sitemap.xml` lists `devernance.space` URLs.
