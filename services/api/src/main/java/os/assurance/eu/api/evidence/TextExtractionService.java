@@ -98,7 +98,7 @@ public class TextExtractionService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
                 "No text could be extracted. Scanned images are not supported; upload a text-based file.");
         }
-        return text.strip();
+        return stripKeepingPageBreaks(text);
     }
 
     /**
@@ -161,6 +161,23 @@ public class TextExtractionService {
             }
         }
         return text.toString();
+    }
+
+    /**
+     * Trims spaces and newlines at both ends but keeps {@link #PAGE_BREAK}. {@code String.strip()} treats the form
+     * feed as whitespace, so a PDF whose first pages have no text would lose its leading markers and every page
+     * citation would name a page that is too low.
+     */
+    public static String stripKeepingPageBreaks(String text) {
+        int start = 0;
+        int end = text.length();
+        while (start < end && text.charAt(start) != PAGE_BREAK && Character.isWhitespace(text.charAt(start))) {
+            start++;
+        }
+        while (end > start && text.charAt(end - 1) != PAGE_BREAK && Character.isWhitespace(text.charAt(end - 1))) {
+            end--;
+        }
+        return text.substring(start, end);
     }
 
     /** Separates pages in extracted text. Parsers that have no pages (DOCX, TXT) never emit it. */
@@ -278,7 +295,7 @@ public class TextExtractionService {
         }
         try {
             String extracted = parseWithTimeout(bytes, fileNameOf(uri), MAX_FETCH_CHARS);
-            return (extracted != null && !extracted.isBlank()) ? extracted.strip() : null;
+            return (extracted != null && !extracted.isBlank()) ? stripKeepingPageBreaks(extracted) : null;
         } catch (Exception e) {
             log.warn("Text extraction failed for {}: {}", request.sourceUri(), e.toString());
             return null;
@@ -318,7 +335,7 @@ public class TextExtractionService {
                     "The source document is larger than 25 MB. Upload a smaller file.");
             }
             String extracted = parseWithTimeout(bytes, fileNameOf(uri), MAX_FETCH_CHARS);
-            return (extracted != null && !extracted.isBlank()) ? extracted.strip() : null;
+            return (extracted != null && !extracted.isBlank()) ? stripKeepingPageBreaks(extracted) : null;
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {

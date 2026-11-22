@@ -215,6 +215,7 @@ public class ControlService {
    * Separation of duties: the engineering lead who ships the system may raise a control to REVIEW or BLOCKED,
    * but only compliance (or an admin) can mark it PASS or lift a block, so nobody attests their own release.
    */
+  @Transactional
   public SystemControl updateSystemControl(
       UUID systemId, UUID controlId, UpdateSystemControlRequest request, UserRole actorRole) {
     requireSystem(systemId);

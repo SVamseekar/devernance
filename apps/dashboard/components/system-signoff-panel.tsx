@@ -117,7 +117,7 @@ function ControlRow({ systemId, control, role, onSaved }: {
               placeholder="Evidence or reason" />
           </div>
           <Button size="sm" variant="outline" className="h-7 text-[10px]"
-            disabled={save.isPending || (status === control.status && notes === (control.notes ?? ""))}
+            disabled={save.isPending || !options.includes(status) || (status === control.status && notes === (control.notes ?? ""))}
             onClick={() => save.mutate()}>
             Save
           </Button>

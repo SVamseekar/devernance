@@ -44,7 +44,16 @@ final class EvidenceTerms {
     return new LinkedHashSet<>(of(text));
   }
 
+  /** Stems a word and drops a trailing "e", so approve, approves, approved and approving give one term. */
   static String stem(String word) {
+    String stemmed = stripSuffix(word);
+    if (stemmed.length() > 3 && stemmed.endsWith("e")) {
+      return stemmed.substring(0, stemmed.length() - 1);
+    }
+    return stemmed;
+  }
+
+  private static String stripSuffix(String word) {
     if (word.length() <= 3 || !Character.isLetter(word.charAt(word.length() - 1))) {
       return word;
     }

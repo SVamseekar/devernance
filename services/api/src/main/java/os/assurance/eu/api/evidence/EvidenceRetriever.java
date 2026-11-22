@@ -2,6 +2,7 @@ package os.assurance.eu.api.evidence;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +59,8 @@ public class EvidenceRetriever {
 
     int questionTerms = EvidenceTerms.distinct(question).size();
     int requiredTerms = Math.min(2, Math.max(1, questionTerms));
-    Map<UUID, Double> fused = new HashMap<>();
+    // Insertion order (keywords first, then meaning) breaks fused-score ties the same way on every run.
+    Map<UUID, Double> fused = new LinkedHashMap<>();
     Map<UUID, Boolean> relevant = new HashMap<>();
     for (int rank = 0; rank < keywords.size(); rank++) {
       EvidenceSearchIndex.RankedChunk hit = keywords.get(rank);

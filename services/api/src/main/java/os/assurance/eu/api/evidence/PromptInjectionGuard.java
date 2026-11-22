@@ -51,7 +51,7 @@ public class PromptInjectionGuard {
       }
       safeLines.add(line);
     }
-    String sanitized = String.join("\n", safeLines).strip();
+    String sanitized = TextExtractionService.stripKeepingPageBreaks(String.join("\n", safeLines));
 
     String collapsedWholeText = normalize(text).replaceAll("\\s+", " ");
     if (looksLikeInjection(collapsedWholeText) && !removed.isEmpty()) {

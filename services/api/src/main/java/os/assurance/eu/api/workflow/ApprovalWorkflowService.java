@@ -245,7 +245,7 @@ public class ApprovalWorkflowService {
     notifyNextPendingReviewer(workflow, updatedStages);
     ApprovalWorkflow reopened = new ApprovalWorkflow(workflow.id(), workflow.systemId(), workflow.trigger(),
         WorkflowStatus.OPEN, updatedStages, workflow.openedAt(), null, workflow.createdAt());
-    if (workflow.status() != WorkflowStatus.OPEN) {
+    if (workflow.status() == WorkflowStatus.REJECTED) {
       // Overriding the stage that rejected a cycle reopens it for the stages after it.
       repository.saveWorkflow(reopened);
     }

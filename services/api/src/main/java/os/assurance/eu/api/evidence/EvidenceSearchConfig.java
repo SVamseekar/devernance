@@ -34,7 +34,8 @@ class EvidenceSearchConfig {
     boolean vectors = hasColumn(jdbc, "embedding_vector");
     if (!vectors) {
       log.warn("pgvector is not installed: evidence meaning ranking reads chunk vectors into the API. "
-          + "Install the vector extension and rerun migrations to rank in the database.");
+          + "Flyway does not rerun V32_1. To rank in the database, run create extension vector, then the "
+          + "embedding_vector column, trigger and backfill statements from V32_1 (docs/DEPLOYMENT.md).");
     }
     EvidenceSearchIndex index = new PostgresEvidenceSearchIndex(jdbc, vectors, inMemory);
     log.info("Evidence search ranks with {}", index.description());

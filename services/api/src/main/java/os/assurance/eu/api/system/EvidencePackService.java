@@ -413,7 +413,7 @@ public class EvidencePackService {
         .map(this::driftEvidence)
         .toList();
     List<UUID> openDriftEventIds = driftEvents.stream()
-        .filter(event -> event.status() == DriftStatus.OPEN)
+        .filter(event -> event.status() != DriftStatus.RESOLVED)
         .map(DriftEvent::id)
         .toList();
     Map<String, Object> lineage = new LinkedHashMap<>();

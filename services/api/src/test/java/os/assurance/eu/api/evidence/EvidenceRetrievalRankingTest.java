@@ -52,6 +52,12 @@ class EvidenceRetrievalRankingTest {
   }
 
   @Test
+  void aVerbAndItsFormsGiveOneTerm() {
+    assertThat(EvidenceTerms.distinct("approve approves approved approving")).hasSize(1);
+    assertThat(EvidenceTerms.distinct("require required")).hasSize(1);
+  }
+
+  @Test
   void quotesTheSentenceThatAnswersTheQuestion() {
     String chunk = "Section 4 covers retention. Logs are kept for six years in the EU region. "
         + "Applicants may request a human-only review within 30 days. Reviews are logged.";

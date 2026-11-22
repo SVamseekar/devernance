@@ -189,7 +189,7 @@ Full template: [`.env.example`](../.env.example). Secrets handling: [NFR.md](./N
 
 1. Provision Postgres 16+ (prefer same region as API).
 2. Create role/database; store password in a secret manager.
-3. Prefer an image with pgvector (e.g. `pgvector/pgvector:pg16`) so evidence meaning ranking runs in SQL; without it the `V32_1` migration skips the vector column and the API ranks chunk vectors in memory.
+3. Prefer an image with pgvector (e.g. `pgvector/pgvector:pg16`) so evidence meaning ranking runs in SQL; without it the `V32_1` migration skips the vector column and the API ranks chunk vectors in memory. Flyway never reruns `V32_1`, so if you install pgvector later, run `create extension vector;` and then the `embedding_vector` column, trigger and backfill statements from `db/postgresql/V32_1` by hand.
 
 ### B. API
 

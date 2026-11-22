@@ -21,6 +21,13 @@ const pct = (value: number | undefined) => (value === undefined ? "—" : `${Mat
 
 /** Console lines for a run; a queued run says what it is waiting for instead of showing numbers. */
 export function evalRunLines(run: EvalRun): string[] {
+  if (run.status === "failed") {
+    return [
+      `> run ${run.runId} — failed ${run.failedAt ?? ""}`.trim(),
+      `> ${run.failureReason ?? "no reason recorded"}`,
+      "> a failed run cannot accept a result; start a new run",
+    ];
+  }
   if (run.status !== "completed") {
     return [
       `> run ${run.runId} — ${run.status}`,

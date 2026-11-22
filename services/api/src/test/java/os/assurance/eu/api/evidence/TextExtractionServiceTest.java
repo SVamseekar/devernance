@@ -122,4 +122,12 @@ class TextExtractionServiceTest {
                 .isInstanceOf(TextExtractionService.SsrfRejectedException.class);
         }
     }
+
+    @Test
+    void stripKeepingPageBreaksKeepsTheLeadingMarkersOfBlankPages() {
+        char pb = TextExtractionService.PAGE_BREAK;
+        assertThat(TextExtractionService.stripKeepingPageBreaks("\n" + pb + "\n  Page two.  \n"))
+            .isEqualTo(pb + "\n  Page two.");
+        assertThat(TextExtractionService.stripKeepingPageBreaks("  plain text \n")).isEqualTo("plain text");
+    }
 }

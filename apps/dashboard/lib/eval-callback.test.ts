@@ -26,6 +26,12 @@ test("a queued run shows no numbers", () => {
   assert.match(lines[1], /waiting for your eval harness/);
 });
 
+test("a failed run shows its reason and does not say to wait", () => {
+  const lines = evalRunLines(run({ status: "failed", failedAt: "2026-10-28T09:05:00Z", failureReason: "harness timed out", metrics: {} as EvalRun["metrics"] }));
+  assert.ok(lines.includes("> harness timed out"));
+  assert.equal(lines.some((l) => l.includes("waiting")), false);
+});
+
 test("a completed run shows versions, metrics and its own result", () => {
   const lines = evalRunLines(run({}));
   assert.ok(lines.includes("> bias slice pass:    60%"));
