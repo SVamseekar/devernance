@@ -35,6 +35,7 @@ tmp/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+*.egg-info/
 
 # Claude Code local context (not for git)
 .claude/

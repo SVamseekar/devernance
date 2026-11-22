@@ -24,6 +24,8 @@ import os.assurance.eu.api.auth.JwtService;
 @Order(2)
 public class TenantContextFilter extends OncePerRequestFilter {
     static final String API_KEY_HEADER = "X-Api-Key";
+    public static final String API_KEY_ID_ATTRIBUTE = "assurance.apiKey.id";
+    public static final String API_KEY_NAME_ATTRIBUTE = "assurance.apiKey.name";
     static final String AUTHORIZATION_HEADER = "Authorization";
     static final String BEARER_PREFIX = "Bearer ";
 
@@ -120,7 +122,8 @@ public class TenantContextFilter extends OncePerRequestFilter {
         // dvn_ since the Devernance rename; aos_ keys issued before it stay valid.
         boolean modern = apiKeyHeader.matches("^(dvn|aos)_[A-Za-z0-9_-]{43}$");
         if (!legacy && !modern) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid " + API_KEY_HEADER);
+            // A key that cannot be one of ours is a failed credential, like an unknown key (RFC 9110 401).
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid " + API_KEY_HEADER);
             return;
         }
         ApiKeyEntity key = apiKeys.findByKeyHash(ApiKeyHasher.sha256Hex(apiKeyHeader)).orElse(null);
@@ -133,11 +136,13 @@ public class TenantContextFilter extends OncePerRequestFilter {
             return;
         }
         if (!key.scope().allows(request.getMethod(), request.getRequestURI())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                "This API key may only call GET " + ApiKeyScope.RELEASE_GATE_PATH + "; create a full-access key for other calls");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, key.scope().refusal());
             return;
         }
         apiKeyUsage.touch(key.id());
+        // Which key called, for records that name the calling workload (governance decisions).
+        request.setAttribute(API_KEY_ID_ATTRIBUTE, key.id());
+        request.setAttribute(API_KEY_NAME_ATTRIBUTE, key.name());
         runAs(key.tenantId(), key.userId(), request, response, filterChain);
     }
 

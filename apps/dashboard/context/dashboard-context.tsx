@@ -24,8 +24,8 @@ interface DashboardContextType {
   // Drift Events
   driftEvents: DriftEvent[];
   allAudits: AuditEvent[];
-  acknowledgeDrift: (id: string) => Promise<void>;
-  resolveDrift: (id: string) => Promise<void>;
+  acknowledgeDrift: (id: string, note: string) => Promise<void>;
+  resolveDrift: (id: string, note: string) => Promise<void>;
   contractsList: DataContract[];
 
   openSystemDetails: (id: string) => void;
@@ -78,25 +78,25 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const [localDriftEvents, setLocalDriftEvents] = useState<DriftEvent[]>(() => (allowMockFallback() ? MOCK_DRIFT_EVENTS : []));
 
-  async function setDriftStatus(eventId: string, status: "ACKNOWLEDGED" | "RESOLVED") {
+  async function setDriftStatus(eventId: string, status: "ACKNOWLEDGED" | "RESOLVED", note: string) {
     if (liveContracts) {
       const event = (queryClient.getQueriesData<DriftEvent[]>({ queryKey: ["drift-events"] })
         .flatMap(([, data]) => data ?? []))
         .find((e) => e.id === eventId);
       if (!event) return;
-      await api.contracts.updateDriftEvent(event.contractId, eventId, status);
+      await api.contracts.updateDriftEvent(event.contractId, eventId, status, note);
       await queryClient.invalidateQueries({ queryKey: ["drift-events", event.contractId] });
       await queryClient.invalidateQueries({ queryKey: ["contracts"] });
       await queryClient.invalidateQueries({ queryKey: ["systems"] });
       return;
     }
     setLocalDriftEvents((p) =>
-      p.map((e) => (e.id === eventId ? { ...e, status, updatedAt: new Date().toISOString() } : e)),
+      p.map((e) => (e.id === eventId ? { ...e, status, resolutionNote: note, updatedAt: new Date().toISOString() } : e)),
     );
   }
 
-  const acknowledgeDrift = (id: string) => setDriftStatus(id, "ACKNOWLEDGED");
-  const resolveDrift = (id: string) => setDriftStatus(id, "RESOLVED");
+  const acknowledgeDrift = (id: string, note: string) => setDriftStatus(id, "ACKNOWLEDGED", note);
+  const resolveDrift = (id: string, note: string) => setDriftStatus(id, "RESOLVED", note);
 
   const baseSystems = liveSystems ?? (allowMockFallback() ? MOCK_SYSTEMS : (apiSystems ?? []));
   const baseContracts = liveContracts ?? (allowMockFallback() ? MOCK_CONTRACTS : (apiContracts ?? []));

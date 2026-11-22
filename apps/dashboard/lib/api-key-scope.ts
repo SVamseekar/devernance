@@ -10,6 +10,11 @@ export const API_KEY_SCOPES: { value: ApiKeyScope; label: string; hint: string }
     hint: "Can only read the CI release gate. Use this for pipelines.",
   },
   {
+    value: "RUNTIME",
+    label: "Runtime (agents)",
+    hint: "Can only ask for governance decisions, report outcomes and report drift. Use this inside an agent; name the key after it.",
+  },
+  {
     value: "FULL",
     label: "Full access",
     hint: "Acts with your role on every endpoint (never keys, invites or workspace settings).",
@@ -18,5 +23,5 @@ export const API_KEY_SCOPES: { value: ApiKeyScope; label: string; hint: string }
 
 /** Keys created before scopes existed come back as FULL from the API; a missing value means the same. */
 export function apiKeyScopeLabel(scope: ApiKeyScope | undefined): string {
-  return (API_KEY_SCOPES.find((s) => s.value === scope) ?? API_KEY_SCOPES[1]).label;
+  return (API_KEY_SCOPES.find((s) => s.value === scope) ?? API_KEY_SCOPES[API_KEY_SCOPES.length - 1]).label;
 }

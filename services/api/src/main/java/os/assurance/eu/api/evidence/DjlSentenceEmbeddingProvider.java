@@ -119,54 +119,89 @@ public class DjlSentenceEmbeddingProvider implements EvidenceEmbeddingProvider {
         return "djl-sentence";
     }
 
+    /** Chunks per forward pass: large enough to amortise the call, small enough to bound padding and memory. */
+    static final int BATCH_SIZE = 32;
+
     @Override
     public String embed(String text) {
-        try (Predictor<NDList, NDList> predictor = model.newPredictor();
-             NDManager manager = NDManager.newBaseManager("OnnxRuntime")) {
-            Encoding encoding = tokenizer.encode(text, true, true);
-            long[] ids = encoding.getIds();
-            long[] mask = encoding.getAttentionMask();
-            int seqLen = ids.length;
+        return embedAll(java.util.List.of(text)).get(0);
+    }
 
-            NDArray inputIds = manager.create(ids, new Shape(1, seqLen));
-            NDArray attentionMask = manager.create(mask, new Shape(1, seqLen));
-            NDArray tokenTypeIds = manager.zeros(new Shape(1, seqLen), DataType.INT64);
-            NDList output = predictor.predict(new NDList(inputIds, attentionMask, tokenTypeIds));
-
-            // output.get(0) is token_embeddings: shape [1, seqLen, hiddenSize]
-            // Copy to float[] immediately — ONNX NDArrays don't support tensor math ops
-            float[] tokenEmbFlat = output.get(0).toFloatArray();
-            int hiddenSize = tokenEmbFlat.length / seqLen;
-
-            // Attention-mask mean pooling in pure Java
-            float[] pooled = new float[hiddenSize];
-            float maskSum = 0f;
-            for (int t = 0; t < seqLen; t++) {
-                if (mask[t] == 0) continue;
-                maskSum += 1f;
-                for (int h = 0; h < hiddenSize; h++) {
-                    pooled[h] += tokenEmbFlat[t * hiddenSize + h];
-                }
+    /**
+     * Runs the texts through the model {@value #BATCH_SIZE} at a time. Each batch is padded to its longest text;
+     * the attention mask keeps padding out of the mean pooling, so a text embeds the same alone or in a batch.
+     */
+    @Override
+    public java.util.List<String> embedAll(java.util.List<String> texts) {
+        java.util.List<String> out = new java.util.ArrayList<>(texts.size());
+        try (Predictor<NDList, NDList> predictor = model.newPredictor()) {
+            for (int from = 0; from < texts.size(); from += BATCH_SIZE) {
+                out.addAll(embedBatch(predictor, texts.subList(from, Math.min(texts.size(), from + BATCH_SIZE))));
             }
-            if (maskSum < 1e-9f) maskSum = 1e-9f;
-            for (int h = 0; h < hiddenSize; h++) {
-                pooled[h] /= maskSum;
-            }
-
-            // L2 normalise
-            float norm = 0f;
-            for (float v : pooled) norm += v * v;
-            norm = (float) Math.sqrt(norm);
-            if (norm < 1e-9f) norm = 1e-9f;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hiddenSize; i++) {
-                if (i > 0) sb.append(',');
-                sb.append(pooled[i] / norm);
-            }
-            return sb.toString();
         } catch (Exception e) {
             throw new RuntimeException("Embedding failed", e);
         }
+        return out;
+    }
+
+    private java.util.List<String> embedBatch(Predictor<NDList, NDList> predictor, java.util.List<String> texts)
+            throws Exception {
+        Encoding[] encodings = new Encoding[texts.size()];
+        int seqLen = 1;
+        for (int i = 0; i < texts.size(); i++) {
+            encodings[i] = tokenizer.encode(texts.get(i), true, true);
+            seqLen = Math.max(seqLen, encodings[i].getIds().length);
+        }
+        int batch = texts.size();
+        long[] ids = new long[batch * seqLen];
+        long[] mask = new long[batch * seqLen];
+        for (int b = 0; b < batch; b++) {
+            long[] tokenIds = encodings[b].getIds();
+            long[] tokenMask = encodings[b].getAttentionMask();
+            System.arraycopy(tokenIds, 0, ids, b * seqLen, tokenIds.length);
+            System.arraycopy(tokenMask, 0, mask, b * seqLen, tokenMask.length);
+        }
+        try (NDManager manager = NDManager.newBaseManager("OnnxRuntime")) {
+            NDArray inputIds = manager.create(ids, new Shape(batch, seqLen));
+            NDArray attentionMask = manager.create(mask, new Shape(batch, seqLen));
+            NDArray tokenTypeIds = manager.zeros(new Shape(batch, seqLen), DataType.INT64);
+            NDList output = predictor.predict(new NDList(inputIds, attentionMask, tokenTypeIds));
+            // token_embeddings [batch, seqLen, hidden], copied out because ONNX NDArrays support no tensor math.
+            float[] tokens = output.get(0).toFloatArray();
+            int hidden = tokens.length / (batch * seqLen);
+            java.util.List<String> out = new java.util.ArrayList<>(batch);
+            for (int b = 0; b < batch; b++) {
+                out.add(meanPooledNormalized(tokens, mask, b, seqLen, hidden));
+            }
+            return out;
+        }
+    }
+
+    private static String meanPooledNormalized(float[] tokens, long[] mask, int b, int seqLen, int hidden) {
+        float[] pooled = new float[hidden];
+        float maskSum = 0f;
+        for (int t = 0; t < seqLen; t++) {
+            if (mask[b * seqLen + t] == 0) continue;
+            maskSum += 1f;
+            int offset = (b * seqLen + t) * hidden;
+            for (int h = 0; h < hidden; h++) {
+                pooled[h] += tokens[offset + h];
+            }
+        }
+        if (maskSum < 1e-9f) maskSum = 1e-9f;
+        float norm = 0f;
+        for (int h = 0; h < hidden; h++) {
+            pooled[h] /= maskSum;
+            norm += pooled[h] * pooled[h];
+        }
+        norm = (float) Math.sqrt(norm);
+        if (norm < 1e-9f) norm = 1e-9f;
+        StringBuilder sb = new StringBuilder();
+        for (int h = 0; h < hidden; h++) {
+            if (h > 0) sb.append(',');
+            sb.append(pooled[h] / norm);
+        }
+        return sb.toString();
     }
 
     @Override

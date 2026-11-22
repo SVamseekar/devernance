@@ -10,6 +10,7 @@ describe("API key scopes", () => {
   it("labels each scope with what the key can do", () => {
     assert.match(apiKeyScopeLabel("RELEASE_GATE"), /release gate only/i);
     assert.match(apiKeyScopeLabel("FULL"), /full access/i);
+    assert.match(apiKeyScopeLabel("RUNTIME"), /runtime/i);
   });
   it("shows keys listed without a scope as full access, as the API treats them", () => {
     assert.match(apiKeyScopeLabel(undefined), /full access/i);

@@ -37,6 +37,16 @@ public class EvalRunRepository {
         .map(EvalRunEntity::toDomain);
   }
 
+  /** The 20 most recent completed runs, newest first, for the evidence pack. */
+  @Transactional(readOnly = true)
+  public List<EvalRun> findRecentCompleted(UUID systemId) {
+    return repository
+        .findTop20ByTenantIdAndSystemIdAndStatusOrderByCompletedAtDesc(tenantContext.tenantId(), systemId, "completed")
+        .stream()
+        .map(EvalRunEntity::toDomain)
+        .toList();
+  }
+
   @Transactional(readOnly = true)
   public long countByStatus(String status) {
     return repository.countByTenantIdAndStatus(tenantContext.tenantId(), status);

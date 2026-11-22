@@ -48,7 +48,11 @@ public class DemoReadOnlyFilter extends OncePerRequestFilter {
     boolean allowedWrite = "POST".equals(method) && "/api/v1/evidence/query".equals(request.getRequestURI());
     // The CI gate is meant for pipelines holding an API key, which the demo never has. Each call is audited, so
     // leaving it open would only let visitors grow the shared demo trail.
-    if (request.getRequestURI().startsWith("/api/v1/ci/") && isDemoTenant()) {
+    // The governance release check and evidence bundle are reads that write an audit event, like the CI gate.
+    String uri = request.getRequestURI();
+    boolean auditedRead = uri.startsWith("/api/v1/ci/") || uri.equals("/api/v1/governance/release-check")
+        || uri.equals("/api/v1/governance/evidence-bundle");
+    if (auditedRead && isDemoTenant()) {
       response.sendError(HttpServletResponse.SC_FORBIDDEN, "The demo workspace is read-only. Sign up to make changes.");
       return;
     }
