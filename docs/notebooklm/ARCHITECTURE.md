@@ -145,7 +145,7 @@ Insert into audit_events (prev_event_hash, event_hash, retain_until=7_YEARS)
 - **Local Native Development**: Run `./scripts/run-local-dev.sh` to start Spring Boot API (port 8080, H2 database) and Next.js Dashboard (port 3000) simultaneously with Google OAuth support.
 - **Local Containerized (Docker Compose)**: `infra/docker-compose.yml` provisions Postgres 16 and Spring Boot API. Optional profiles (`--profile dashboard`, `--profile minio`) add the self-hosted dashboard container and MinIO object store.
 - **Production Topology**:
-  - **Dashboard**: Hosted on Vercel (`apps/dashboard` root), live at `https://euassuranceai.souravamseekar.com`.
+  - **Dashboard**: Hosted on Cloudflare Workers (`apps/dashboard` root, worker `devernance-site`), live at `https://devernance.space`.
   - **API**: Deployed as a containerized Java service on Cloud Run / ECS / K8s behind TLS.
   - **Database**: Managed PostgreSQL 16 instance with pgvector extension enabled.
 - **Infrastructure as Code**: `infra/terraform/` contains modular HCL skeletons (validating via `terraform-validate.sh` in CI).
