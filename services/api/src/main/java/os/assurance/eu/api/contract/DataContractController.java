@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import os.assurance.eu.api.tenant.TenantAuthorizationService;
+import os.assurance.eu.api.tenant.TenantContext;
 import os.assurance.eu.api.tenant.UserRole;
 
 @RestController
@@ -23,12 +24,14 @@ public class DataContractController {
   private final EntitlementService entitlements;
   private final DataContractService service;
   private final TenantAuthorizationService authorizationService;
+  private final TenantContext tenantContext;
 
   public DataContractController(DataContractService service, TenantAuthorizationService authorizationService,
-      EntitlementService entitlements) {
+      EntitlementService entitlements, TenantContext tenantContext) {
     this.entitlements = entitlements;
     this.service = service;
     this.authorizationService = authorizationService;
+    this.tenantContext = tenantContext;
   }
 
   @GetMapping
@@ -80,7 +83,8 @@ public class DataContractController {
       @Valid @RequestBody UpdateDriftEventRequest request) {
     requireContractMutator();
     entitlements.requireSystemWritable(service.getContract(contractId).systemId());
-    return service.updateDriftEvent(contractId, eventId, request);
+    return service.updateDriftEvent(
+        contractId, eventId, request, authorizationService.currentRole(), tenantContext.actorId());
   }
 
   private void requireContractMutator() {

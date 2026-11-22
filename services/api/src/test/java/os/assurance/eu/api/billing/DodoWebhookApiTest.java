@@ -155,9 +155,12 @@ class DodoWebhookApiTest {
   @Test
   void aFailedPaymentKeepsThePlanForAWeekThenDropsToFree() throws Exception {
     Workspace w = newWorkspace();
-    deliver(id(), event("subscription.active", "2026-11-10T12:00:00Z", w.tenantId(), "prod_team_m",
+    // The grace window is event time + 7 days, so the events must be recent or the grace has already ended.
+    String activated = Instant.now().minusSeconds(2 * 3600).truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
+    String onHold = Instant.now().minusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
+    deliver(id(), event("subscription.active", activated, w.tenantId(), "prod_team_m",
         "2099-12-10T12:00:00Z"), true).andExpect(status().isOk());
-    deliver(id(), event("subscription.on_hold", "2026-11-11T12:00:00Z", w.tenantId(), "prod_team_m",
+    deliver(id(), event("subscription.on_hold", onHold, w.tenantId(), "prod_team_m",
         "2099-12-10T12:00:00Z"), true).andExpect(status().isOk());
 
     mockMvc.perform(get("/api/v1/billing").header("Authorization", w.bearer()))

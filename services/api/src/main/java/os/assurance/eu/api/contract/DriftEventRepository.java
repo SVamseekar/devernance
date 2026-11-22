@@ -26,12 +26,13 @@ public class DriftEventRepository {
   }
 
   @Transactional(readOnly = true)
+  /** Drift that is not resolved: acknowledged drift still counts. */
   public List<DriftEvent> findOpenByContractIds(Collection<UUID> contractIds) {
     if (contractIds.isEmpty()) {
       return List.of();
     }
-    return repository.findAllByTenantIdAndContractIdInAndStatusOrderByCreatedAtAsc(
-            tenantContext.tenantId(), contractIds, DriftStatus.OPEN)
+    return repository.findAllByTenantIdAndContractIdInAndStatusNotOrderByCreatedAtAsc(
+            tenantContext.tenantId(), contractIds, DriftStatus.RESOLVED)
         .stream()
         .map(DriftEventEntity::toDomain)
         .toList();

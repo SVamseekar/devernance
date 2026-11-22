@@ -1,6 +1,8 @@
 package os.assurance.eu.api.auth;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import os.assurance.eu.api.tenant.UserJpaRepository;
 
 @RestController
 public class AuthController {
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private static final long ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
     private final UserJpaRepository users;
     private final JwtService jwtService;
@@ -83,7 +86,8 @@ public class AuthController {
     public TokenResponse refresh(@RequestBody RefreshRequest request) {
         var result = refreshTokenService.rotate(request.refreshToken());
         if (result instanceof RefreshTokenService.RefreshResult.Rejected rejected) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, rejected.reason());
+            log.info("Refresh token rejected: {}", rejected.reason());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
         }
         var rotated = (RefreshTokenService.RefreshResult.Rotated) result;
         UserEntity user = users.findByIdAndTenantId(rotated.userId(), rotated.tenantId()).orElse(null);

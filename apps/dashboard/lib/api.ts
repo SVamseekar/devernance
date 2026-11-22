@@ -25,6 +25,12 @@ import type {
   CorpusView,
   EvidenceQueryResponse,
   ProposalList,
+  GovernanceApproval,
+  GovernanceApprovalStatus,
+  GovernanceDecision,
+  GovernanceDecisionStatus,
+  GovernanceDriftReport,
+  GovernanceSystemStatus,
   MappingProposal,
   RegItem,
   RegMonitorFeed,
@@ -33,6 +39,7 @@ import type {
   SectorPack,
   SectorPacksResponse,
   SystemControl,
+  ConformityDossier,
   WorkflowNotification,
   WorkspaceInvite,
   WorkspaceUser,
@@ -124,6 +131,11 @@ export interface CreateSystemPayload {
   deploymentRegion: string;
   sector?: string;
   decisionImpact?: string;
+  vendorName?: string;
+  modelName?: string;
+  modelVersion?: string;
+  dataSources?: string[];
+  affectedUsers?: string[];
 }
 
 export interface ClassifyPayload {
@@ -170,7 +182,9 @@ export const api = {
       request<FrameworkView>(`/systems/${id}/frameworks/${framework}`, undefined, { quietPlanLimit: true }),
     evgraphArtifacts: (id: string) =>
       request<Record<string, unknown>>(`/systems/${id}/evgraph-artifacts`),
-    conformity: (id: string) => request<Record<string, unknown>>(`/systems/${id}/conformity`),
+    conformity: (id: string) => request<ConformityDossier>(`/systems/${id}/conformity`),
+    updateConformity: (id: string, payload: Pick<ConformityDossier, "annexIv" | "fria">) =>
+      request<ConformityDossier>(`/systems/${id}/conformity`, { method: "PUT", body: JSON.stringify(payload) }),
     /**
      * Phase 6 PDF export of the sealed pack. Returns contentSha256 from response header.
      */
@@ -315,8 +329,6 @@ export const api = {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    execute: (id: string) =>
-      request<EvalRun>(`/eval-runs/${id}/execute`, { method: "POST" }),
   },
   contracts: {
     list: (systemId?: string) =>
@@ -326,10 +338,16 @@ export const api = {
     get: (id: string) => request<DataContract>(`/data-contracts/${id}`),
     driftEvents: (id: string) =>
       request<DriftEvent[]>(`/data-contracts/${id}/drift-events`),
-    updateDriftEvent: (contractId: string, eventId: string, status: "ACKNOWLEDGED" | "RESOLVED") =>
+    create: (payload: { systemId: string; name: string; owner: string; version: string; coverage: number }) =>
+      request<DataContract>("/data-contracts", {
+        method: "POST",
+        body: JSON.stringify({ ...payload, status: "healthy" }),
+      }),
+    /** A note is required: the API refuses to acknowledge or resolve drift without one. */
+    updateDriftEvent: (contractId: string, eventId: string, status: "ACKNOWLEDGED" | "RESOLVED", note: string) =>
       request<DriftEvent>(`/data-contracts/${contractId}/drift-events/${eventId}`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, note }),
       }),
   },
   audit: {
@@ -465,6 +483,31 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ documents }),
       }),
+  },
+  /** Governance runtime: policies applied with the CLI, runtime decisions, human approvals, drift. */
+  governance: {
+    status: () => request<GovernanceSystemStatus[]>("/governance/status"),
+    approvals: (status?: GovernanceApprovalStatus, limit = 50) =>
+      request<GovernanceApproval[]>(
+        `/governance/approvals?limit=${limit}${status ? `&status=${status}` : ""}`
+      ),
+    /** Approving needs a signed-in person with a role the policy names; an API key never can. */
+    approve: (approvalId: string, rationale: string) =>
+      request<GovernanceApproval>(`/governance/approvals/${approvalId}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ rationale }),
+      }),
+    /** The API refuses a rejection without a rationale. */
+    reject: (approvalId: string, rationale: string) =>
+      request<GovernanceApproval>(`/governance/approvals/${approvalId}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ rationale }),
+      }),
+    decisions: (status?: GovernanceDecisionStatus, limit = 50) =>
+      request<GovernanceDecision[]>(
+        `/governance/decisions?limit=${limit}${status ? `&status=${status}` : ""}`
+      ),
+    drift: () => request<GovernanceDriftReport[]>("/governance/drift"),
   },
   sectorPacks: {
     list: () => request<SectorPacksResponse>("/sector-packs"),

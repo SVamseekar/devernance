@@ -20,6 +20,7 @@ import {
   Landmark,
   BookOpen,
   ListChecks,
+  Scale,
 } from "lucide-react";
 
 const showPublicClaims = process.env.NEXT_PUBLIC_SHOW_PUBLIC_CLAIMS === "true";
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { href: "/reg-monitor", label: "Reg Monitor", icon: Newspaper },
   { href: "/corpus", label: "Law corpus", icon: BookOpen },
   { href: "/proposals", label: "Proposal queue", icon: ListChecks },
+  { href: "/governance", label: "Governance", icon: Scale },
   { href: "/approvals", label: "Approvals", icon: ClipboardCheck },
   { href: "/evidence", label: "Evidence", icon: FileSearch },
   { href: "/evals", label: "Eval Gates", icon: FlaskConical },

@@ -23,6 +23,10 @@ public class EvidenceEmbeddingService {
     return provider.embed(text);
   }
 
+  public List<String> embedAll(List<String> texts) {
+    return provider.embedAll(texts);
+  }
+
   public double similarity(String left, String right) {
     return provider.similarity(left, right);
   }

@@ -36,6 +36,7 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
       Pattern.compile("^/api/v1/systems/[^/]+/certification-readiness/export$"),
       Pattern.compile("^/api/v1/systems/[^/]+/proposals/map$"),
       Pattern.compile("^/api/v1/account/export$"),
+      Pattern.compile("^/api/v1/governance/evidence-bundle$"),
       Pattern.compile("^/api/v1/packs/.+$"),
       Pattern.compile("^/api/v1/public-claims/[^/]+/evgraph$"),
       Pattern.compile("^/api/v1/evidence/documents/upload$"));

@@ -62,11 +62,16 @@ DELETE /api/v1/api-keys/{id}     # 204; revoked keys get 401 immediately
 - Roles: ADMIN and AI_ENGINEERING_LEAD. Keys look like `dvn_` + 43 characters (keys issued before the Devernance rename start `aos_` and still work); only a SHA-256 hash is stored.
 - Keys are created and revoked from a signed-in session only. A request authenticated by a key cannot
   create or revoke keys (403), so a leaked key cannot mint replacements.
-- `scope` is `RELEASE_GATE` (the default) or `FULL`. A `RELEASE_GATE` key can only call
-  `GET /api/v1/ci/release-gate`; anything else returns 403, so a key leaked from a CI secret store cannot change
-  systems, approvals or evidence. A `FULL` key acts with the permissions of the user who created it (still never
+- `scope` is `RELEASE_GATE` (the default), `RUNTIME` or `FULL`. A `RELEASE_GATE` key can only call
+  `GET /api/v1/ci/release-gate` and the read-only governance checks (`GET /governance/release-check`,
+  `GET` and `POST /governance/validate`, `POST /governance/simulate`); anything else returns 403, so a key leaked from a CI
+  secret store cannot change systems, approvals or evidence. A `RUNTIME` key is for a running agent: it can only call
+  `POST /governance/authorize`, `GET /governance/decisions/{id}`, `POST /governance/decisions/{id}/execution`,
+  `POST /governance/authorizations/verify` and `POST /governance/observations`. Its name is recorded as the agent on
+  every decision. A `FULL` key acts with the permissions of the user who created it (still never
   minting keys, inviting users or managing the workspace). Keys created before scopes existed, and legacy UUID
   keys, are `FULL`.
+- A key that is not well formed, unknown or revoked gets `401`.
 - CI calls `GET /api/v1/ci/release-gate?systemId=…` with `X-Api-Key`. The dashboard exposes the same path
   without a session cookie and forwards it unchanged.
 
@@ -340,16 +345,23 @@ recalculates the system release gate. The signature is computed over
 Callbacks with identical metrics are idempotent; conflicting replays return
 `409 Conflict`.
 
+Devernance does not run models. A queued run waits for your eval harness to report what it measured with the
+signed callback above.
+
+The run's own decision is BLOCKED when the averaged score is below its `threshold` **or** any per-metric floor
+fails: `safetyRefusal` below `assurance.eval.floor.safety-refusal` (0.90) or `biasSlicePassRate` below
+`assurance.eval.floor.bias-slice-pass-rate` (0.80). The average alone can hide a collapsed slice. The release gate
+blocks on the latest completed run's verdict (see Release Gate). A new approval cycle (`EVAL_REGRESSION`) opens only
+when the run fails or the score drops below the previous one.
+
 ```http
 POST /eval-runs/{runId}/execute
 ```
 
-Manually executes a queued eval run immediately with the same backend-owned
-worker path used by background dispatch. The durable worker records
-`running`, increments `workerAttempts`, generates deterministic MVP metrics for
-faithfulness, relevance, safety refusal, bias slice pass rate, latency, and
-cost, completes the run, stores metrics, and recalculates the system release
-gate. Worker failures are persisted with `failureReason`; retryable failures
+Demo and test only. Completes a queued run with **generated placeholder metrics**, marked `"synthetic": true`, so
+it is refused with `409` unless `assurance.eval.synthetic-metrics.enabled=true` (env
+`ASSURANCE_EVAL_SYNTHETIC_METRICS`, default `false`). The background dispatcher runs only when both that flag and
+`assurance.eval.worker.enabled` are true. Worker failures are persisted with `failureReason`; retryable failures
 return to `queued` with a delayed `queuedAt`, and exhausted failures become
 `failed`. Re-executing a completed run returns `409 Conflict`.
 
@@ -449,6 +461,16 @@ the release gate to block. Resolving the event with:
 ```
 
 recalculates the contract, system data-contract status, and release decision.
+
+Acknowledging or resolving needs a `note` saying what was done (`400` without one). Acknowledged drift still counts:
+only `resolved` clears a warning or a breach. Only compliance or an admin can resolve a `breach`, or change one that
+is already resolved (`403` for others), so the engineer whose pipeline caused it does not also close it. The event
+keeps `resolutionNote`, `resolvedBy` and `resolvedAt`, and the audit event `data_contract.drift_updated` carries the
+note.
+
+```json
+{ "status": "resolved", "note": "Column dropped at ingestion in PR #412; DPO confirmed no data reached the model" }
+```
 
 ## Audit chain verification
 
@@ -693,14 +715,31 @@ Response:
 ```json
 {
   "systemId": "sys_001",
-  "decision": "blocked",
-  "blockers": [
-    "Human oversight SOP missing",
-    "Bias eval below threshold",
-    "claims_events.v4 data contract breach"
+  "decision": "REVIEW",
+  "blockers": [],
+  "reviewReasons": [
+    "Approval pending: COMPLIANCE_REVIEW (EVAL_REGRESSION cycle)",
+    "Annex IV section IV.3 is missing from the conformity dossier"
   ]
 }
 ```
+
+`blockers` explain BLOCKED. `reviewReasons` list what keeps the system from PASS once nothing blocks it, and are
+filled for every decision. What the gate reads:
+
+| Input | Blocks | Sends to review |
+|---|---|---|
+| Risk class | PROHIBITED | |
+| Eval | score below 78; no completed run (HIGH); latest run failed its threshold or a metric floor | score below 85 |
+| Evidence | | coverage below 82% for the risk class |
+| Data contract | open breach | open warning, or no contract |
+| Controls | any control BLOCKED; unmet obligations from the determination run | |
+| Human oversight (HIGH) | classification opened the oversight gap and `HUMAN_OVERSIGHT` is not PASS | |
+| Approvals | the latest decided cycle was rejected (any risk class) | a cycle is open (HIGH) |
+| Conformity (HIGH) | | an Annex IV section is MISSING; FRIA not RECORDED or WAIVED |
+
+A rejected cycle stays in force until a later cycle is approved or an admin overrides the rejected stage; a new eval
+run cannot clear it. Approval changes update the stored `releaseDecision` at once.
 
 ### CI/CD machine contract (Part 8)
 
@@ -720,6 +759,7 @@ Response:
   "systemName": "Claims Triage AI",
   "decision": "BLOCKED",
   "blockers": ["Data contract breach is open"],
+  "reviewReasons": ["Evidence coverage 72% is below 82%"],
   "evalScore": 78,
   "evidenceCoverage": 72,
   "dataContractStatus": "BREACH",
@@ -752,8 +792,13 @@ Response:
   "generatedAt": "2026-06-05T10:30:00Z",
   "decision": "blocked",
   "riskClassification": {},
-  "evidence": [],
-  "evalRuns": [],
+  "evidence": [{ "coverage": 100, "openGaps": [], "documents": [
+    { "documentId": "…", "type": "MODEL_CARD", "title": "GPT-4o System Card", "sha256": "sha256-e2579e…",
+      "ingestionStatus": "indexed", "indexedAt": "2026-10-28T08:16:17Z" } ] }],
+  "evalRuns": [{ "latestScore": 91, "releaseDecision": "PASS", "runs": [
+    { "runId": "…", "dataset": "golden-health-v1", "modelVersion": "gpt-4o-mini-2024-07-18",
+      "promptVersion": "v12", "threshold": 0.85, "metrics": { "faithfulness": 0.91, "biasSlicePassRate": 0.88 },
+      "runDecision": "PASS", "synthetic": false, "completedAt": "2026-10-28T08:17:21Z" } ] }],
   "dataContracts": [],
   "approvals": [],
   "auditEvents": [],
@@ -766,7 +811,9 @@ Response:
 
 Seal notes:
 
-- `evidencePackVersion` is currently `"1.0"`.
+- `evidencePackVersion` is currently `"1.2"`. Version 1.2 seals the document list (with each file's SHA-256) and the
+  20 most recent completed eval runs (versions, metrics, run decision, and whether the metrics were synthetic), so a
+  buyer can check both without the unsigned GRC index.
 - `contentSha256` is SHA-256 over canonical JSON (every object's keys sorted, ISO-8601 instants)
   of the pack fields **excluding** `contentSha256` and `signature`, with `"conformity": {}` added. Parsing the
   exported JSON and re-serialising it this way reproduces the hash (see `docs/VERIFY_EVIDENCE_PACK.md`).
@@ -1006,3 +1053,242 @@ for seven days, then the workspace drops to Free. A cancelled subscription keeps
 Environment: `DODO_BASE_URL`, `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, `DODO_PRODUCT_TEAM_MONTHLY`,
 `DODO_PRODUCT_TEAM_YEARLY`, `DODO_PRODUCT_BUSINESS_MONTHLY`, `DODO_PRODUCT_BUSINESS_YEARLY`, and optionally
 `DODO_BUSINESS_ID` (static customer-portal fallback).
+
+## Governance runtime
+
+Policy-as-code for AI systems: apply manifests, ask for runtime decisions, approve high-impact actions, detect
+drift, and export signed evidence. Concepts: [GOVERNANCE_PLATFORM.md](GOVERNANCE_PLATFORM.md). Manifest fields:
+[GOVERNANCE_POLICY_REFERENCE.md](GOVERNANCE_POLICY_REFERENCE.md). All routes are under `/api/v1/governance`. A
+`system` parameter is the `AISystem` manifest name (or the registry system id). Unknown systems return 404, also
+for other workspaces' systems.
+
+| Route | Who | Key scopes |
+|---|---|---|
+| `POST /apply` | ADMIN, AI_ENGINEERING_LEAD, COMPLIANCE_OFFICER | FULL |
+| `GET /resources?system=&activeOnly=true` | any role | FULL |
+| `POST /validate`, `GET /validate?system=` | any role | RELEASE_GATE, FULL |
+| `POST /simulate` | any role | RELEASE_GATE, FULL |
+| `GET /release-check?system=` | any role | RELEASE_GATE, FULL |
+| `POST /authorize` | ADMIN, AI_ENGINEERING_LEAD | RUNTIME, FULL |
+| `GET /decisions/{id}` | any role | RUNTIME, FULL |
+| `POST /decisions/{id}/execution` | ADMIN, AI_ENGINEERING_LEAD | RUNTIME, FULL |
+| `POST /authorizations/verify` | any role | RUNTIME, FULL |
+| `GET /decisions?system=&action=&status=&from=&to=&limit=` | any role | FULL |
+| `GET /approvals?status=&limit=` | any role | FULL |
+| `POST /approvals/{id}/approve`, `/reject` | roles named by the policy | **none: signed-in session only** |
+| `POST /observations` | ADMIN, AI_ENGINEERING_LEAD | RUNTIME, FULL |
+| `GET /drift?system=` | any role | FULL |
+| `GET /evidence-bundle?system=&from=&to=`, `GET /closure?system=&from=&to=` | any role | FULL |
+| `GET /status?system=`, `GET /graph?system=` | any role | FULL |
+
+Times (`from`, `to`) are ISO-8601 instants; `to` is exclusive. Lists are newest first, default 50, at most 200.
+
+### Apply
+
+```http
+POST /api/v1/governance/apply
+{"resources": [ {"apiVersion": "devernance.io/v1", "kind": "AISystem", "metadata": {"name": "claims-agent"}, "spec": {...}},
+                {"apiVersion": "devernance.io/v1", "kind": "GovernancePolicy", "metadata": {"name": "claims-policy"}, "spec": {...}} ]}
+```
+
+```json
+{
+  "resources": [
+    {"kind": "AISystem", "name": "claims-agent", "version": 1, "result": "created", "systemId": "…", "contentSha256": "…"},
+    {"kind": "GovernancePolicy", "name": "claims-policy", "version": 1, "result": "created", "systemId": "…", "contentSha256": "…"}
+  ],
+  "findings": []
+}
+```
+
+`result` is `created`, `configured` (a new version) or `unchanged`. Systems are applied before policies. Any invalid
+manifest returns 400 with every problem in `message` (one per line) and nothing is applied. `findings` are the
+validation findings after applying (see validate). Two applies racing on the same name: the second gets 409.
+
+### Validate and simulate (change nothing)
+
+```http
+POST /api/v1/governance/validate   {"resources": [ ...manifests... ]}
+GET  /api/v1/governance/validate?system=claims-agent
+```
+
+```json
+{"valid": false, "errors": 1, "warnings": 0,
+ "findings": [{"code": "TOOL_UNGOVERNED", "severity": "ERROR", "system": "claims-agent",
+               "subject": "export_all_customers", "message": "Tool 'export_all_customers' is not mapped …"}]}
+```
+
+```http
+POST /api/v1/governance/simulate
+{"resources": [ ...optional manifests... ],
+ "cases": [{"name": "large refund", "system": "claims-agent", "action": "payment.refund",
+            "resource": {"customer_id": "CUST-102"}, "context": {"amount": 75000}, "expect": "REVIEW"}]}
+```
+
+```json
+{"passed": true, "findings": [],
+ "results": [{"name": "large refund", "system": "claims-agent", "action": "payment.refund", "status": "REVIEW",
+              "rule": "payment.refund", "reason": "High-value refund", "expect": "REVIEW", "passed": true}]}
+```
+
+### Release check
+
+```http
+GET /api/v1/governance/release-check?system=claims-agent
+```
+
+```json
+{"system": "claims-agent", "systemId": "…", "decision": "BLOCKED", "exitCode": 1,
+ "summary": "Release check BLOCKED - governance drift in production; release gate BLOCKED.",
+ "policy": {"name": "claims-policy", "version": 1}, "deploymentBlocking": true,
+ "findings": [], "drift": [ ...drift reports that are not in sync... ],
+ "releaseGate": {"decision": "BLOCKED", "blockers": ["…"], "reviewReasons": ["…"]}}
+```
+
+Starts from the existing release gate; governance validation errors or drift make it BLOCKED (`deployment:
+blocking`, default) or at most REVIEW (`advisory`). Counts as a CI gate run for plan limits and is audited.
+
+### Authorize
+
+```http
+POST /api/v1/governance/authorize
+X-Api-Key: dvn_…   (a RUNTIME key named claims-agent)
+{"system": "claims-agent", "action": "payment.refund",
+ "resource": {"type": "customer_payment", "customer_id": "CUST-102"},
+ "context": {"amount": 75000, "currency": "INR", "authorized_customer_id": "CUST-102"},
+ "model": "gpt-4.1@2025-04-14", "environment": "production", "dryRun": false}
+```
+
+```json
+{
+  "id": "e3feeb20-…", "system": "claims-agent", "systemId": "…", "systemVersion": 1,
+  "action": "payment.refund", "resource": {…}, "context": {…}, "model": "gpt-4.1@2025-04-14",
+  "environment": "production", "agent": "claims-agent",
+  "status": "REVIEW", "enforced": true, "authorized": false,
+  "rule": "payment.refund", "reason": "High-value refund",
+  "policy": {"name": "claims-policy", "version": 1},
+  "approval": {"id": "833286bb-…", "status": "PENDING", "approverRoles": ["COMPLIANCE_OFFICER"],
+               "expiresAt": "…", …},
+  "execution": null,
+  "authorizationToken": null, "authorizationExpiresAt": null,
+  "createdAt": "…"
+}
+```
+
+- `action`: lowercase words joined by dots. `resource` and `context`: JSON objects, at most 16 KB each.
+- `environment`: default `production`; lowercase letters, digits, `_`, `-`. Recorded on the decision only: with
+  `onDrift: block`, drift in any environment of the system denies, whatever the request names.
+- `dryRun: true`: decides without storing anything (`id` is null) and creates no approval.
+- Act only on `authorized`. When true, `authorizationToken` (JWS, RS256, `typ` `aos-evidence+jws`) carries
+  `purpose=governance-authorization`, `decisionId`, `tenantId`, `systemId`, `action`, `requestSha256`, `iat`, `exp`.
+  It is minted on `POST /authorize`, and on `GET /decisions/{id}` only for the caller that made the request (the same
+  API key, or the same person in a session). Never in lists, and not after the token was redeemed or an outcome
+  was recorded.
+- Always 200 for a decision, including DENY. 400 for a malformed request, 403 for a role or key scope that may
+  not authorize, 404 for an unknown system.
+
+### Decisions, outcomes and tokens
+
+```http
+GET  /api/v1/governance/decisions/{id}               # same shape as authorize; fresh token for the requester if still authorized
+POST /api/v1/governance/decisions/{id}/execution     {"status": "EXECUTED"|"FAILED", "detail": "…", "reference": "payment-1002"}
+POST /api/v1/governance/authorizations/verify        {"token": "…", "system": "claims-agent", "action": "payment.refund", "resource": {…}, "context": {…}}
+```
+
+- Execution: only the caller that requested the decision (same API key, or same person in a session) may report
+  it; anyone else → 403. Once per decision (second report → 409). A decision that does not authorize the action →
+  409, and `governance.execution_refused` is written to the audit chain. `detail` ≤ 1024, `reference` ≤ 256
+  characters.
+- Verify: `token`, `system` (the system the calling service protects) and `action` are required (400 otherwise).
+  A valid token is **redeemed** by the call (`governance.authorization_redeemed`): a second verify of the same token
+  fails with "already used", even before the outcome is recorded.
+- Verify → `{"valid": true|false, "reason": "…", "decisionId": "…", "action": "…", "expiresAt": "…"}`. Reasons
+  when invalid: bad signature, not an authorization token, another workspace, not issued for this system, expired,
+  a different request (including the same value sent with another type, such as `"75000"` for `75000`), the
+  decision no longer exists, already used, no longer authorizes.
+
+### Approvals
+
+```http
+GET  /api/v1/governance/approvals?status=PENDING
+POST /api/v1/governance/approvals/{id}/approve   {"rationale": "Claim documents checked"}
+POST /api/v1/governance/approvals/{id}/reject    {"rationale": "Duplicate claim"}      # rationale required
+```
+
+Approval: `{id, decisionId, systemId, system, action, agent, resource, context, status, approverRoles, reason,
+decidedBy, rationale, requestedAt, expiresAt, decidedAt}`. `status`: `PENDING`, `APPROVED`, `REJECTED`, `EXPIRED`
+(computed: unanswered or unused past `expiresAt`). Errors: 403 for an API key, a role the policy did not name, or
+a request you made yourself or through an API key you created; 409 when it is no longer pending; 400 for a rejection without a rationale.
+
+### Observations and drift
+
+```http
+POST /api/v1/governance/observations
+{"system": "claims-agent", "environment": "production", "model": "gpt-4.1@2026-01-15",
+ "promptHash": "sha256:…", "tools": ["claim_search", "customer_database", "process_refund"],
+ "policyVersion": 1, "source": "kubernetes"}
+GET  /api/v1/governance/drift?system=claims-agent
+```
+
+Report at least one of `model`, `promptHash`, `tools`, `policyVersion`. Both return drift reports:
+
+```json
+{"system": "claims-agent", "systemId": "…", "environment": "production", "observed": true, "inSync": false,
+ "differences": [{"property": "model", "approved": "gpt-4.1@2025-04-14", "observed": "gpt-4.1@2026-01-15"}],
+ "reassessment": {"required": true, "modelApproved": false,
+                  "notes": ["The running model is not on the approved list. Roll back, or have it approved and added."]},
+ "observedState": {…}, "observedAt": "…", "source": "kubernetes"}
+```
+
+`GET /drift` returns one report per environment that has reported. Drift is recomputed against the current approved
+state on every read.
+
+### Evidence bundle and closure
+
+```http
+GET /api/v1/governance/evidence-bundle?system=claims-agent&from=2026-11-01T00:00:00Z&to=2026-12-01T00:00:00Z
+```
+
+```json
+{"manifest": "<canonical JSON text>", "manifestSha256": "…", "signature": "<JWS>",
+ "jwksPath": "/.well-known/jwks.json",
+ "files": {"decisions/<id>.json": "<canonical JSON text>", "approvals/<id>.json": "…", "executions/<id>.json": "…",
+           "policies/<name>-v<N>.json": "…", "systems/<name>-v<N>.json": "…", "drift/observations.json": "…"}}
+```
+
+To verify: SHA-256 of each `files` value equals its entry in `manifest.files`; SHA-256 of `manifest` equals
+`manifestSha256`; `signature` verifies against the JWKS and its payload has `purpose=governance-evidence-bundle`
+and the same `manifestSha256`. At most 5000 decisions per bundle (422 beyond: narrow the period). Rate-limited as
+an expensive export. `devernance evidence verify` implements the check with the Python standard library.
+
+```http
+GET /api/v1/governance/closure?system=claims-agent
+```
+
+```json
+{"system": "claims-agent", "status": "OPEN", "auditChainValid": true, "policy": {…}, "from": "…", "to": "…",
+ "gaps": [], "limitation": "…",
+ "rules": [{"rule": "payment.refund", "requirement": "Refunds above 50,000 need approval …", "enforcement": "enforce",
+            "decisions": 2, "allowed": 1, "denied": 0, "reviewed": 1, "executed": 2, "failed": 0, "unreported": 0,
+            "status": "CLOSED", "gaps": []}]}
+```
+
+### Status and graph
+
+```http
+GET /api/v1/governance/status?system=claims-agent
+GET /api/v1/governance/graph?system=claims-agent
+```
+
+Status: per system `{system, systemId, systemVersion, model, tools, policy, runtimeEnforcement, validation, drift,
+pendingApprovals, decisionsLast24h: {ALLOW, DENY, REVIEW}}`. Graph: `{nodes: [{id, type, label}], edges: [{from,
+to, relation}]}` with node types `system`, `model`, `policy`, `tool`, `action`, `rule` and relations `uses`,
+`governs`, `has`, `performs`, `decided by`, `defines`.
+
+### Audit events
+
+`governance.resource_applied`, `governance.decision`, `governance.approval_approved`,
+`governance.approval_rejected`, `governance.authorization_redeemed`, `governance.execution_recorded`,
+`governance.execution_refused`,
+`governance.drift_detected`, `governance.drift_resolved`, `governance.release_check`,
+`governance.evidence_bundle_exported`.

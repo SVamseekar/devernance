@@ -25,7 +25,7 @@ const PUBLIC_PAGES = [
   "/signup",
 ];
 
-const APP_PAGES = ["/command", "/systems", "/approvals", "/evals", "/evidence", "/public-claims", "/readiness", "/reg-monitor", "/settings"];
+const APP_PAGES = ["/command", "/systems", "/governance", "/approvals", "/evals", "/evidence", "/public-claims", "/readiness", "/reg-monitor", "/settings"];
 
 async function expectNoViolations(page: Page) {
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();

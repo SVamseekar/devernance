@@ -10,7 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 @Component
-@ConditionalOnProperty(name = "assurance.eval.worker.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+    name = {"assurance.eval.worker.enabled", "assurance.eval.synthetic-metrics.enabled"},
+    havingValue = "true")
 public class EvalRunQueueWorker {
   private static final Logger LOGGER = LoggerFactory.getLogger(EvalRunQueueWorker.class);
 

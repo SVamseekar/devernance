@@ -38,6 +38,17 @@ export function sectorAnswerDefaults(sector: string): Partial<RiskAnswers> | nul
   return null;
 }
 
+/** Starting answers for a sector, so the default selection already carries its pack's hints. */
+export function initialAnswers(sector: string): RiskAnswers {
+  return {
+    q_biometrics: false,
+    q_essential: false,
+    q_hr: false,
+    q_interaction: false,
+    ...(sectorAnswerDefaults(sector) ?? {}),
+  };
+}
+
 /** A suggestion only — the user confirms the class and the API records the basis. Not a legal determination. */
 export function deriveRegistration(answers: RiskAnswers, sector: string): Registration {
   const riskClass = suggestRiskClass(answers);
