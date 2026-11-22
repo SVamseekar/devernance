@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { QUESTIONNAIRE, deriveRegistration, sectorAnswerDefaults } from "./system-registration";
+import { QUESTIONNAIRE, deriveRegistration, initialAnswers, sectorAnswerDefaults } from "./system-registration";
 
 const none = { q_biometrics: false, q_essential: false, q_hr: false, q_interaction: false };
 
@@ -43,5 +43,17 @@ describe("sectorAnswerDefaults", () => {
 describe("QUESTIONNAIRE", () => {
   it("has the four classification questions", () => {
     assert.deepEqual(QUESTIONNAIRE.map((q) => q.id), ["q_biometrics", "q_essential", "q_hr", "q_interaction"]);
+  });
+});
+
+describe("initialAnswers", () => {
+  it("applies the default sector's hints before anyone changes the sector", () => {
+    const answers = initialAnswers("insurance");
+    assert.equal(answers.q_essential, true);
+    assert.equal(deriveRegistration(answers, "insurance").riskClass, "high");
+  });
+
+  it("leaves every answer off for a sector without hints", () => {
+    assert.deepEqual(initialAnswers("other"), { q_biometrics: false, q_essential: false, q_hr: false, q_interaction: false });
   });
 });

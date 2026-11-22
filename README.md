@@ -40,7 +40,7 @@ It helps teams validate AI releases against EU AI Act–oriented controls by com
 | Dashboard + landing | **Next.js 16**, React 19, TypeScript, Tailwind CSS v4, TanStack Query, shadcn/ui |
 | API | **Spring Boot 4.1.1**, Java 17, **Tika 4.0.0**, Flyway **V1–V20** (+ postgres V4), Spring Data JPA |
 | Auth | Password JWT + refresh · API keys (`X-Api-Key`) · JWKS · Google/Microsoft OAuth **implemented** (prod smoke pending) |
-| Data | H2 (local default) or PostgreSQL (+ optional pgvector HNSW) |
+| Data | H2 (local default) or PostgreSQL (full-text BM25 + optional pgvector) |
 | Deploy | Dashboard on Vercel; API via Docker Compose or host (Flyway on boot); Terraform skeleton in `infra/terraform/` |
 
 ## Repository layout

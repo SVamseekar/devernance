@@ -4,7 +4,8 @@ export type DataContractStatus = "HEALTHY" | "WARNING" | "BREACH";
 export type DriftSeverity = "INFO" | "WARNING" | "BREACH";
 export type DriftStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
 export type EvalRunStatus = "queued" | "running" | "completed" | "failed";
-export type IngestionStatus = "indexed" | "pending" | "failed";
+/** indexed_with_warnings: lines that tried to instruct the AI were left out; the document still counts. */
+export type IngestionStatus = "indexed" | "indexed_with_warnings" | "pending" | "failed";
 
 export interface AiSystem {
   id: string;
@@ -149,6 +150,10 @@ export interface DriftEvent {
   status: DriftStatus;
   createdAt: string;
   updatedAt: string;
+  /** Why it was acknowledged or resolved, who did it and when (absent while open). */
+  resolutionNote?: string | null;
+  resolvedBy?: string | null;
+  resolvedAt?: string | null;
 }
 
 export interface AuditEvent {
@@ -170,6 +175,8 @@ export interface ReleaseGateResponse {
   decision: ReleaseDecision;
   blockers: string[];
   controls?: GateControlMode[];
+  /** What keeps the system from PASS once nothing blocks it. */
+  reviewReasons?: string[];
 }
 
 export type ControlMode = "INFORMATIONAL" | "WARNING" | "APPROVAL_REQUIRED" | "BLOCKING";
@@ -645,4 +652,22 @@ export interface BillingSummary {
   usage: { systems: number; editors: number; gateRunsThisMonth: number };
   /** -1 means unlimited. */
   limits: { gatedSystems: number; editorSeats: number; gateRunsPerMonth: number };
+}
+
+/** One Annex IV dossier row; the gate treats anything but MISSING as present. */
+export interface ConformitySection {
+  id: string;
+  title: string;
+  legalRef: string;
+  status: string;
+  evidenceRef: string;
+  notes: string;
+}
+
+export interface ConformityDossier {
+  id: string;
+  systemId: string;
+  annexIv: { disclaimer?: string; legalRef?: string; sections: ConformitySection[] } & Record<string, unknown>;
+  fria: { status: string; disclaimer?: string; notes?: string } & Record<string, unknown>;
+  [key: string]: unknown;
 }

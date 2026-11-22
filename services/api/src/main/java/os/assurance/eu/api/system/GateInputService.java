@@ -60,8 +60,10 @@ public class GateInputService {
 
   /** Copy of the system with coverage and evidence gaps recomputed; manual gaps are kept. */
   public AiSystem recompute(AiSystem system) {
+    // A document with lines removed by the prompt-injection guard is still that document; count it.
     List<String> types = evidence.findDocumentsBySystemId(system.id()).stream()
-        .filter(d -> "indexed".equalsIgnoreCase(d.ingestionStatus()))
+        .filter(d -> "indexed".equalsIgnoreCase(d.ingestionStatus())
+            || "indexed_with_warnings".equalsIgnoreCase(d.ingestionStatus()))
         .map(d -> d.type())
         .toList();
     List<String> gaps = new ArrayList<>(system.openGaps().stream()

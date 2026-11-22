@@ -45,6 +45,6 @@ public class ControlController {
     authorizationService.requireAnyRole(
         UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.AI_ENGINEERING_LEAD);
     entitlements.requireSystemWritable(systemId);
-    return controlService.updateSystemControl(systemId, controlId, request);
+    return controlService.updateSystemControl(systemId, controlId, request, authorizationService.currentRole());
   }
 }

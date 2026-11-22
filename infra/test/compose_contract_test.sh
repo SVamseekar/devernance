@@ -60,12 +60,14 @@ check(services["api"].get("environment", {}).get("ASSURANCE_SECURITY_TRUST_CLIEN
       "api must trust the client-IP header (only the dashboard can reach it)")
 check(services["api"]["environment"].get("SPRING_PROFILES_ACTIVE") == "postgres", "api must run the postgres profile")
 check("ASSURANCE_SEED_DEMO_USERS" not in env("api"), "api must not set ASSURANCE_SEED_DEMO_USERS")
+# Generated eval metrics are a local demo aid; production runs wait for the signed callback.
+check("ASSURANCE_EVAL_SYNTHETIC_METRICS" not in env("api"), "api must not set ASSURANCE_EVAL_SYNTHETIC_METRICS")
 
 # Every API property placeholder is either passed to the api container or a deliberate default.
 defaults_ok = {
     "ASSURANCE_AUTH_RATE_PER_EMAIL", "ASSURANCE_AUTH_RATE_PER_IP", "ASSURANCE_INVITE_TTL_HOURS",
     "ASSURANCE_REFRESH_REUSE_GRACE_SECONDS", "ASSURANCE_EVGRAPH_ALLOW_RUNTIME_INSTALL",
-    "ASSURANCE_OPERATOR_TENANT_ID", "ASSURANCE_SEED_DEMO_USERS",
+    "ASSURANCE_OPERATOR_TENANT_ID", "ASSURANCE_SEED_DEMO_USERS", "ASSURANCE_EVAL_SYNTHETIC_METRICS",
 }
 placeholders = set()
 for props in pathlib.Path(resources).glob("application*.properties"):

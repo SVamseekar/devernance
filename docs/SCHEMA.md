@@ -1,6 +1,6 @@
 # Data Model
 
-Schema as implemented by Flyway under `services/api/src/main/resources/db/migration/` (H2 + Postgres shared) plus postgres-only `db/postgresql/V4` (pgvector HNSW).
+Schema as implemented by Flyway under `services/api/src/main/resources/db/migration/` (H2 + Postgres shared) plus postgres-only `db/postgresql/` migrations (`V4`, `V23_1`, `V32_1` hybrid evidence search).
 
 ## Migration inventory
 
@@ -9,7 +9,7 @@ Schema as implemented by Flyway under `services/api/src/main/resources/db/migrat
 | V1 | tenants, users, ai_systems, eval_runs (legacy slice), audit_events |
 | V2 | evidence_documents, evidence_chunks, evidence_queries |
 | V3 | evidence production hardening (content SHA-256, provider, metadata) |
-| V4 | **postgres only** — pgvector HNSW index (skipped gracefully if extension missing) |
+| V4 | **postgres only** — pgvector column (skipped gracefully if extension missing); its HNSW index is dropped by V32_1 |
 | V5 | eval_datasets, eval_runs worker durability columns |
 | V6 | data_contracts, drift_events |
 | V7 | api_keys |
@@ -36,6 +36,8 @@ Schema as implemented by Flyway under `services/api/src/main/resources/db/migrat
 | V28 | Devernance rename (stored identifiers) |
 | V29 | query indexes: `ai_systems(tenant_id, created_at)`, `audit_events(tenant_id, system_id, created_at)`, `refresh_tokens(user_id)` |
 | V30 | API key scope (`RELEASE_GATE` for new keys, `FULL` for keys created earlier) |
+| V31 | drift resolution: note, actor and time for acknowledged and resolved drift events |
+| V32_1 | **postgres only** — hybrid evidence search: generated English `content_tsv` + GIN index and `content_lexemes`; dimension-free `embedding_vector` filled by trigger (vector parts skipped if pgvector missing) |
 
 Canonical counts: `docs/METRICS_CANONICAL.md` (Flyway **V1–V20** + postgres V4); V21–V30 were added after that freeze.
 
@@ -186,7 +188,7 @@ create table evidence_queries (
 );
 ```
 
-The portable schema stores deterministic local embeddings as text so the same core migrations validate against H2 and PostgreSQL. The PostgreSQL profile adds a `pgvector` migration path with HNSW cosine index for production. A non-local embedding provider should ship a matching vector dimension when dimensions change.
+The portable schema stores deterministic local embeddings as text so the same core migrations validate against H2 and PostgreSQL. On PostgreSQL, `V32_1` adds a generated English `tsvector` with a GIN index for BM25 keyword ranking and, when the `vector` extension is available, a dimension-free `embedding_vector` column kept in step with `embedding` by a trigger. Meaning ranking is an exact cosine scan over one system's chunks (found through the `document_id` index), so no approximate index is used; each provider's vectors are compared only with its own. Without pgvector, meaning ranking runs in the API. H2 ranks both ways in memory.
 
 ## Eval Tables
 
