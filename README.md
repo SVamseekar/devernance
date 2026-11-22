@@ -12,7 +12,7 @@ Devernance (formerly EU AI Assurance OS) is a multi-tenant **governance control 
 |---|---|
 | **Next.js dashboard + landing** | Authenticated product shell + public marketing/legal pages |
 | **Spring Boot API** | Registry, evidence RAG, evals, contracts, workflows, audit, release gates |
-| **Live URL** | Landing + dashboard shell on Vercel (API may be hosted separately) |
+| **Live URL** | [devernance.space](https://devernance.space): landing + dashboard shell on Cloudflare Workers (API hosted separately) |
 
 It helps teams validate AI releases against EU AI Act–oriented controls by combining:
 
@@ -87,7 +87,7 @@ Prove it end to end against a real API: `scripts/governance-e2e.sh`. Read
 | API | **Spring Boot 4.1.1**, Java 17, **Tika 4.0.0**, Flyway **V1–V20** (+ postgres V4), Spring Data JPA |
 | Auth | Password JWT + refresh · API keys (`X-Api-Key`) · JWKS · Google/Microsoft OAuth **implemented** (prod smoke pending) |
 | Data | H2 (local default) or PostgreSQL (full-text BM25 + optional pgvector) |
-| Deploy | Dashboard on Vercel; API via Docker Compose or host (Flyway on boot); Terraform skeleton in `infra/terraform/` |
+| Deploy | Site and dashboard on Cloudflare Workers; API via Docker Compose or host (Flyway on boot); Terraform skeleton in `infra/terraform/` |
 
 ## Repository layout
 
@@ -203,7 +203,7 @@ See [`docs/ROADMAP.md`](./docs/ROADMAP.md) and [`docs/superpowers/plans/2026-07-
 - [`docs/API.md`](./docs/API.md) — HTTP contract
 - [`docs/SCHEMA.md`](./docs/SCHEMA.md) — SQL tables (Flyway V1–V20)
 - [`docs/SECURITY.md`](./docs/SECURITY.md) — threat model
-- [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — Docker, Vercel + API host, migrations, rollback
+- [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — Docker, Cloudflare Workers + API host, migrations, rollback
 - [`docs/OPS.md`](./docs/OPS.md) — CI release gate + observability
 - [`docs/NFR.md`](./docs/NFR.md) — latency/uptime targets and secrets
 - [`docs/SECTOR_PACKS.md`](./docs/SECTOR_PACKS.md) — sector pack claims

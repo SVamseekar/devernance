@@ -1,7 +1,42 @@
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://devernance.space";
 
-/** Contact mailbox, an Email Routing forward on devernance.space. Support and security share it. */
-const contactEmail = "hello@devernance.space";
+/**
+ * Public contact addresses on devernance.space, hosted on Zoho Mail. Use these constants everywhere instead of
+ * hardcoding an address. Each one is an alias or mailbox listed in docs/EMAIL.md. System addresses (admin, dev,
+ * dmarc, no-reply, abuse, postmaster) are not public and do not appear here.
+ */
+export const contactEmails = {
+  hello: "hello@devernance.space",
+  sales: "sales@devernance.space",
+  demo: "demo@devernance.space",
+  support: "support@devernance.space",
+  billing: "billing@devernance.space",
+  refunds: "refunds@devernance.space",
+  privacy: "privacy@devernance.space",
+  legal: "legal@devernance.space",
+  security: "security@devernance.space",
+  partners: "partners@devernance.space",
+  press: "press@devernance.space",
+  founder: "souravamseekar@devernance.space",
+} as const;
+
+export type ContactEmailKey = keyof typeof contactEmails;
+
+/** Ordered list shown on the /contact page. */
+export const contactDirectory: readonly { key: ContactEmailKey; label: string; description: string }[] = [
+  { key: "hello", label: "General", description: "Questions about Devernance" },
+  { key: "sales", label: "Sales", description: "Plans, pricing and readiness sprints" },
+  { key: "demo", label: "Demo", description: "Book a walkthrough of the release gate and evidence packs" },
+  { key: "support", label: "Support", description: "Help with your workspace, the Action or the API" },
+  { key: "billing", label: "Billing", description: "Invoices and payment questions" },
+  { key: "refunds", label: "Refunds", description: "Refunds within 14 days of your first payment" },
+  { key: "privacy", label: "Privacy and GDPR", description: "Data access, erasure and other data protection requests" },
+  { key: "legal", label: "Legal", description: "Contracts, terms and legal notices" },
+  { key: "security", label: "Security", description: "Report a vulnerability responsibly" },
+  { key: "partners", label: "Partnerships", description: "Integrations, consultancies and resellers" },
+  { key: "press", label: "Press", description: "Media enquiries" },
+  { key: "founder", label: "Founder", description: "Investors and strategic conversations" },
+];
 
 export const siteConfig = {
   name: "Devernance",
@@ -15,8 +50,8 @@ export const siteConfig = {
   /** The dashboard is served by the same app as the marketing site. */
   appUrl: process.env.NEXT_PUBLIC_APP_URL?.trim() || siteUrl,
   locale: "en_GB",
-  supportEmail: contactEmail,
-  securityEmail: contactEmail,
+  supportEmail: contactEmails.support,
+  securityEmail: contactEmails.security,
   ownerName: "Marti Soura Vamseekar",
   githubUrl: "https://github.com/SVamseekar/devernance",
   evgraphUrl: "https://github.com/SVamseekar/evgraph",
@@ -61,6 +96,7 @@ export const publicRoutes = [
   { path: "/method", changeFrequency: "weekly" as const, priority: 0.8 },
   { path: "/faq", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/request-demo", changeFrequency: "monthly" as const, priority: 0.9 },
+  { path: "/contact", changeFrequency: "monthly" as const, priority: 0.6 },
   { path: "/privacy", changeFrequency: "yearly" as const, priority: 0.4 },
   { path: "/terms", changeFrequency: "yearly" as const, priority: 0.4 },
   { path: "/refunds", changeFrequency: "yearly" as const, priority: 0.4 },

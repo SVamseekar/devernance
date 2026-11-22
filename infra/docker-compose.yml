@@ -5,7 +5,7 @@
 #
 # Profiles:
 #   (default)   postgres + api
-#   dashboard   + Next.js self-host (optional; Vercel is primary for prod)
+#   dashboard   + Next.js self-host (optional; production site runs on Cloudflare Workers)
 #   minio       + S3-compatible object store for evidence FileStorage
 #   full        convenience: dashboard + minio together with default stack
 #
@@ -83,7 +83,7 @@ services:
     # Suggested: memory limit 2G when using djl-sentence
 
   # Optional: self-hosted dashboard (profile dashboard or full).
-  # Production dashboard is Vercel; this is for air-gapped / full local demos.
+  # Production site runs on Cloudflare Workers; this is for air-gapped / full local demos.
   dashboard:
     profiles: ["dashboard", "full"]
     build:

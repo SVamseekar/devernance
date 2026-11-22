@@ -2,13 +2,32 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { footerColumns, mainNav } from "./marketing-nav";
-import { dashboardRoutes, landingNavLinks, publicRoutes, siteConfig } from "./site-config";
+import { contactDirectory, contactEmails, dashboardRoutes, landingNavLinks, publicRoutes, siteConfig } from "./site-config";
 
 describe("siteConfig", () => {
   it("uses the product brand and a security contact", () => {
     assert.equal(siteConfig.shortName, "Devernance");
     assert.match(siteConfig.supportEmail, /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
     assert.match(siteConfig.securityEmail, /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
+  });
+
+  it("keeps every public contact address on the product domain", () => {
+    for (const [key, address] of Object.entries(contactEmails)) {
+      assert.match(address, /^[a-z0-9.]+@devernance\.space$/, key);
+    }
+    assert.equal(siteConfig.supportEmail, contactEmails.support);
+    assert.equal(siteConfig.securityEmail, contactEmails.security);
+  });
+
+  it("lists every contact address once in the contact directory", () => {
+    const keys = contactDirectory.map((entry) => entry.key).sort();
+    assert.deepEqual(keys, Object.keys(contactEmails).sort());
+  });
+
+  it("publishes the contact page in the sitemap and the footer", () => {
+    assert.ok((publicRoutes.map((r) => r.path) as string[]).includes("/contact"));
+    const hrefs = footerColumns.flatMap((c) => c.links.map((l) => l.href));
+    assert.ok(hrefs.includes("/contact"));
   });
 
   it("links pricing, security and docs from the header", () => {

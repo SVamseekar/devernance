@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { CookieSettingsButton } from "@/components/cookie-consent";
 import { LegalPage, LegalSection } from "@/components/landing/legal-page-shell";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 const title = "Privacy Policy";
 const description = `How ${siteConfig.shortName} collects, uses and protects personal data, and your rights under GDPR, UK GDPR, CCPA/CPRA, and the Australian and New Zealand Privacy Acts.`;
@@ -11,7 +11,7 @@ const path = "/privacy";
 
 export const metadata: Metadata = { title, description, alternates: { canonical: path } };
 
-const email = siteConfig.supportEmail;
+const email = contactEmails.privacy;
 
 export default function PrivacyPage() {
   return (

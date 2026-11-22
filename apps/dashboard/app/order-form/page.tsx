@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { CoverTable, LegalPage, LegalSection } from "@/components/landing/legal-page-shell";
 import { COMMON_PAPER, LEGAL } from "@/lib/legal";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 
 const title = "Enterprise order form";
 const description = `Order form template for an ${siteConfig.shortName} Enterprise software subscription, on the Common Paper Cloud Service Agreement.`;
@@ -71,7 +71,7 @@ export default function OrderFormPage() {
 
       <LegalSection title="How to order">
         <p>
-          <Link href="/request-demo">Request a demo</Link> or email {siteConfig.supportEmail} with the number of AI systems
+          <Link href="/request-demo">Request a demo</Link> or email {contactEmails.sales} with the number of AI systems
           you want to gate and your billing entity. We send this form with the fees filled in for signature.
         </p>
       </LegalSection>

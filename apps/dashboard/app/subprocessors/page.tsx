@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { LegalPage, LegalSection } from "@/components/landing/legal-page-shell";
-import { siteConfig } from "@/lib/site-config";
+import { contactEmails, siteConfig } from "@/lib/site-config";
 import { SUBPROCESSORS } from "@/lib/subprocessors";
 
 const title = "Subprocessors";
@@ -15,7 +15,7 @@ export default function SubprocessorsPage() {
     <LegalPage title={title} description={description} path={path}>
       <p>
         We give 30 days&apos; notice before adding a subprocessor. To be notified, email{" "}
-        <a href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>.
+        <a href={`mailto:${contactEmails.privacy}`}>{contactEmails.privacy}</a>.
       </p>
       <LegalSection title="Current subprocessors">
         <div className="overflow-x-auto rounded-xl border border-line bg-white">

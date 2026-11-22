@@ -32,13 +32,11 @@ would break something.
 | Calendar UIDs `…@assurance-os` | `apps/dashboard/lib/ics.ts` | Calendar apps match re-imported events by UID, so a new UID duplicates every event. |
 | Browser storage key `eu-ai-theme` | `apps/dashboard/app/layout.tsx` | A new key resets every visitor's theme choice. |
 | The Dell checkout `D:/Projects/eu-ai-assurance-os`, and checkout paths in the plans under `docs/superpowers/` | Dell scripts, plans | The Dell's services run from that folder. The plans record where commands ran at the time. The Mac checkout is `~/Projects/devernance`, and the Evgraph files in `public-claims/` point there. |
-| Vercel projects `eu-ai-assurance` and `eu-ai-assurance-os` | CI, docs | Project names are internal. The live address is `devernance.space` ([Domain](#domain)). |
 
 ## GitHub repo
 
 On 18 October 2026 the repo was renamed from `SVamseekar/eu-ai-assurance-os` to `SVamseekar/devernance`.
-GitHub redirects the old web, API and git URLs. The Vercel projects stay connected because Vercel tracks the repo by
-its numeric ID, which a rename does not change.
+GitHub redirects the old web, API and git URLs.
 
 - Never create a new repo named `eu-ai-assurance-os` under this account. GitHub drops the redirect once the old name
   is reused.
@@ -51,17 +49,18 @@ its numeric ID, which a rename does not change.
 
 ## Domain
 
-`devernance.space` is the product domain. It was registered at Porkbun on 16 November 2026 and its DNS moves to
-Cloudflare. `devernance.com` was the first choice and was not bought. The full ordered runbook, with the checks for each
+`devernance.space` is the product domain. It was registered at Porkbun on 16 November 2026 and its DNS and hosting
+moved to Cloudflare; Vercel is retired. `devernance.com` was the first choice and was not bought. The full ordered runbook, with the checks for each
 step, is [DOMAIN_MIGRATION.md](./DOMAIN_MIGRATION.md). In short:
 
 1. Add the zone in Cloudflare and switch the Porkbun nameservers to Cloudflare.
-2. Attach `devernance.space` and `www` to the `eu-ai-assurance` Vercel project (Cloudflare records set to DNS only).
-3. Set up `hello@devernance.space` (Cloudflare Email Routing) and the sending domain in Resend (SPF, DKIM, DMARC).
-4. Redirect `euassuranceai.souravamseekar.com` to `devernance.space` with a permanent redirect in Vercel.
-5. Add the new OAuth redirect URIs in Google and Microsoft. Keep the old ones for a week.
-6. Merge the code change: `siteUrl` and `contactEmail` in `apps/dashboard/lib/site-config.ts`, the
+2. Deploy the site to Cloudflare Workers (`devernance-site`, custom domain `devernance.space`) and redirect `www`.
+3. Set up the Zoho mailboxes and aliases ([EMAIL.md](./EMAIL.md)) and, with the API, the sending domain in Brevo.
+4. Redirect `euassuranceai.souravamseekar.com` to `devernance.space` with a Porkbun URL forward (301).
+5. When the API goes live, add the new OAuth redirect URIs in Google and Microsoft.
+6. Merge the code change: `siteUrl` and `contactEmails` in `apps/dashboard/lib/site-config.ts`, the
    `NEXT_PUBLIC_SITE_URL` build value in `.github/workflows/ci.yml`, the fallback disclaimer URL in
    `PublicClaimsService`, and the links in the README and docs.
-7. In Google Search Console, add the new domain, submit the sitemap and file a change of address.
+7. In Google Search Console, add the new domain, submit the sitemap and file a change of address. Then delete the
+   Vercel projects.
 8. Trademark: get a clearance search from a trademark lawyer, then file with the EUIPO and the USPTO in classes 9 and 42.

@@ -28,7 +28,7 @@ Local compose users must copy `.env.example` → `.env` and fill values (specifi
 ### Optional profiles
 
 ```bash
-# Self-host dashboard on :3000 (production UI is still Vercel)
+# Self-host dashboard on :3000 (production site runs on Cloudflare Workers)
 docker compose -f infra/docker-compose.yml --env-file .env.example --profile dashboard up --build
 
 # MinIO S3-compatible store on :9000 (console :9001)

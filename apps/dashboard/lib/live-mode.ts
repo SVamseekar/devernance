@@ -1,6 +1,6 @@
 /**
  * Mock/demo fallback is for local development only.
- * Production (Vercel NODE_ENV=production) never paints seeded Claims Triage as live data.
+ * Production (NODE_ENV=production) never paints seeded Claims Triage as live data.
  * Set NEXT_PUBLIC_USE_MOCK_DATA=true to force mocks, =false to force live-only.
  */
 export function allowMockFallback(): boolean {
